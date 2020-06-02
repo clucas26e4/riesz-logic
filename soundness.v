@@ -103,7 +103,96 @@ Proof with try assumption.
     apply leq_plus_cong...
   - move: Hleq1 Hleq2; rewrite -[sem_hseq (T1 :: T3 :: G)]/(sem_seq T1 \/S sem_hseq (T3 :: G)) -[sem_hseq (T2 :: T3 :: G)]/(sem_seq T2 \/S sem_hseq (T3 :: G)) -[sem_hseq ((T1 ++ T2) :: T3 :: G)]/(sem_seq (T1 ++ T2) \/S sem_hseq (T3 :: G)) => Hleq1 Hleq2.
     rewrite sem_seq_plus.
-    
+    apply cond_zero_leq_max_2.
+    apply leq_antisym.
+    + eapply leq_trans.
+      { apply leq_min.
+        - eapply leq_trans.
+          + apply min_leq.
+          + apply neg_subdistri_plus.
+        - rewrite (commu_min (neg (sem_seq T1 +S sem_seq T2))).
+          apply min_leq. }
+      have plus_pos_min : forall A B C, zero <== A -> zero <== B -> zero <== C -> A +S B /\S C <== (A /\S C) +S (B /\S C).
+      { clear.
+        move => A B C H1 H2 H3.
+        apply leq_plus_right.
+        apply leq_min.
+        - apply leq_minus_left.
+          rewrite (commu_plus A (B /\S C)).
+          apply leq_plus_right.
+          apply leq_min.
+          + apply leq_minus_left.
+            rewrite (commu_plus B A).
+            apply min_leq.
+          + apply leq_trans with (A +S B /\S C).
+            * apply leq_minus_left.
+              rewrite -{1 3}(neutral_plus (A +S B /\S C)).
+              apply leq_plus_cong...
+              apply leq_refl.
+            * rewrite (commu_min (A +S B) C).
+              apply min_leq.
+        - apply leq_minus_left.
+          rewrite (commu_plus C (B /\S C)).
+          apply leq_plus_right.
+          apply leq_min.
+          + apply leq_minus_left.
+            rewrite (commu_plus B C).
+            rewrite -(neutral_plus (A +S B /\S C)).
+            apply leq_plus_cong...
+            rewrite (commu_min (A +S B) C).
+            apply min_leq.
+          + apply leq_minus_left.
+            rewrite -(neutral_plus (A +S B /\S C)).
+            apply leq_plus_cong...
+            rewrite (commu_min (A +S B) C).
+            apply min_leq. }            
+      eapply leq_trans.
+      * apply plus_pos_min; apply zero_leq_neg.
+      * rewrite - {5}(neutral_plus zero).
+        apply leq_plus_cong; (rewrite cond_min_neg_eq_zero ; [ apply leq_refl | ])...
+    + apply leq_min.
+      * rewrite commu_max.
+        apply leq_max.
+      * rewrite commu_max.
+        apply leq_max.
+Qed.
+
+Lemma T_sound :  forall G T r,
+    zero <== sem_hseq (seq_mul r T :: G) ->
+    zero <== sem_hseq (T :: G).
+Proof with try assumption.
+  case => [ | T2 G] T [r Hpos]; 
+    set t := existT (fun r : R => (0 <? r)%R = true) r Hpos => Hleq.
+  - move: Hleq; simpl; rewrite sem_seq_mul; move => Hleq.
+    rewrite -(mul_1 (sem_seq T)).
+    rewrite -(Rpos_inv_l t).
+    rewrite -mul_assoc.
+    rewrite -(min_max Hleq).
+    rewrite commu_max.
+    apply compa_mul_ax.
+  -  move: Hleq. rewrite -[sem_hseq (seq_mul t T :: T2 :: G)]/(sem_seq (seq_mul t T) \/S sem_hseq (T2 :: G)) -[sem_hseq (T :: T2 :: G)]/(sem_seq T \/S sem_hseq (T2 :: G)) sem_seq_mul => Hleq.
+     apply cond_min_neg_eq_zero in Hleq.
+     apply cond_zero_leq_max_2.
+     apply leq_antisym.
+     + move: Hleq; rewrite -Rpos_mul_neg => Hleq.
+       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       
+     + apply leq_min; rewrite commu_max; apply leq_max.
+      
 
 Lemma hr_sound : forall G, HR G -> zero <== sem_hseq G.
 Proof with try assumption.
@@ -113,4 +202,5 @@ Proof with try assumption.
   - apply W_sound ; [by apply HR_not_empty | ]...
   - by apply C_sound.
   - by apply S_sound.
-  -
+  - by apply M_sound.
+  - 

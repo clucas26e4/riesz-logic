@@ -56,6 +56,12 @@ Definition time_pos (a b : Rpos) : Rpos.
   by apply Rmult_lt_0_compat.
 Defined.
 
+Definition minus_pos {a b : Rpos} (Rlt: projT1 b < projT1 a) : Rpos.
+  move: a b Rlt => [a Ha] [b Hb] /= => Rlt.
+  split with (a - b).
+  apply R_blt_lt; nra.
+Defined.
+
 Definition inv_pos (a : Rpos) : Rpos.
   move: a => [a Ha].
   split with (/ a).
@@ -88,6 +94,19 @@ Proof.
   by rewrite (Heq Hb) (Heq Hb').
 Qed.
 
+Definition le_pos (a b : Rpos) : Prop.
+  move: a b => [a Ha] [b Hb].
+  by apply ((a <= b)%R).
+Defined.
+
+Definition ble_pos (a b : Rpos) : bool.
+  move: a b => [a Ha] [b Hb].
+  case (Rle_dec a b); move => _; [ by apply true | by apply false].
+Defined.
+
+Notation "a <= b" := (le_pos a b) : Rpos_scope.
+Notation "a <=? b" := (ble_pos a b) : Rpos_scope.
+
 Local Open Scope Rpos_scope.
 
 (* Properties on strictly positive real numbers *)
@@ -107,4 +126,22 @@ Proof.
   apply Rinv_l.
   apply R_blt_lt in Hr.
   by lra.
+Qed.
+
+Lemma ble_le_pos : forall a b, a <=? b = true <-> a <= b.
+Proof.
+  move => [a Ha] [b Hb] /=.
+  by case (Rle_dec a b).
+Qed.
+
+Lemma ble_nle_pos : forall a b, a <=? b = false <-> ~ (a <= b).
+Proof.
+  move => [a Ha] [b Hb] /=.
+  by case (Rle_dec a b).
+Qed.
+
+Lemma le_pos_dec : forall a b, {a <= b} + {~ (a <= b)}.
+Proof.
+  move => [a Ha] [b Hb] /=.
+  by apply Rle_dec.
 Qed.

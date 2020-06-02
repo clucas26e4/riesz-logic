@@ -37,7 +37,7 @@ Fixpoint evalContext (c : context) (t : term) : term :=
   | cohole => -S t
   | TC t' => t'
   | varC n => var n
-  | covarC n => var n
+  | covarC n => covar n
   | zeroC => zero
   | minC c1 c2 => min (evalContext c1 t) (evalContext c2 t)
   | maxC c1 c2 => max (evalContext c1 t) (evalContext c2 t)
@@ -84,6 +84,7 @@ Inductive eqMALG : term -> term -> Prop :=
 | commu_plus t1 t2 : eqMALG (plus t1 t2) (plus t2 t1)
 | neutral_plus t : eqMALG (plus t zero) t
 | opp_plus t : eqMALG (plus t (minus t)) zero
+| minus_ax a b t (Hlt: (projT1 b < projT1 a)%R) : eqMALG ((a *S t) +S (b *S (-S t))) ((minus_pos Hlt) *S t)
 | mul_1 t  : eqMALG (mul One t) t
 | mul_assoc x y t : eqMALG (mul x (mul y t)) (mul (x * y) t)
 | mul_distri_term x t1 t2 : eqMALG (mul x (plus t1 t2)) (plus (mul x t1) (mul x t2))
@@ -1045,6 +1046,29 @@ Proof with auto with MGA_solver.
   rewrite mul_distri_max_pos.
   rewrite mul_0...
 Qed.
+
+Hint Resolve Rpos_mul_neg : MGA_solver.
+
+Lemma mul_leq : forall t A B, A <== B -> t *S A <== t *S B.
+Proof.
+  auto with MGA_solver.
+Qed.
+
+Hint Resolve mul_leq : MGA_solver.
+
+Lemma mul_leq_inv : forall t A B, t *S A <== t *S B -> A <== B.
+Proof with auto with MGA_solver.
+  move => t A B Hle.
+  rewrite -(mul_1 A) -(mul_1 B).
+  rewrite -(Rpos_inv_l t) -2!mul_assoc...
+Qed.
+
+(*Lemma le_pos_leq : forall t1 t2 A, t1 <= t2 -> t1 *S A <== t2 *S A.
+Proof.
+  move => t1 t2 A Hle.
+  rewrite -(neutral_plus (t1 *S A)).
+  rewrite commu_plus.
+  apply leq_plus_left.*)
 
 (*
 Lemma diamond_minus : forall A , diamond (-S A) === -S (diamond A).

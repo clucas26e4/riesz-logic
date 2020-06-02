@@ -27,8 +27,18 @@ Proof.
     simpl; rewrite IHT1.
     by auto with MGA_solver.
 Qed.
-    
-(* Interpretation of a hypersequent *)
+
+Lemma sem_seq_mul : forall T r, sem_seq (seq_mul r T) === r *S sem_seq T.
+Proof.
+  elim => [ | [rA A] T IHT] r.
+  - by rewrite mul_0.
+  - simpl.
+    rewrite IHT.
+    rewrite -mul_assoc.
+    auto with MGA_solver.
+Qed.    
+
+    (* Interpretation of a hypersequent *)
 Fixpoint sem_hseq G :=
   match G with
   | nil => zero (* should not happen *)
