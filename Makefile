@@ -52,6 +52,7 @@ hseq.vo : hseq.v Rpos.vo term.vo
 
 interpretation.vo : interpretation.v hseq.vo Rpos.vo term.vo semantic.vo $(OLLIBSDIR)/Permutation_more.vo
 soundness.vo : soundness.v Rpos.vo term.vo hseq.vo semantic.vo interpretation.vo $(OLLIBSDIR)/Permutation_more.vo
+can_full_invertibility.vo : can_full_invertibility.v hseq.vo Rpos.vo term.vo $(OLLIBSDIR)/Permutation_more.vo $(OLLIBSDIR)/Permutation_solve.vo
 
 
 Rterm.vo : Rterm.v $(OLLIBSDIR)/List_more.vo

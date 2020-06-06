@@ -15,18 +15,20 @@ Require Import Lra.
 Require Import Permutation_more.
 Local Open Scope R_scope.
 
-(* TODO MOVING (to semantic) *)
-
-(* TODO MOVING (to hseq then elsewhere) *)
-  
-  
 (* TODO MOVING (to interpretation) *)
+Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec l r) A) === r *S sem_seq (vec l A).
+Proof.
+  move => A.
+  induction l => r.
+  - simpl; rewrite mul_0; auto.
+  - simpl.
+    rewrite IHl.
+    rewrite -mul_assoc.
+    rewrite mul_distri_term.
+    reflexivity.
+Qed.
 
 (* all rules are sound *)
-Lemma INIT_sound : zero <== sem_hseq (nil :: nil).
-Proof.
-  by apply leq_refl.
-Qed.
 
 Lemma W_sound : forall G T, G <> nil ->  zero <== (sem_hseq G) -> zero <== sem_hseq (T :: G).
 Proof with try assumption.
@@ -38,16 +40,14 @@ Proof with try assumption.
     by apply abso_min.
 Qed.
 
-Lemma C_sound : forall G T, zero <== sem_hseq (T :: T :: G) -> zero <== sem_hseq (T :: G).
+Lemma C_sound : forall G T, sem_hseq (T :: T :: G) === sem_hseq (T :: G).
 Proof with try assumption.
-  move => G T Hleq.
+  move => G T.
   destruct G.
-  - rewrite /sem_hseq in Hleq |- *.
-    apply leq_cong_r with (sem_seq T \/S sem_seq T)...
+  - rewrite /sem_hseq.
     by auto with MGA_solver.
-  - move: Hleq; rewrite /sem_hseq-/(sem_hseq (s :: G)) => Hleq.
-    move: Hleq; rewrite asso_max => Hleq.
-    apply leq_cong_r with (sem_seq T \/S sem_seq T \/S sem_hseq (s :: G))...
+  - rewrite /sem_hseq-/(sem_hseq (s :: G)).
+    rewrite asso_max.
     by auto with MGA_solver.
 Qed.
 
@@ -220,19 +220,17 @@ Proof with try assumption.
      + apply leq_min; rewrite commu_max; apply leq_max.
 Qed.
 
-Lemma ID_sound : forall G T n r s,
-    sum_vec r = sum_vec s -> 
-    zero <== sem_hseq (T :: G) ->
-    zero <== sem_hseq ((vec s (covar n) ++ vec r (var n) ++ T) :: G).
+Lemma ext_ID_sound : forall G T A r s,
+    sum_vec r = sum_vec s -> sem_hseq (T :: G) === sem_hseq ((vec s (-S A) ++ vec r A ++ T) :: G).
 Proof.
-  move => [ | T2 G] T n r s Heq Hleq.
+  move => [ | T2 G] T A r s Heq.
   - simpl.
     rewrite ?sem_seq_plus.
-    rewrite asso_plus (commu_plus (sem_seq (vec s (covar n)))).
+    rewrite asso_plus (commu_plus (sem_seq (vec s (-S A)))).
     destruct r; destruct s.
     + simpl in *.
       rewrite commu_plus neutral_plus neutral_plus.
-      apply Hleq.
+      reflexivity.
     + exfalso.
       destruct r ; simpl in *.
       apply R_blt_lt in e.
@@ -248,12 +246,10 @@ Proof.
       rewrite (sem_seq_vec _ H1).
       rewrite (sem_seq_vec _ H2).
       replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil H1)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil H2)) by (apply Rpos_eq; simpl in *; nra).
-      change (covar n) with (-S (var n)).
       rewrite mul_minus opp_plus.
       rewrite commu_plus neutral_plus.
-      apply Hleq.
+      reflexivity.
   - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
-    have H : sem_seq (vec s (covar n) ++ vec r (var n) ++ T) === sem_seq T ; [ | rewrite H; clear H; apply Hleq].
     destruct r; destruct s.
     + reflexivity.
     + exfalso.
@@ -273,13 +269,31 @@ Proof.
       rewrite (sem_seq_vec _ H2).
       replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil H1)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil H2)) by (apply Rpos_eq; simpl in *; nra).
       rewrite asso_plus.
-      change (var n) with (-S (covar n)). 
+      rewrite -{2}(minus_minus A).
       rewrite mul_minus opp_plus.
       rewrite commu_plus neutral_plus.
       reflexivity.
 Qed.
 
-Lemma plus_sound : forall G T A B r, zero <== sem_hseq ((vec r A ++ vec r B ++ T) :: G) -> zero <== sem_hseq ((vec r (A +S B) ++ T) :: G).
+Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r zero ++ T) :: G).
+Proof.
+  move => [ | T2 G] T [ | r0 r].
+  - reflexivity.
+  - unfold sem_hseq.
+    have H : (r0 :: r) <> nil by auto.
+    rewrite ?sem_seq_plus ?(sem_seq_vec _ H).
+    rewrite mul_0.
+    rewrite commu_plus; rewrite neutral_plus; reflexivity.
+  - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
+    reflexivity.
+  - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
+    have H : (r0 :: r) <> nil by auto.
+    rewrite ?sem_seq_plus ?(sem_seq_vec _ H).
+    rewrite mul_0.
+    rewrite commu_plus; rewrite neutral_plus; reflexivity.
+Qed.
+    
+Lemma plus_sound : forall G T A B r, sem_hseq ((vec r A ++ vec r B ++ T) :: G) === sem_hseq ((vec r (A +S B) ++ T) :: G).
 Proof.
   move => [ | T2 G] T A B r.
   - simpl in *.
@@ -300,7 +314,29 @@ Proof.
       auto.
 Qed.
 
-Lemma max_sound : forall G T A B r, zero <== sem_hseq ((vec r B ++ T) :: (vec r A ++ T) :: G) -> zero <== sem_hseq ((vec r (A \/S B) ++ T) :: G).
+Lemma mul_sound : forall G T A r0 r, sem_hseq ((vec (mul_vec r r0) A ++ T) :: G) === sem_hseq ((vec r (r0 *S A) ++ T) :: G).
+Proof.
+  move => [ | T2 G] T A r0 [ | r' r].
+  - simpl; auto.
+  - unfold sem_hseq.
+    have H : (r' :: r) <> nil by auto.
+    rewrite ?sem_seq_plus ?(sem_seq_vec _ H).
+    rewrite mul_vec_eq (sem_seq_vec _ H).
+    rewrite ?mul_assoc.
+    replace (time_pos r0 (existT (fun r1 : R => (0 <? r1) = true) (sum_vec (r' :: r)) (sum_vec_non_nil H))) with (time_pos (existT (fun r1 : R => (0 <? r1) = true) (sum_vec (r' :: r)) (sum_vec_non_nil H)) r0); auto.
+    apply Rpos_eq; destruct r0; simpl; nra.
+  - unfold mul_vec; unfold vec.
+    reflexivity.
+  - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
+    have H : (r' :: r) <> nil by auto.
+    rewrite ?sem_seq_plus ?(sem_seq_vec _ H).
+    rewrite mul_vec_eq (sem_seq_vec _ H).
+    rewrite ?mul_assoc.
+    replace (time_pos r0 (existT (fun r1 : R => (0 <? r1) = true) (sum_vec (r' :: r)) (sum_vec_non_nil H))) with (time_pos (existT (fun r1 : R => (0 <? r1) = true) (sum_vec (r' :: r)) (sum_vec_non_nil H)) r0); auto.
+    apply Rpos_eq; destruct r0; simpl; nra.
+Qed.        
+  
+Lemma max_sound : forall G T A B r, sem_hseq ((vec r B ++ T) :: (vec r A ++ T) :: G) === sem_hseq ((vec r (A \/S B) ++ T) :: G).
 Proof.
   move => [ | G T2] T A B [ | r0 r].
   - simpl.
@@ -328,21 +364,20 @@ Proof.
     auto.
 Qed.
 
-Lemma min_sound : forall G T A  B r, zero <== sem_hseq ((vec r A ++ T) :: G) -> zero <== sem_hseq ((vec r B ++ T) :: G) -> zero <== sem_hseq ((vec r (A /\S B) ++ T) :: G).
+Lemma min_sound : forall G T A  B r, sem_hseq ((vec r A ++ T) :: G) /\S sem_hseq ((vec r B ++ T) :: G) === sem_hseq ((vec r (A /\S B) ++ T) :: G).
   move => [ | T2 G] T A B [ | r0 r].
   - simpl.
-    auto.
+    apply leq_refl.
   - unfold sem_hseq.
     have H : r0 :: r <> nil by auto.
     rewrite ?sem_seq_plus ?(sem_seq_vec _ H).
     set sr := existT (fun r1 : R => (0 <? r1) = true) (sum_vec (r0 :: r)) (sum_vec_non_nil H).
-    move => HA HB.
     rewrite mul_distri_min_pos.
     rewrite min_plus.
-    apply leq_min; assumption.
+    reflexivity.
   - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
     unfold vec.
-    auto.
+    apply leq_refl.
   - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
     have H : r0 :: r <> nil by auto.
     rewrite ?sem_seq_plus ?(sem_seq_vec _ H).
@@ -350,27 +385,30 @@ Lemma min_sound : forall G T A  B r, zero <== sem_hseq ((vec r A ++ T) :: G) -> 
     rewrite mul_distri_min_pos.
     rewrite min_plus.
     rewrite max_distri_min.
-    move => HA HB.
-    apply leq_min; assumption.
+    reflexivity.
 Qed.    
                                                                            
-Lemma hr_sound : forall G, HR G -> zero <== sem_hseq G.
+Lemma hr_sound b : forall G, HR b G -> zero <== sem_hseq G.
 Proof with try assumption.
   move => G pi.
   induction pi.
-  - by apply INIT_sound.
-  - apply W_sound ; [by apply HR_not_empty | ]...
-  - by apply C_sound.
+  - apply leq_refl.
+  - apply W_sound ; [by apply (@HR_not_empty b) | ]...
+  - by rewrite -C_sound.
   - by apply S_sound.
   - by apply M_sound.
   - by apply T_sound with r.
-  - by apply ID_sound.
-  - by apply plus_sound.
-  - by apply max_sound.
-  - by apply min_sound.
+  - by rewrite -ext_ID_sound.
+  - by rewrite -Z_sound.
+  - by rewrite -plus_sound.
+  - by rewrite -mul_sound.
+  - by rewrite -max_sound.
+  - rewrite -min_sound.
+    by apply leq_min.
   - destruct G.
     + simpl in *; by rewrite -(sem_seq_permutation p).
     + unfold sem_hseq in *; fold (sem_hseq (l :: G)) in *.
         by rewrite -(sem_seq_permutation p).
   - by rewrite -(sem_hseq_permutation p).
+  - rewrite ext_ID_sound; [ apply IHpi | apply e ].
 Qed.
