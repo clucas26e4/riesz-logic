@@ -50,8 +50,8 @@ term.vo : term.v Rpos.vo $(OLLIBSDIR)/List_more.vo
 semantic.vo : semantic.v Rpos.vo term.vo
 hseq.vo : hseq.v Rpos.vo term.vo
 
-interpretation.vo : interpretation.v hseq.vo Rpos.vo term.vo semantic.vo
-soundness.vo : soundness.v Rpos.vo term.vo hseq.vo semantic.vo interpretation.vo
+interpretation.vo : interpretation.v hseq.vo Rpos.vo term.vo semantic.vo $(OLLIBSDIR)/Permutation_more.vo
+soundness.vo : soundness.v Rpos.vo term.vo hseq.vo semantic.vo interpretation.vo $(OLLIBSDIR)/Permutation_more.vo
 
 
 Rterm.vo : Rterm.v $(OLLIBSDIR)/List_more.vo

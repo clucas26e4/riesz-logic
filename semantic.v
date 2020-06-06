@@ -1063,12 +1063,23 @@ Proof with auto with MGA_solver.
   rewrite -(Rpos_inv_l t) -2!mul_assoc...
 Qed.
 
-(*Lemma le_pos_leq : forall t1 t2 A, t1 <= t2 -> t1 *S A <== t2 *S A.
+
+Lemma neg_leq_cond : forall A B, A <== B -> neg B <== neg A.
+Proof with try assumption.
+  move => A B Hleq.
+  apply max_leq.
+  - apply leq_trans with (-S A).
+    + apply minus_reverse_leq...
+    + apply leq_max.
+  - auto with MGA_solver.
+Qed.
+
+Lemma max_idempotence : forall A, A \/S A === A.
 Proof.
-  move => t1 t2 A Hle.
-  rewrite -(neutral_plus (t1 *S A)).
-  rewrite commu_plus.
-  apply leq_plus_left.*)
+  move => A.
+  apply min_max.
+  apply leq_refl.
+Qed.
 
 (*
 Lemma diamond_minus : forall A , diamond (-S A) === -S (diamond A).
