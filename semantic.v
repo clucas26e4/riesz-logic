@@ -1,21 +1,15 @@
-From Coq Require Import ssreflect ssrfun ssrbool.
-
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
-
 (** * Equational reasoning for modal lattice-ordered Abelian groups *)
 
-Require Import Setoid.
-Require Import Morphisms.
+Require Import CMorphisms.
 
 Require Import EqNat.
 Require Import PeanoNat.
+Require Import Lra.
 
 Require Import Rpos.
 Require Import term.
 
-Local Open Scope Rpos_scope.
+Local Open Scope R_scope.
 
 (** ** Basic definitions needed for equational reasoning *)
 (** Context *)
@@ -72,7 +66,7 @@ Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
   end.
 
 (** ** Equational Reasoning *)
-Inductive eqMALG : term -> term -> Prop :=
+Inductive eqMALG : term -> term -> Type :=
 (* equational rules *)
 | refl t : eqMALG t t
 | trans t1 t2 t3 : eqMALG t1 t2 -> eqMALG t2 t3 -> eqMALG t1 t3
@@ -86,9 +80,9 @@ Inductive eqMALG : term -> term -> Prop :=
 | opp_plus t : eqMALG (plus t (minus t)) zero
 | minus_ax a b t (Hlt: (projT1 b < projT1 a)%R) : eqMALG ((a *S t) +S (b *S (-S t))) ((minus_pos Hlt) *S t)
 | mul_1 t  : eqMALG (mul One t) t
-| mul_assoc x y t : eqMALG (mul x (mul y t)) (mul (x * y) t)
+| mul_assoc x y t : eqMALG (mul x (mul y t)) (mul (time_pos x y) t)
 | mul_distri_term x t1 t2 : eqMALG (mul x (plus t1 t2)) (plus (mul x t1) (mul x t2))
-| mul_distri_coeff x y t : eqMALG (mul (x + y) t) (plus (mul x t) (mul y t))
+| mul_distri_coeff x y t : eqMALG (mul (plus_pos x y) t) (plus (mul x t) (mul y t))
 | mul_minus x t : eqMALG (mul x (minus t)) (minus (mul x t))
 (* lattice axioms *)
 | asso_max t1 t2 t3 : eqMALG (max t1 (max t2 t3)) (max (max t1 t2) t3)
@@ -106,11 +100,11 @@ Notation "A <== B" := (eqMALG (min A B) A) (at level 90, no associativity).
 
 (** *** === is an equivalence relation **)
 
-Add Relation term eqMALG
-    reflexivity proved by refl
-    symmetry proved by sym
-    transitivity proved by trans
-                             as eqMALG_rel.
+Instance eqMALG_Equivalence : Equivalence eqMALG | 10 := {
+  Equivalence_Reflexive := refl ;
+  Equivalence_Symmetric := sym ;
+  Equivalence_Transitive := trans }.
+
 (** *** Proofs of a equalities *)
 
 Hint Constructors eqMALG : core.
@@ -223,8 +217,8 @@ Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_co
 
 Lemma evalContext_cong : forall c t1 t2, t1 === t2 -> evalContext c t1 === evalContext c t2.
 Proof.
-  elim => //=; auto.
-  all:move => c1 IHc1 c2 IHc2 t1 t2 eq; specialize (IHc1 t1 t2 eq); specialize (IHc2 t1 t2 eq); by rewrite IHc1 IHc2.
+  induction c; simpl; auto.
+  all:intros t1 t2 eq; specialize (IHc1 t1 t2 eq); specialize (IHc2 t1 t2 eq); rewrite IHc1; now rewrite IHc2.
 Qed.
 
 Global Instance evalContext_cong_instance c : Proper (eqMALG ==> eqMALG) (evalContext c) | 10.
@@ -251,16 +245,9 @@ Proof.
   auto.
 Qed.
 
-Lemma minus_minus : forall A , -S (-S A) === A.
+Lemma minus_minus : forall A , -S (-S A) = A.
 Proof with auto.
-  intro A.
-  rewrite<- neutral_plus.
-  rewrite<- (opp_plus A).
-  rewrite (commu_plus A (-S A)).
-  rewrite asso_plus.
-  rewrite (commu_plus (-S (-S A)) (-S A)).
-  rewrite opp_plus.
-  by rewrite commu_plus.
+  induction A; simpl; try rewrite IHA; try rewrite IHA1; try rewrite IHA2...
 Qed.
 
 Hint Resolve minus_zero : MGA_solver.
@@ -540,13 +527,15 @@ Hint Resolve mul_0 : MGA_solver.
 
 Lemma no_div_zero : forall r A, r *S A === zero -> A === zero.
 Proof with auto with MGA_solver.
-  move => r A eq.
+  intros r A eq.
   transitivity (One *S A)...
-  transitivity ((/ r * r) *S A)...
+  transitivity ((time_pos (inv_pos r) r) *S A)...
   { apply mul_left.
-    symmetry; by apply Rpos_inv_l. }
-  apply trans with ((/ r) *S (r *S A))...
-  apply trans with ((/ r) *S zero)...
+    apply Rpos_eq; destruct r; simpl. clear eq; apply R_blt_lt in e.
+    rewrite Rinv_l...
+    nra. }
+  apply trans with ((inv_pos r) *S (r *S A))...
+  apply trans with ((inv_pos r) *S zero)...
 Qed.
 
 Lemma mul_distri_minus : forall k A B, (k *S A) -S (k *S B) === k *S (A -S B).
@@ -838,21 +827,27 @@ Lemma mul_distri_max_pos : forall r A B, r *S (A \/S B) === (r *S A) \/S (r *S B
 Proof with auto with MGA_solver.
   intros r A B.
   apply leq_antisym.
-  - apply leq_cong_r with (r *S ((/ r) *S ((r *S A) \/S (r *S B)))).
-    { apply trans with ((r * (/ r)) *S (r *S A \/S r *S B))...
-      replace (r * / r) with One...
-      symmetry; by apply Rpos_inv_r. }
+  - apply leq_cong_r with (r *S ((inv_pos r) *S ((r *S A) \/S (r *S B)))).
+    { apply trans with ((time_pos r (inv_pos r)) *S (r *S A \/S r *S B))...
+      replace (time_pos r (inv_pos r)) with One...
+      destruct r; apply Rpos_eq; simpl.
+      apply R_blt_lt in e; rewrite Rinv_r...
+      nra. }
     apply mul_compa.
     apply max_leq.
-    + apply leq_cong_l with ((/ r) *S (r *S A)).
-      { apply trans with (((/ r) * r) *S A)...
-        rewrite Rpos_inv_l; try auto with MGA_solver; apply Rgt_not_eq; apply Hlt. }
+    + apply leq_cong_l with ((inv_pos r) *S (r *S A)).
+      { apply trans with ((time_pos (inv_pos r) r) *S A)...
+        replace (time_pos (inv_pos r) r) with One.
+        2:{ apply Rpos_eq; destruct r; simpl; apply R_blt_lt in e; rewrite Rinv_l; try auto; try nra. }
+        auto with MGA_solver; apply Rgt_not_eq; apply Hlt. }
       apply mul_compa; try apply Rlt_le; try auto with MGA_solver.
-    + apply leq_cong_l with ((/ r) *S (r *S B)).
-      { apply trans with (((/ r) * r) *S B)...
-        rewrite Rpos_inv_l; try auto with MGA_solver; apply Rgt_not_eq; apply Hlt. }
-      apply mul_compa; try apply Rlt_le; try auto with MGA_solver.
-      apply leq_cong_r with (r *S B \/S r *S A)...
+    + apply leq_cong_l with ((inv_pos r) *S (r *S B)).
+      { apply trans with ((time_pos (inv_pos r) r) *S B)...
+        replace (time_pos (inv_pos r) r) with One.
+        2:{ apply Rpos_eq; destruct r; simpl; apply R_blt_lt in e; rewrite Rinv_l; try auto; try nra. }
+        rewrite mul_1; reflexivity. }
+      apply mul_compa.
+      rewrite commu_max; apply leq_max.
   - apply max_leq; apply mul_compa...
     apply leq_cong_r with (B \/S A)...
 Qed.
@@ -863,18 +858,21 @@ Proof with auto with MGA_solver.
   apply leq_antisym.
   - apply leq_min; apply mul_compa...
     apply leq_cong_l with (B /\S A)...
-  - apply leq_cong_l with (r *S ((/ r) *S ((r *S A) /\S (r *S B)))).
-    { apply trans with ((r * (/ r)) *S (r *S A /\S r *S B))...
-      rewrite Rpos_inv_r... }
+  - apply leq_cong_l with (r *S ((inv_pos r) *S ((r *S A) /\S (r *S B)))).
+    { apply trans with ((time_pos r (inv_pos r)) *S (r *S A /\S r *S B))...
+      replace (time_pos r (inv_pos r)) with One...
+      apply Rpos_eq; destruct r; simpl; apply R_blt_lt in e; rewrite Rinv_r; nra. }
     apply mul_compa...
     apply leq_min.
-    + apply leq_cong_r with ((/ r) *S (r *S A)).
-      { apply trans with (((/ r) * r) *S A)...
-        rewrite Rpos_inv_l; try auto with MGA_solver; apply Rgt_not_eq; apply Hlt. }
+    + apply leq_cong_r with ((inv_pos r) *S (r *S A)).
+      { apply trans with ((time_pos (inv_pos r) r) *S A)...
+        replace (time_pos (inv_pos r) r) with One...
+        apply Rpos_eq; destruct r; simpl; apply R_blt_lt in e; rewrite Rinv_l; nra. }
       apply mul_compa; try apply Rlt_le; try auto with MGA_solver.
-    + apply leq_cong_r with ((/ r) *S (r *S B)).
-      { apply trans with (((/ r) * r) *S B)...
-        rewrite Rpos_inv_l; try auto with MGA_solver; apply Rgt_not_eq; apply Hlt. }
+    + apply leq_cong_r with ((inv_pos r) *S (r *S B)).
+      { apply trans with ((time_pos (inv_pos r) r) *S B)...
+        replace (time_pos (inv_pos r) r) with One...
+        apply Rpos_eq; destruct r; simpl; apply R_blt_lt in e; rewrite Rinv_l; nra. }
       apply mul_compa; try apply Rlt_le; try auto with MGA_solver.
       apply leq_cong_l with (r *S B /\S r *S A)...
 Qed.
@@ -883,16 +881,16 @@ Hint Resolve mul_distri_min_pos : MGA_solver.
 
 Require Import Lra. 
    
-Lemma mul_distri_min : forall A B, (One + One) *S (A /\S B) === ((One + One) *S A) /\S ((One + One) *S B).
+Lemma mul_distri_min : forall A B, (plus_pos One One) *S (A /\S B) === ((plus_pos One One) *S A) /\S ((plus_pos One One) *S B).
 Proof with auto with MGA_solver.
   intros A B.
-  apply trans with (-S (-S ((One + One) *S (A /\S B))))...
-  apply trans with (-S ((One + One) *S (-S (A /\S B))))...
-  apply trans with (-S ((One + One) *S ((-S A) \/S (-S B))))...
-  apply trans with (-S (((One + One) *S (-S A)) \/S ((One + One) *S (-S B))))...
-  apply trans with (-S ((-S ((One + One) *S A)) \/S ((One + One) *S (-S B))))...
-  apply trans with (-S ((-S ((One + One) *S A)) \/S (-S ((One + One) *S B))))...
-  apply trans with (-S (-S (((One + One) *S A) /\S ((One + One) *S B))))...
+  apply trans with (-S (-S ((plus_pos One One) *S (A /\S B))))...
+  apply trans with (-S ((plus_pos One One) *S (-S (A /\S B))))...
+  apply trans with (-S ((plus_pos One One) *S ((-S A) \/S (-S B))))...
+  apply trans with (-S (((plus_pos One One) *S (-S A)) \/S ((plus_pos One One) *S (-S B))))...
+  apply trans with (-S ((-S ((plus_pos One One) *S A)) \/S ((plus_pos One One) *S (-S B))))...
+  apply trans with (-S ((-S ((plus_pos One One) *S A)) \/S (-S ((plus_pos One One) *S B))))...
+  apply trans with (-S (-S (((plus_pos One One) *S A) /\S ((plus_pos One One) *S B))))...
 Qed.
 
 Hint Resolve mul_distri_min : MGA_solver.
@@ -911,7 +909,7 @@ Qed.
 
 Hint Resolve mul_nat : MGA_solver. *)
 
-Lemma mul_2 : forall A , (One + One) *S A === A +S A.
+Lemma mul_2 : forall A , (plus_pos One One) *S A === A +S A.
 Proof with auto with MGA_solver.
   intros A.
   transitivity (One *S A +S One *S A)...
@@ -920,13 +918,13 @@ Qed.
 
 Hint Resolve mul_2 : MGA_solver.
 
-Lemma mean_prop : forall A B , A +S B <== (One + One) *S (A \/S B).
+Lemma mean_prop : forall A B , A +S B <== (plus_pos One One) *S (A \/S B).
 Proof with auto with MGA_solver.
   intros A B.
-  apply leq_cong_r with (((One + One) *S A) \/S ((One + One) *S B))...
+  apply leq_cong_r with (((plus_pos One One) *S A) \/S ((plus_pos One One) *S B))...
   apply leq_trans with (A +S (A \/S B))...
   { apply leq_cong_r with (A +S (B \/S A))... }
-  apply leq_cong_r with ((One + One) *S (A \/S B))...
+  apply leq_cong_r with ((plus_pos One One) *S (A \/S B))...
   apply leq_cong_r with ((A \/S B) +S (A \/S B))...
 Qed.
 
@@ -936,15 +934,15 @@ Lemma decomp_abs : forall A , abs A === pos A +S neg A.
 Proof with auto with MGA_solver.
   intro A.
   apply trans with ((A +S zero) \/S (-S A))...
-  rewrite -{+1}(opp_plus A).
+  rewrite <-(opp_plus A) at 1.
   apply trans with (((A +S A) -S A) \/S (-S A))...
   apply trans with (((A +S A) -S A) \/S ((-S A) +S zero))...
   apply trans with (((A +S A) -S A) \/S (zero -S A))...
   apply trans with (((A +S A) \/S zero) -S A)...
-  transitivity ((((One + One) *S A) \/S zero) -S A)...
-  transitivity ((((One + One) *S A) \/S (zero +S zero)) -S A)...
-  transitivity ((((One + One) *S A) \/S ((One + One) *S zero)) -S A)...
-  apply trans with (((One + One) *S (pos A)) -S A)...
+  transitivity ((((plus_pos One One) *S A) \/S zero) -S A)...
+  transitivity ((((plus_pos One One) *S A) \/S (zero +S zero)) -S A)...
+  transitivity ((((plus_pos One One) *S A) \/S ((plus_pos One One) *S zero)) -S A)...
+  apply trans with (((plus_pos One One) *S (pos A)) -S A)...
   apply trans with ((pos A +S pos A) -S A)...
   apply trans with (pos A +S (pos A -S A))...
 Qed.
@@ -996,14 +994,14 @@ Qed.
 
 Hint Resolve min_minus_leq_zero : MGA_solver.
 
-Lemma two_eq_zero : forall A , (One + One) *S A === zero -> A === zero.
+Lemma two_eq_zero : forall A , (plus_pos One One) *S A === zero -> A === zero.
 Proof with auto with MGA_solver.
   intros A eq.
   assert (A === -S A).
   - apply trans with ((-S A) +S zero)...
     apply trans with (zero -S A)...
     apply eq_minus_right...
-    apply trans with ((One + One) *S A)...
+    apply trans with ((plus_pos One One) *S A)...
   - apply abs_eq_zero.
     apply leq_antisym...
     apply leq_cong_l with (A /\S (-S A))...
@@ -1012,22 +1010,22 @@ Proof with auto with MGA_solver.
     apply trans with (A /\S A)...
 Qed.
 
-Lemma inj_mul_two : forall A B, (One + One) *S A === (One + One) *S B -> A === B.
+Lemma inj_mul_two : forall A B, (plus_pos One One) *S A === (plus_pos One One) *S B -> A === B.
 Proof with auto with MGA_solver.
   intros A B eq.
   apply trans with (B +S zero)...
   apply trans with (zero +S B)...
   apply eq_plus_right.
   apply two_eq_zero...
-  apply trans with (((One + One) *S A) +S ((One + One) *S (-S B)))...
-  apply trans with (((One + One) *S A) -S ((One + One) *S B))...
+  apply trans with (((plus_pos One One) *S A) +S ((plus_pos One One) *S (-S B)))...
+  apply trans with (((plus_pos One One) *S A) -S ((plus_pos One One) *S B))...
 Qed.
 
-Lemma leq_div_2 : forall A B , (One + One) *S A <== (One + One) *S B -> A <== B.
+Lemma leq_div_2 : forall A B , (plus_pos One One) *S A <== (plus_pos One One) *S B -> A <== B.
 Proof with auto with MGA_solver.
   intros A B eq.
   apply inj_mul_two...
-  apply trans with (((One + One) *S A) /\S ((One + One) *S B))...
+  apply trans with (((plus_pos One One) *S A) /\S ((plus_pos One One) *S B))...
 Qed.
 
 Lemma neg_subdistri_plus : forall A B, neg (A +S B) <== (neg A) +S (neg B).
@@ -1058,15 +1056,17 @@ Hint Resolve mul_leq : MGA_solver.
 
 Lemma mul_leq_inv : forall t A B, t *S A <== t *S B -> A <== B.
 Proof with auto with MGA_solver.
-  move => t A B Hle.
-  rewrite -(mul_1 A) -(mul_1 B).
-  rewrite -(Rpos_inv_l t) -2!mul_assoc...
+  intros t A B Hle.
+  rewrite <-(mul_1 A); rewrite <-(mul_1 B).
+  replace One with (time_pos (inv_pos t) t).
+  2:{ destruct t; apply Rpos_eq; simpl; clear Hle; apply R_blt_lt in e; rewrite Rinv_l; nra. }
+  rewrite <- 2 mul_assoc...
 Qed.
 
 
 Lemma neg_leq_cond : forall A B, A <== B -> neg B <== neg A.
 Proof with try assumption.
-  move => A B Hleq.
+  intros A B Hleq.
   apply max_leq.
   - apply leq_trans with (-S A).
     + apply minus_reverse_leq...
@@ -1076,9 +1076,18 @@ Qed.
 
 Lemma max_idempotence : forall A, A \/S A === A.
 Proof.
-  move => A.
+  intros A.
   apply min_max.
   apply leq_refl.
+Qed.
+
+Lemma eq_subs_minus : forall A B n, subs (-S A) n B = -S (subs A n B).
+Proof with try reflexivity.
+  induction A ; intros B n'; try (simpl; constructor; assumption); try (simpl; rewrite IHA1; rewrite IHA2; auto with MGA_solver; fail)...
+  - simpl; case (n' =? n)...
+  - simpl; case (n' =? n)...
+    rewrite minus_minus...
+  - simpl; rewrite IHA...
 Qed.
 
 (*

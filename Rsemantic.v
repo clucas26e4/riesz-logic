@@ -1,12 +1,5 @@
-From Coq Require Import ssreflect ssrfun ssrbool.
-
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
-
 (** * Equational reasoning for modal lattice-ordered Abelian groups *)
-Require Import Setoid.
-Require Import Morphisms.
+Require Import CMorphisms.
 Require Import Rterm.
 
 Require Import Reals.
@@ -50,7 +43,7 @@ Fixpoint Rsubs (t1 : Rterm) (x : nat) (t2 : Rterm) : Rterm :=
   end.
 
 (** ** Equational Reasoning *)
-Inductive R_eqMALG : Rterm -> Rterm -> Prop :=
+Inductive R_eqMALG : Rterm -> Rterm -> Type :=
 (* equational rules *)
 | R_refl t : R_eqMALG t t
 | R_trans t1 t2 t3 : R_eqMALG t1 t2 -> R_eqMALG t2 t3 -> R_eqMALG t1 t3
@@ -82,11 +75,11 @@ Notation "A <R= B" := (R_eqMALG (R_min A B) A) (at level 90, no associativity).
 
 (** *** =R= is an equivalence relation **)
 
-Add Relation Rterm R_eqMALG
-    reflexivity proved by R_refl
-    symmetry proved by R_sym
-    transitivity proved by R_trans
-                             as R_eqMALG_rel.
+Instance R_eqMALG_Equivalence : Equivalence R_eqMALG | 10 := {
+  Equivalence_Reflexive := R_refl ;
+  Equivalence_Symmetric := R_sym ;
+  Equivalence_Transitive := R_trans }.
+
 (** *** Proofs of a equalities *)
 
 Hint Constructors R_eqMALG : core.
@@ -199,8 +192,8 @@ Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_co
 
 Lemma evalContext_cong : forall c t1 t2, t1 =R= t2 -> evalRcontext c t1 =R= evalRcontext c t2.
 Proof.
-  elim => //=; auto.
-  all:move => c1 IHc1 c2 IHc2 t1 t2 eq; specialize (IHc1 t1 t2 eq); specialize (IHc2 t1 t2 eq); by rewrite IHc1 IHc2.
+  induction c; simpl; auto.
+  all:intros t1 t2 eq; specialize (IHc1 t1 t2 eq); specialize (IHc2 t1 t2 eq); rewrite IHc1 ; now rewrite IHc2.
 Qed.
 
 Global Instance evalContext_cong_instance c : Proper (R_eqMALG ==> R_eqMALG) (evalRcontext c) | 10.
@@ -224,7 +217,7 @@ Hint Resolve minus_distri : Rsem_solver.
 
 Lemma minus_R_zero : R_zero =R= -R R_zero.
 Proof.
-  rewrite - (R_neutral_plus ((-1) *R R_zero)).
+  rewrite <- (R_neutral_plus ((-1) *R R_zero)).
   rewrite R_commu_plus.
   auto.
 Qed.
@@ -238,7 +231,7 @@ Proof with auto.
   rewrite R_asso_plus.
   rewrite (R_commu_plus (-R (-R A)) (-R A)).
   rewrite R_opp_plus.
-  by rewrite R_commu_plus.
+  now rewrite R_commu_plus.
 Qed.
 
 Hint Resolve minus_R_zero : Rsem_solver.
@@ -489,7 +482,7 @@ Qed.
 
 Lemma R_minus_mul : forall r A, -R (r *R A) =R= r *R (-R A).
 Proof with auto with Rsem_solver.
-  move => r A.
+  intros r A.
   rewrite R_mul_assoc.
   replace (-1 * r) with (r * -1) by lra.
   rewrite R_mul_assoc.
@@ -529,7 +522,7 @@ Hint Resolve R_mul_0 : Rsem_solver.
 
 Lemma no_div_R_zero : forall r A, r <> 0 -> r *R A =R= R_zero -> A =R= R_zero.
 Proof with auto with Rsem_solver.
-  move => r A Hr eq.
+  intros r A Hr eq.
   transitivity (1 *R A)...
   transitivity ((/ r * r) *R A)...
   { apply R_mul_left.
