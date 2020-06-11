@@ -27,6 +27,17 @@ Fixpoint R_sum_term k A :=
   | S n => A +R (R_sum_term n A)
   end.
 
+(** Substitution *)
+Fixpoint Rsubs (t1 : Rterm) (x : nat) (t2 : Rterm) : Rterm :=
+  match t1 with
+  | R_var y => if (beq_nat x y) then t2 else R_var y
+  | R_zero => R_zero
+  | R_plus t t' => R_plus (Rsubs t x t2) (Rsubs t' x t2)
+  | R_min t t' => R_min (Rsubs t x t2) (Rsubs t' x t2)
+  | R_max t t' => R_max (Rsubs t x t2) (Rsubs t' x t2)
+  | R_mul y t => R_mul y (Rsubs t x t2)
+  end.
+
 (** Definition of positive part, negative part and absolute value *)
 Notation "'R_pos' A" := (A \/R R_zero) (at level 5).
 Notation "'R_neg' A" := ((-R A) \/R R_zero) (at level 5).

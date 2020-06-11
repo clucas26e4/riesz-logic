@@ -4,7 +4,6 @@ Require Import hseq.
 Require Import semantic.
 Require Import interpretation.
 Require Import tactics.
-Require Import can_full_invertibility.
 
 Require Import List_more.
 Require Import Permutation_Type_more.
@@ -12,57 +11,6 @@ Require Import Permutation_Type_solve.
 Require Import Lra.
 
 Local Open Scope R_scope.
-
-Fixpoint subs_seq (D : sequent) n t :=
-  match D with
-  | nil => nil
-  | (r, A) :: D => (r , subs A n t) :: (subs_seq D n t)
-  end.
-
-Lemma subs_seq_app : forall D D' n t, subs_seq (D ++ D') n t = subs_seq D n t ++ subs_seq D' n t.
-Proof.
-  induction D; intros D' n t; simpl; try rewrite IHD; try destruct a; try reflexivity.
-Qed.
-
-Lemma subs_seq_vec : forall D n t A r, subs_seq ((vec r A) ++ D) n t = vec r (subs A n t) ++ subs_seq D n t.
-Proof.
-  intros D n t A; induction r;simpl; try rewrite IHr; try reflexivity.
-Qed.
-
-Lemma subs_seq_ex : forall T1 T2 n t, Permutation_Type T1 T2 -> Permutation_Type (subs_seq T1 n t) (subs_seq T2 n t).
-Proof.
-  intros T1 T2 n t Hperm; induction Hperm; try destruct x; try destruct y; simpl; try now constructor.
-  transitivity (subs_seq l' n t); assumption.
-Qed.
-
-Fixpoint subs_hseq (G : hypersequent) n t :=
-  match G with
-  | nil => nil
-  | D :: G => (subs_seq D n t) :: (subs_hseq G n t)
-  end.
-
-Lemma subs_hseq_ex : forall G1 G2 n t, Permutation_Type G1 G2 -> Permutation_Type (subs_hseq G1 n t) (subs_hseq G2 n t).
-Proof.
-  intros G1 G2 n t Hperm; induction Hperm; try destruct x; try destruct y; simpl; try now constructor.
-  transitivity (subs_hseq l' n t); assumption.
-Qed.
-
-Lemma subs_proof b : forall G n t,
-    HR b G ->
-    HR b (subs_hseq G n t).
-Proof with try assumption; try reflexivity.
-  intros G n t pi.
-  induction pi;unfold subs_hseq in *; fold subs_hseq in *; try rewrite ? subs_seq_vec in *; try rewrite subs_seq_app in *; unfold subs in *; fold subs in *; try now constructor.
-  - replace (subs_seq (seq_mul r T) n t) with (seq_mul r (subs_seq T n t)) in IHpi by (clear; induction T; try destruct a; simpl; try rewrite IHT; try reflexivity).
-    apply TR with r...
-  - case (n =? n0).
-    + apply ID_gen...
-    + apply ID...
-  - eapply ex_seq; [ apply subs_seq_ex ; apply p | ]...
-  - eapply ex_hseq; [ apply subs_hseq_ex; apply p | ]...
-  - rewrite eq_subs_minus in IHpi.
-    apply can with (subs A n t) r s...
-Qed.    
 
 (* First formulation *)
                                                                    
@@ -142,7 +90,7 @@ Proof with try assumption; try reflexivity.
       * unfold evalContext; fold evalContext; unfold minus; fold minus.
         change ((One, r *S (-S evalContext c t2)) :: (One, r *S evalContext c t1) :: nil) with ((vec (One :: nil) (r *S (-S evalContext c t2))) ++ (vec (One :: nil) (r *S evalContext c t1)) ++ nil).
         apply mul.
-        apply ex_seq with (vec (One :: nil) (r *S evalContext c t1) ++ vec (mul_vec (One :: nil) r) (-S evalContext c t2) ++  nil) ; [ perm_Type_solve | ].
+        apply ex_seq with (vec (One :: nil) (r *S evalContext c t1) ++ vec (mul_vec r (One :: nil)) (-S evalContext c t2) ++  nil) ; [ perm_Type_solve | ].
         apply mul.
         apply TR with (inv_pos r).
         simpl.
@@ -194,7 +142,7 @@ Proof with try assumption; try reflexivity.
       nra.
     + unfold minus; fold minus.
       do_HR_logical.
-      apply ex_seq with ((vec (mul_vec (One :: nil) x) (-S t1)) ++ (vec (mul_vec (One :: nil) x) ( t1)) ++ (vec (mul_vec (One :: nil) x) (-S t2))++ (vec (mul_vec (One :: nil) x) (t2)) ++ nil) ; [ perm_Type_solve | ].
+      apply ex_seq with ((vec (mul_vec x (One :: nil)) (-S t1)) ++ (vec (mul_vec x (One :: nil)) ( t1)) ++ (vec (mul_vec x (One :: nil)) (-S t2))++ (vec (mul_vec x (One :: nil)) (t2)) ++ nil) ; [ perm_Type_solve | ].
       do 2 (apply ID_gen; try reflexivity).
       apply INIT.
     + unfold minus; fold minus.
@@ -389,7 +337,7 @@ Proof with try assumption; try reflexivity.
       nra.
     + unfold minus; fold minus.
       do_HR_logical.
-      apply ex_seq with ((vec (mul_vec (One :: nil) x) (-S t1)) ++ (vec (mul_vec (One :: nil) x) ( t1)) ++ (vec (mul_vec (One :: nil) x) (-S t2))++ (vec (mul_vec (One :: nil) x) (t2)) ++ nil) ; [ perm_Type_solve | ].
+      apply ex_seq with ((vec (mul_vec x (One :: nil)) (-S t1)) ++ (vec (mul_vec x (One :: nil)) ( t1)) ++ (vec (mul_vec x (One :: nil)) (-S t2))++ (vec (mul_vec x (One :: nil)) (t2)) ++ nil) ; [ perm_Type_solve | ].
       do 2 (apply ID_gen; try reflexivity).
       apply INIT.
     + unfold minus; fold minus.
@@ -499,7 +447,7 @@ Proof.
     apply ex_seq with (T ++ (a , A) :: D); [ perm_Type_solve | ].
     apply IHT.
     replace a with (time_pos a One) by (destruct a; unfold One; apply Rpos_eq; simpl; nra).
-    apply ex_seq with ((vec (mul_vec (One :: nil) a) A) ++ (vec (One :: nil) (sem_seq T)) ++ D) ; [ perm_Type_solve | ].
+    apply ex_seq with ((vec (mul_vec a (One :: nil)) A) ++ (vec (One :: nil) (sem_seq T)) ++ D) ; [ perm_Type_solve | ].
     apply mul_can_inv.
     apply plus_can_inv.
     apply pi.
@@ -529,7 +477,7 @@ Proof with try assumption; try reflexivity.
     eapply ex_hseq ; [ apply Permutation_Type_swap | apply pi].
 Qed.
 
-Lemma completeness : forall G,
+Lemma hr_complete : forall G,
     G <> nil ->
     zero <== sem_hseq G ->
     HR true G.

@@ -53,18 +53,6 @@ Fixpoint minusC c :=
   | minC c1 c2 => maxC (minusC c1) (minusC c2)
   end.
 
-(** Substitution *)
-Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
-  match t1 with
-  | var y => if (beq_nat x y) then t2 else var y
-  | covar y => if (beq_nat x y) then (minus t2) else covar y
-  | zero => zero
-  | plus t t' => plus (subs t x t2) (subs t' x t2)
-  | min t t' => min (subs t x t2) (subs t' x t2)
-  | max t t' => max (subs t x t2) (subs t' x t2)
-  | mul y t => mul y (subs t x t2)
-  end.
-
 (** ** Equational Reasoning *)
 Inductive eqMALG : term -> term -> Type :=
 (* equational rules *)

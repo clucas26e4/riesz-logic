@@ -38,6 +38,21 @@ Fixpoint sum_term k A :=
   | S n => A +S (sum_term n A)
   end.
 
+(** Substitution *)
+
+
+(** Substitution *)
+Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
+  match t1 with
+  | var y => if (beq_nat x y) then t2 else var y
+  | covar y => if (beq_nat x y) then (minus t2) else covar y
+  | zero => zero
+  | plus t t' => plus (subs t x t2) (subs t' x t2)
+  | min t t' => min (subs t x t2) (subs t' x t2)
+  | max t t' => max (subs t x t2) (subs t' x t2)
+  | mul y t => mul y (subs t x t2)
+  end.
+
 (** Definition of positive part, negative part and absolute value *)
 Notation "'pos' A" := (A \/S zero) (at level 5).
 Notation "'neg' A" := ((-S A) \/S zero) (at level 5).

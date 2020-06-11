@@ -10,7 +10,7 @@ Require Import Permutation_more.
 Local Open Scope R_scope.
 
 (* TODO MOVING (to interpretation) *)
-Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec l r) A) === r *S sem_seq (vec l A).
+Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec r l) A) === r *S sem_seq (vec l A).
 Proof.
   intros A.
   induction l; intros r.
@@ -307,7 +307,7 @@ Proof.
       auto.
 Qed.
 
-Lemma mul_sound : forall G T A r0 r, sem_hseq ((vec (mul_vec r r0) A ++ T) :: G) === sem_hseq ((vec r (r0 *S A) ++ T) :: G).
+Lemma mul_sound : forall G T A r0 r, sem_hseq ((vec (mul_vec r0 r) A ++ T) :: G) === sem_hseq ((vec r (r0 *S A) ++ T) :: G).
 Proof.
   intros [ | T2 G] T A r0 [ | r' r].
   - simpl; auto.
