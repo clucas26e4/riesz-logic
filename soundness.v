@@ -1,6 +1,7 @@
 Require Import Rpos.
 Require Import term.
 Require Import hseq.
+Require Import hr.
 Require Import semantic.
 Require Import interpretation.
 

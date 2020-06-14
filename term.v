@@ -57,3 +57,11 @@ Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
 Notation "'pos' A" := (A \/S zero) (at level 5).
 Notation "'neg' A" := ((-S A) \/S zero) (at level 5).
 Notation "'abs' A" := (A \/S (-S A)) (at level 5).
+
+(** Definition of atoms *)
+Fixpoint is_atom A :=
+  match A with
+  | var _ => True
+  | covar _ => True
+  | _ => False
+  end.
