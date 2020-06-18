@@ -72,6 +72,97 @@ Fixpoint vec_mul_vec l1 l2 :=
   | r :: l1 => (mul_vec r l2) ++ (vec_mul_vec l1 l2)
   end.
 
+Lemma vec_app : forall vr1 vr2 A, vec (vr1 ++ vr2) A = vec vr1 A ++ vec vr2 A.
+Proof.
+  induction vr1; intros vr2 A; simpl; try rewrite IHvr1; try reflexivity.
+Qed.
+
+Lemma sum_vec_app : forall vr1 vr2, sum_vec (vr1 ++ vr2) = (sum_vec vr1) + (sum_vec vr2).
+Proof.
+  induction vr1; intros vr2.
+  - rewrite app_nil_l; simpl; nra.
+  - simpl.
+    rewrite IHvr1.
+    destruct a; simpl; nra.
+Qed.
+
+Lemma mul_vec_sum_vec : forall r vr, sum_vec (mul_vec r vr) = (projT1 r) * (sum_vec vr).
+Proof.
+  intro r; induction vr.
+  - simpl; nra.
+  - simpl.
+    rewrite IHvr.
+    destruct r; destruct a; simpl; nra.
+Qed.
+
+Lemma sum_vec_vec_mul_vec : forall vr vs, sum_vec (vec_mul_vec vr vs) = (sum_vec vr) * (sum_vec vs).
+Proof.
+  induction vr; intro vs.
+  - simpl; nra.
+  - unfold vec_mul_vec; fold vec_mul_vec.
+    unfold sum_vec; fold sum_vec.
+    rewrite sum_vec_app.
+    rewrite mul_vec_sum_vec.
+    rewrite IHvr.
+    destruct a;  simpl; nra.
+Qed.
+
+Lemma vec_mul_vec_nil_r : forall vr, vec_mul_vec vr nil = nil.
+Proof with try reflexivity.
+  induction vr...
+  simpl; rewrite IHvr...
+Qed.
+
+Lemma vec_mul_vec_cons_r : forall vr1 vr2 r, Permutation_Type (vec_mul_vec vr1 (r :: vr2)) (mul_vec r vr1 ++ vec_mul_vec vr1 vr2).
+Proof.
+  induction vr1; intros vr2 r; simpl; try reflexivity.
+  replace (time_pos a r) with (time_pos r a) by (clear; destruct r; destruct a; apply Rpos_eq; simpl; nra).
+  apply Permutation_Type_skip.
+  rewrite app_assoc.
+  etransitivity ; [ | apply Permutation_Type_app ; [ apply Permutation_Type_app_comm | reflexivity ] ].
+  rewrite <- app_assoc; apply Permutation_Type_app; try reflexivity.
+  apply IHvr1.
+Qed.
+
+Lemma vec_mul_vec_comm : forall vr1 vr2, Permutation_Type (vec_mul_vec vr1 vr2) (vec_mul_vec vr2 vr1).
+Proof.
+  induction vr1; intros vr2.
+  - simpl; rewrite vec_mul_vec_nil_r; reflexivity.
+  - simpl.
+    etransitivity ; [ | symmetry; apply vec_mul_vec_cons_r ].
+    apply Permutation_Type_app; try reflexivity.
+    apply IHvr1.
+Qed.
+
+Lemma mul_vec_app : forall vr vs r, mul_vec r (vr ++ vs) = mul_vec r vr ++ mul_vec r vs.
+Proof.
+  induction vr; intros vs r; simpl; try rewrite IHvr; try reflexivity.
+Qed.
+
+Lemma mul_vec_mul_vec_comm : forall vr r s, mul_vec r (mul_vec s vr) = mul_vec s (mul_vec r vr).
+Proof.
+  induction vr; intros r s; simpl; try rewrite IHvr; try reflexivity.
+  replace (time_pos r (time_pos s a)) with (time_pos s (time_pos r a)); try reflexivity.
+  destruct s; destruct r; destruct a; apply Rpos_eq; simpl; nra.
+Qed.
+
+Lemma vec_mul_vec_mul_vec_comm : forall vr vs r, vec_mul_vec vr (mul_vec r vs) =  mul_vec r (vec_mul_vec vr vs).
+Proof.
+  induction vr; intros vs r; try reflexivity.
+  simpl.
+  rewrite mul_vec_app.
+  rewrite IHvr.
+  rewrite mul_vec_mul_vec_comm.
+  reflexivity.
+Qed.
+
+Lemma vec_perm : forall vr1 vr2 A,
+    Permutation_Type vr1 vr2 -> Permutation_Type (vec vr1 A) (vec vr2 A).
+Proof.
+  intros vr1 vr2 A Hperm; induction Hperm; try now constructor.
+  transitivity (vec l' A); try assumption.
+Qed.    
+
 (** ** Sequent *)
 
 Fixpoint seq_mul (r : Rpos) (T : sequent) :=
@@ -192,6 +283,20 @@ Proof.
        apply Permutation_Type_skip.
        apply IHvr2.
      + apply IHvr1.
+Qed.
+
+Lemma seq_mul_vec_mul_vec : forall A r vr,
+    seq_mul r (vec vr A) = vec (mul_vec r vr) A.
+Proof.
+  intros A r vr; induction vr; simpl; try rewrite IHvr; try reflexivity.
+Qed.
+
+Lemma seq_mul_perm : forall T1 T2 r,
+    Permutation_Type T1 T2 ->
+    Permutation_Type (seq_mul r T1) (seq_mul r T2).
+Proof.
+  intros T1 T2 r Hperm; induction Hperm; try destruct x; try destruct y; try now constructor.
+  transitivity (seq_mul r l'); assumption.
 Qed.
 
 (** ** Substitution *)
