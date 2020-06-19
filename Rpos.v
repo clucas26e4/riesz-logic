@@ -4,6 +4,12 @@ Require Import Lra.
 
 Local Open Scope R_scope.
 
+Lemma Req_dec (a b : R) : {a = b} + {a <> b}.
+Proof.
+  case (Rle_dec a b); [intros Hle | intros Hnle; right ; nra].
+  case (Rle_dec b a); [intros Hle'; left; nra | intros Hnle; right; nra].
+Qed.
+
 (* Boolean version of Lt for real *)
 Definition R_lt_dec (a b : R) : bool.
   case (Rlt_dec a b).

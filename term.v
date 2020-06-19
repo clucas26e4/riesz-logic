@@ -65,3 +65,27 @@ Fixpoint is_atom A :=
   | covar _ => True
   | _ => False
   end.
+
+Lemma term_eq_dec : forall (A B : term) , { A = B } + { A <> B}.
+Proof.
+  induction A; destruct B; try (right; intro H; now inversion H).
+  - case_eq (n =? n0); intro H; [ apply Nat.eqb_eq in H; rewrite H; now left | apply Nat.eqb_neq in H; right; intro H2; inversion H2; apply H; assumption ].
+  - case_eq (n =? n0); intro H; [ apply Nat.eqb_eq in H; rewrite H; now left | apply Nat.eqb_neq in H; right; intro H2; inversion H2; apply H; assumption ].
+  - now left.
+  - specialize (IHA1 B1); specialize (IHA2 B2).
+    destruct IHA1 as [ Heq | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    destruct IHA2 as [ Heq' | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    left; now subst.
+  - specialize (IHA B).
+    destruct IHA as [ Heq | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    destruct r as [r Hr] ; destruct r0 as [r0 Hr0].
+    case (Req_dec r r0); [intros Heqr; left; replace (existT (fun r1 : R => (0 <? r1)%R = true) r0 Hr0) with (existT (fun r1 : R => (0 <? r1)%R = true) r Hr) by (apply Rpos_eq; simpl; apply Heqr); now subst | intros Hneqr; right; intros H; inversion H; auto].
+  - specialize (IHA1 B1); specialize (IHA2 B2).
+    destruct IHA1 as [ Heq | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    destruct IHA2 as [ Heq' | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    left; now subst.
+  - specialize (IHA1 B1); specialize (IHA2 B2).
+    destruct IHA1 as [ Heq | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    destruct IHA2 as [ Heq' | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].
+    left; now subst.
+Qed.
