@@ -10,6 +10,9 @@ Require Import completeness.
 Require Import soundness.
 Require Import interpretation.
 Require Import hr.
+Require Import invertibility.
+Require Import M_elim.
+Require Import can_elim.
 
 Require Import List_more.
 Require Import Reals.
@@ -46,24 +49,40 @@ Qed.
 
 Lemma HR_plus_inv : forall G T A B r, HR_C_S_T_M ((vec r (A +S B) ++ T) :: G) -> HR_C_S_T_M ((vec r A ++ vec r B ++ T) :: G).
 Proof.
-Admitted.
+  apply hrr_plus_inv.
+Qed.
 
 Lemma HR_Z_inv : forall G T r, HR_C_S_T_M ((vec r zero ++ T) :: G) -> HR_C_S_T_M (T :: G).
 Proof.
-Admitted.
+  apply hrr_Z_inv.
+Qed.
   
 Lemma HR_mul_inv : forall G T A r0 r, HR_C_S_T_M ((vec r (r0 *S A) ++ T) :: G) -> HR_C_S_T_M ((vec (mul_vec r0 r) A ++ T) :: G).
 Proof.
-Admitted.
+  apply hrr_mul_inv.
+Qed.
 
 Lemma HR_max_inv : forall G T A B r, HR_C_S_T_M ((vec r (A \/S B) ++ T) :: G) -> HR_C_S_T_M ((vec r B ++ T) :: (vec r A ++ T) :: G).
 Proof.
-Admitted.
+  apply hrr_max_inv.
+Qed.
 
 Lemma HR_min_inv_l : forall G T A  B r, HR_C_S_T_M ((vec r (A /\S B) ++ T) :: G) -> HR_C_S_T_M ((vec r A ++ T) :: G).
 Proof.
-Admitted.
+  apply hrr_min_inv_l.
+Qed.
 
 Lemma HR_min_inv_r : forall G T A  B r, HR_C_S_T_M ((vec r (A /\S B) ++ T) :: G) -> HR_C_S_T_M ((vec r B ++ T) :: G).
 Proof.
-Admitted.
+  apply hrr_min_inv_r.
+Qed.
+
+Lemma HR_M_elim : forall G, HR_C_S_T_M G -> HR_C_S_T G.
+Proof.
+  apply hrr_M_elim.
+Qed.
+
+Lemma HR_can_elim : forall G, HR_full G -> HR_C_S_T_M G.
+Proof.
+  apply hrr_can_elim.
+Qed.

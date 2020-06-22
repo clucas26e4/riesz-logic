@@ -175,6 +175,18 @@ Proof.
   - simpl; apply hrr_W; apply IHlist; apply pi.
 Qed.
 
+Lemma hrr_C_gen P : forall G H, HR P (H ++ H ++ G) -> HR (hr_frag_add_C P) (H ++ G).
+Proof.
+  intros G H; revert P G; induction H as [ | T H]; intros P G pi.
+  - apply HR_le_frag with P ; [ | apply pi].
+    apply add_C_le_frag.
+  - simpl; apply hrr_C; try reflexivity.
+    apply hrr_ex_hseq with (H ++ T :: T :: G); [ perm_Type_solve | ].
+    apply IHH.
+    eapply hrr_ex_hseq ; [ | apply pi].
+    perm_Type_solve.
+Qed.
+
 (* Proof of lemmas of subsection 3.3 *)
 
 Lemma hrr_ID_gen P : forall G T A r s, sum_vec r = sum_vec s -> HR P (T :: G) -> HR P ((vec s (-S A) ++ vec r A ++ T) :: G).
@@ -479,7 +491,7 @@ Proof.
         -- symmetry; apply seq_mul_vec_app_r.
 Qed.
 
-Lemma W_A_B : forall G T A B vr vs,
+Lemma C_A_B : forall G T A B vr vs,
     HR_C_S_T_M (((vec vs B) ++ (vec vr A) ++ T) ::((vec vs B) ++ (vec vr B) ++ T) ::((vec vs A) ++ (vec vr A) ++ T) :: G) ->
     HR_C_S_T_M (((vec vs B) ++ (vec vr B) ++ T) ::((vec vs A) ++ (vec vr A) ++ T) :: G).
 Proof.

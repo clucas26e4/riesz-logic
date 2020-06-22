@@ -139,6 +139,12 @@ Proof.
   induction vr; intros vs r; simpl; try rewrite IHvr; try reflexivity.
 Qed.
 
+Lemma mul_vec_perm : forall vr vs r, Permutation_Type vr vs ->  Permutation_Type (mul_vec r vr) (mul_vec r vs).
+Proof.
+  intros vr vs r Hperm; induction Hperm; try now constructor.
+  transitivity (mul_vec r l'); try assumption.
+Qed.
+
 Lemma mul_vec_mul_vec_comm : forall vr r s, mul_vec r (mul_vec s vr) = mul_vec s (mul_vec r vr).
 Proof.
   induction vr; intros r s; simpl; try rewrite IHvr; try reflexivity.
