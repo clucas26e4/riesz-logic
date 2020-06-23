@@ -167,7 +167,7 @@ Lemma vec_perm : forall vr1 vr2 A,
 Proof.
   intros vr1 vr2 A Hperm; induction Hperm; try now constructor.
   transitivity (vec l' A); try assumption.
-Qed.    
+Qed.
 
 (** ** Sequent *)
 
@@ -232,6 +232,35 @@ Proof.
   perm_Type_solve.
 Qed.
 
+
+Lemma seq_mul_vec_perm_r : forall vr T1 T2,
+    Permutation_Type T1 T2 ->
+    Permutation_Type (seq_mul_vec vr T1) (seq_mul_vec vr T2).
+Proof.
+  intros vr T1 T2 Hperm; induction Hperm; try perm_Type_solve.
+  - rewrite cons_is_app.
+    etransitivity ; [ apply seq_mul_vec_app_r | ].
+    rewrite (cons_is_app _ l').
+    etransitivity ; [ | symmetry; apply seq_mul_vec_app_r].
+    perm_Type_solve.
+  - rewrite (cons_is_app _ (x :: l)).
+    etransitivity ; [ apply seq_mul_vec_app_r | ].
+    rewrite (cons_is_app _ l).
+    etransitivity ; [ apply Permutation_Type_app; try apply seq_mul_vec_app_r; reflexivity | ].
+    rewrite (cons_is_app _ (y :: l)).
+    etransitivity ; [ | symmetry ; apply seq_mul_vec_app_r ].
+    rewrite (cons_is_app _ l).
+    etransitivity ; [ | symmetry; apply Permutation_Type_app; try apply seq_mul_vec_app_r; reflexivity ].
+    perm_Type_solve.
+Qed.
+
+Lemma seq_mul_vec_perm_l : forall vr1 vr2 T,
+    Permutation_Type vr1 vr2 ->
+    Permutation_Type (seq_mul_vec vr1 T) (seq_mul_vec vr2 T).
+Proof.
+  intros vr1 vr2 T Hperm; induction Hperm; try perm_Type_solve.
+Qed.
+    
 Lemma seq_mul_seq_mul_vec: forall T vr r,
     seq_mul r (seq_mul_vec vr T) = seq_mul_vec vr (seq_mul r T).
 Proof.
@@ -297,6 +326,19 @@ Proof.
   intros A r vr; induction vr; simpl; try rewrite IHvr; try reflexivity.
 Qed.
 
+Lemma seq_mul_vec_vec_mul_vec : forall vr vs A,
+    seq_mul_vec vr (vec vs A) = vec (vec_mul_vec vr vs) A.
+Proof.
+  induction vr; intros vs A.
+  - reflexivity.
+  - simpl.
+    rewrite vec_app.
+    rewrite IHvr.
+    rewrite seq_mul_vec_mul_vec.
+    reflexivity.
+Qed.
+
+    
 Lemma seq_mul_perm : forall T1 T2 r,
     Permutation_Type T1 T2 ->
     Permutation_Type (seq_mul r T1) (seq_mul r T2).
