@@ -441,7 +441,7 @@ Qed.
 Lemma HR_sem_hseq P : forall G H,
     H <> nil ->
     HR P (((One, sem_hseq H) :: nil) :: G) ->
-    HR (hr_frag_add_S (hr_frag_add_CAN (hr_frag_add_M P))) (H ++ G).
+    HR (hr_frag_add_CAN (hr_frag_add_M P)) (H ++ G).
 Proof with try assumption; try reflexivity.
   intros G H Hnnil; revert P G.
   induction H; [ now auto | ].
@@ -450,15 +450,14 @@ Proof with try assumption; try reflexivity.
   destruct H as [ | T2 H ].
   - simpl in *.
     replace T with (T ++ nil) by now rewrite app_nil_r.
-    apply HR_le_frag with (hr_frag_add_CAN (hr_frag_add_M P)); [ | apply HR_sem_seq]...
-    apply add_S_le_frag.
+    apply HR_sem_seq...
   - unfold sem_hseq in pi; fold (sem_hseq (T2 :: H)) in pi.
     change ((One, sem_seq T \/S sem_hseq (T2 :: H)) :: nil) with ((vec (One :: nil) (sem_seq T \/S sem_hseq (T2 :: H))) ++ nil) in pi.
     apply hrr_max_can_inv in pi.
     apply hrr_ex_hseq with ((T2 :: H) ++ (T :: G)); [ perm_Type_solve | ].
-    apply HR_le_frag with (hr_frag_add_S (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_S P)))))))).
+    apply HR_le_frag with (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_CAN (hr_frag_add_M P)))))).
     { destruct P; repeat split; simpl; apply leb_refl. }
-    refine (IHlist _ (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_CAN (hr_frag_add_M(hr_frag_add_S P))))) (T :: G) _) ; [ now auto | ].
+    refine (IHlist _ (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_CAN (hr_frag_add_M P)))) (T :: G) _) ; [ now auto | ].
     apply hrr_ex_hseq with (T :: ((One , sem_hseq (T2 :: H)) :: nil) :: G) ; [ perm_Type_solve | ].
     replace T with (T ++ nil) by now rewrite app_nil_r.
     apply HR_sem_seq.
@@ -469,15 +468,13 @@ Qed.
 Lemma hr_complete : forall G,
     G <> nil ->
     zero <== sem_hseq G ->
-    HR_S_M_can G.
+    HR_M_can G.
 Proof with try assumption.
   intros G Hnnil Hleq.
   assert (pi := completeness_1 _ _ One Hleq).
   replace G with (G ++ nil) by now rewrite app_nil_r.
-  apply (@HR_sem_hseq hr_frag_S_M_can)...
+  apply (@HR_sem_hseq hr_frag_M_can)...
   change ((One , sem_hseq G) :: nil) with ((vec (One :: nil) (sem_hseq G)) ++ nil).
-  apply (@hrr_min_can_inv_r hr_frag_S_M_can) with zero.
-  apply (@hrr_Z_can_inv hr_frag_S_M_can) with (One :: nil).
-  apply HR_le_frag with (hr_frag_M_can)...
-  repeat split.
+  apply (@hrr_min_can_inv_r hr_frag_M_can) with zero.
+  apply (@hrr_Z_can_inv hr_frag_M_can) with (One :: nil)...
 Qed.

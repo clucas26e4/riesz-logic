@@ -60,6 +60,18 @@ Proof.
   - transitivity (sem_seq l'); assumption.
 Qed.
 
+Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec r l) A) === r *S sem_seq (vec l A).
+Proof.
+  intros A.
+  induction l; intros r.
+  - simpl; rewrite mul_0; auto.
+  - simpl.
+    rewrite IHl.
+    rewrite <-mul_assoc.
+    rewrite mul_distri_term.
+    reflexivity.
+Qed.
+
     (* Interpretation of a hypersequent *)
 Fixpoint sem_hseq G :=
   match G with

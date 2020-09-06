@@ -14,25 +14,21 @@ Require Import Lra.
 Local Open Scope R_scope.
 
 Record hr_frag := mk_hr_frag {
-                      hr_C : bool;
-                      hr_S : bool;
                       hr_T : bool;
                       hr_M : bool;
                       hr_CAN : bool }.
 
 Definition le_hr_frag P Q :=
-  prod (Bool.leb (hr_C P) (hr_C Q))
-       (prod (Bool.leb (hr_S P) (hr_S Q))
-             (prod (Bool.leb (hr_T P) (hr_T Q))
-                   (prod (Bool.leb (hr_M P) (hr_M Q))
-                         (Bool.leb (hr_CAN P) (hr_CAN Q))))).
+  prod (Bool.leb (hr_T P) (hr_T Q))
+       (prod (Bool.leb (hr_M P) (hr_M Q))
+             (Bool.leb (hr_CAN P) (hr_CAN Q))).
 
 Lemma le_hr_frag_trans : forall P Q R,
   le_hr_frag P Q -> le_hr_frag Q R -> le_hr_frag P R.
 Proof.
 intros P Q R H1 H2.
-destruct H1 as (Hc1 & Hs1 & Ht1 & Hm1 & Hcan1).
-destruct H2 as (Hc2 & Hs2 & Ht2 & Hm2 & Hcan2).
+destruct H1 as (Ht1 & Hm1 & Hcan1).
+destruct H2 as (Ht2 & Hm2 & Hcan2).
 repeat (split; [eapply leb_trans; try eassumption | ]).
 eapply leb_trans; eassumption.
 Qed.
@@ -45,27 +41,13 @@ split.
   apply le_hr_frag_trans.
 Qed.
 
-Definition hr_frag_add_C P := mk_hr_frag true (hr_S P) (hr_T P) (hr_M P) (hr_CAN P).
-Definition hr_frag_rm_C P := mk_hr_frag false (hr_S P) (hr_T P) (hr_M P) (hr_CAN P).
-Definition hr_frag_add_S P := mk_hr_frag (hr_C P) true (hr_T P) (hr_M P) (hr_CAN P).
-Definition hr_frag_rm_S P := mk_hr_frag (hr_C P) false (hr_T P) (hr_M P) (hr_CAN P).
-Definition hr_frag_add_T P := mk_hr_frag (hr_C P) (hr_S P) true (hr_M P) (hr_CAN P).
-Definition hr_frag_rm_T P := mk_hr_frag (hr_C P) (hr_S P) false (hr_M P) (hr_CAN P).
-Definition hr_frag_add_M P := mk_hr_frag (hr_C P) (hr_S P) (hr_T P) true (hr_CAN P).
-Definition hr_frag_rm_M P := mk_hr_frag (hr_C P) (hr_S P) (hr_T P) false (hr_CAN P).
-Definition hr_frag_add_CAN P := mk_hr_frag (hr_C P) (hr_S P) (hr_T P) (hr_M P) true.
-Definition hr_frag_rm_CAN P := mk_hr_frag (hr_C P) (hr_S P) (hr_T P) (hr_M P) false.
+Definition hr_frag_add_T P := mk_hr_frag true (hr_M P) (hr_CAN P).
+Definition hr_frag_rm_T P := mk_hr_frag false (hr_M P) (hr_CAN P).
+Definition hr_frag_add_M P := mk_hr_frag (hr_T P) true (hr_CAN P).
+Definition hr_frag_rm_M P := mk_hr_frag (hr_T P) false (hr_CAN P).
+Definition hr_frag_add_CAN P := mk_hr_frag (hr_T P) (hr_M P) true.
+Definition hr_frag_rm_CAN P := mk_hr_frag (hr_T P) (hr_M P) false.
 
-Lemma add_C_le_frag : forall P, le_hr_frag P (hr_frag_add_C P).
-Proof.
-  intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
-Qed.
-Lemma add_S_le_frag : forall P, le_hr_frag P (hr_frag_add_S P).
-Proof.
-  intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
-Qed.
 Lemma add_T_le_frag : forall P, le_hr_frag P (hr_frag_add_T P).
 Proof.
   intros P.
@@ -80,16 +62,6 @@ Lemma add_CAN_le_frag : forall P, le_hr_frag P (hr_frag_add_CAN P).
 Proof.
   intros P.
   repeat (split; try apply leb_refl; try apply leb_true).
-Qed.
-Lemma rm_C_le_frag : forall P, le_hr_frag (hr_frag_rm_C P) P.
-Proof.
-  intros P.
-  repeat (split; try apply leb_refl).
-Qed.
-Lemma rm_S_le_frag : forall P, le_hr_frag (hr_frag_rm_S P) P.
-Proof.
-  intros P.
-  repeat (split; try apply leb_refl).
 Qed.
 Lemma rm_T_le_frag : forall P, le_hr_frag (hr_frag_rm_T P) P.
 Proof.
@@ -107,11 +79,11 @@ Proof.
   repeat (split; try apply leb_refl).
 Qed.
 
-Definition hr_frag_M_can := (mk_hr_frag false false false true true).
-Definition hr_frag_S_M_can := (mk_hr_frag false true false true true).
-Definition hr_frag_full := (mk_hr_frag true true true true true).
-Definition hr_frag_C_S_T_M := (mk_hr_frag true true true true false).
-Definition hr_frag_C_S_T := (mk_hr_frag true true true false false).
+Definition hr_frag_M_can := (mk_hr_frag false true true).
+Definition hr_frag_full := (mk_hr_frag true true true).
+Definition hr_frag_T_M := (mk_hr_frag true true false).
+Definition hr_frag_T := (mk_hr_frag true false false).
+Definition hr_frag_nothing := (mk_hr_frag false false false).
 
 
 (** * Definition of hr *)
@@ -120,8 +92,8 @@ Definition hr_frag_C_S_T := (mk_hr_frag true true true false false).
 Inductive HR P : hypersequent -> Type :=
 | hrr_INIT : HR P (nil :: nil)
 | hrr_W : forall G T, HR P G -> HR P (T :: G)
-| hrr_C {f : hr_C P = true} : forall G T, HR P (T :: T :: G) -> HR P (T :: G)
-| hrr_S  {f : hr_S P = true} : forall G T1 T2, HR P ((T1 ++ T2) :: G) -> HR P (T1 :: T2 :: G)
+| hrr_C : forall G T, HR P (T :: T :: G) -> HR P (T :: G)
+| hrr_S : forall G T1 T2, HR P ((T1 ++ T2) :: G) -> HR P (T1 :: T2 :: G)
 | hrr_M {f : hr_M P = true} : forall G T1 T2, HR P (T1 :: G) -> HR P (T2 :: G) -> HR P ((T1 ++ T2) :: G)
 | hrr_T {f : hr_T P = true} : forall G T r, HR P (seq_mul r T :: G) -> HR P (T :: G)
 | hrr_ID : forall G T n r s, sum_vec r = sum_vec s -> HR P (T :: G) -> HR P ((vec s (covar n) ++ vec r (var n) ++ T) :: G)
@@ -137,14 +109,14 @@ Inductive HR P : hypersequent -> Type :=
 
 (* HR with only can and M *)
 Definition HR_M_can := HR hr_frag_M_can.
-(* HR with only can, S and M *)
-Definition HR_S_M_can := HR hr_frag_S_M_can.
 (* HR with every rule *)
 Definition HR_full := HR hr_frag_full.
 (* HR without the CAN rule *)
-Definition HR_C_S_T_M := HR hr_frag_C_S_T_M.
+Definition HR_T_M := HR hr_frag_T_M.
 (* HR with neither the CAN rule nor the M rule *)
-Definition HR_C_S_T := HR hr_frag_C_S_T.
+Definition HR_T := HR hr_frag_T.
+(* HR with neither the CAN rule nor the M rule nor the T rule*)
+Definition HR_nothing := HR hr_frag_nothing.
 
 (* Some basic properties *)
 
@@ -161,7 +133,7 @@ Lemma HR_le_frag : forall P Q,
     forall G, HR P G -> HR Q G.
 Proof.
   intros P Q Hle G pi.
-  induction pi;  destruct P as [HCP HSP HTP HMP HCANP]; destruct Q as [HCQ HSQ HTQ HMQ HCANQ]; destruct Hle as [HleC [HleS [HleT [HleM HleCAN]]]]; simpl in *; subst; try (now constructor).
+  induction pi;  destruct P as [HTP HMP HCANP]; destruct Q as [HTQ HMQ HCANQ]; destruct Hle as [HleT [HleM HleCAN]]; simpl in *; subst; try (now constructor).
   - apply hrr_T with r; assumption.
   - apply hrr_ex_seq with T1; assumption.
   - apply hrr_ex_hseq with G; assumption.
@@ -175,16 +147,24 @@ Proof.
   - simpl; apply hrr_W; apply IHlist; apply pi.
 Qed.
 
-Lemma hrr_C_gen P : forall G H, HR P (H ++ H ++ G) -> HR (hr_frag_add_C P) (H ++ G).
+Lemma hrr_C_gen P : forall G H, HR P (H ++ H ++ G) -> HR P (H ++ G).
 Proof.
   intros G H; revert P G; induction H as [ | T H]; intros P G pi.
-  - apply HR_le_frag with P ; [ | apply pi].
-    apply add_C_le_frag.
+  - apply pi.
   - simpl; apply hrr_C; try reflexivity.
     apply hrr_ex_hseq with (H ++ T :: T :: G); [ perm_Type_solve | ].
     apply IHH.
     eapply hrr_ex_hseq ; [ | apply pi].
     perm_Type_solve.
+Qed.
+
+Lemma hrr_C_copy P : forall G T n, HR P ((copy_seq (S n) T) :: G) -> HR P (T :: G).
+Proof.
+  intros G T n; revert G T; induction n; intros G T pi; simpl in *; try assumption.
+  apply hrr_C.
+  apply IHn.
+  apply hrr_S.
+  apply pi.
 Qed.
 
 (* Proof of lemmas of subsection 3.3 *)
@@ -211,19 +191,6 @@ Proof.
     apply hrr_mul.
     apply hrr_ex_seq with (vec (mul_vec r s) (-S A) ++ vec (mul_vec r r0) A ++ T); [ perm_Type_solve | ].
     apply IHA ; [ | apply pi].
-    (* TODO MOVING *)
-    assert (forall l r, sum_vec (mul_vec r l) =  Rmult (projT1 r) (sum_vec l)) as sum_mul_vec.
-    { clear.
-      induction l; intros [r Hr].
-      - simpl; nra.
-      - remember (existT (fun r0 : R => (0 <? r0)%R = true) r Hr) as t.
-        unfold mul_vec; fold (mul_vec t l).
-        unfold sum_vec; fold (sum_vec (mul_vec t l)); fold (sum_vec l).
-        rewrite IHl.
-        rewrite Heqt.
-        destruct a.
-        simpl.
-        nra. }
     rewrite ? sum_mul_vec.
     destruct r as [r Hr].
     simpl.
@@ -316,7 +283,7 @@ Proof.
   apply hrr_INIT.
 Qed.
 
-Lemma hrr_max_can_inv P : forall G T A B r, HR P ((vec r (A \/S B) ++ T) :: G) -> HR (hr_frag_add_CAN (hr_frag_add_M (hr_frag_add_S P))) ((vec r B ++ T) :: (vec r A ++ T) :: G).
+Lemma hrr_max_can_inv P : forall G T A B r, HR P ((vec r (A \/S B) ++ T) :: G) -> HR (hr_frag_add_CAN (hr_frag_add_M P)) ((vec r B ++ T) :: (vec r A ++ T) :: G).
 Proof.
   intros G T A B r pi.
   apply hrr_can with (A \/S B) r r; try reflexivity.
@@ -325,7 +292,7 @@ Proof.
   2:{ eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ].
       apply hrr_W.
       apply HR_le_frag with P; try assumption.
-      apply le_hr_frag_trans with (hr_frag_add_M (hr_frag_add_S P)); [ (apply le_hr_frag_trans with (hr_frag_add_S P) ; [ apply add_S_le_frag | apply add_M_le_frag]) | apply add_CAN_le_frag]. }
+      apply le_hr_frag_trans with (hr_frag_add_M P); [ apply add_M_le_frag | apply add_CAN_le_frag]. }
   apply hrr_ex_hseq with ((vec r A ++ T) :: (vec r (-S (A \/S B)) ++ vec r B) :: G); [ apply Permutation_Type_swap | ].
   apply hrr_can with (A \/S B) r r ; try reflexivity.
   apply hrr_ex_seq with ( (vec r (-S (A \/S B)) ++ vec r A) ++ (vec r (A \/S B) ++ T)); [perm_Type_solve | ].
@@ -333,7 +300,7 @@ Proof.
   2:{ eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ].
       apply hrr_W.
       apply HR_le_frag with P; try assumption.
-      apply le_hr_frag_trans with (hr_frag_add_M (hr_frag_add_S P)); [ (apply le_hr_frag_trans with (hr_frag_add_S P) ; [ apply add_S_le_frag | apply add_M_le_frag]) | apply add_CAN_le_frag]. }
+      apply le_hr_frag_trans with (hr_frag_add_M P); [ apply add_M_le_frag | apply add_CAN_le_frag]. }
   unfold minus; fold minus.
   apply hrr_min.
   - apply hrr_ex_hseq with (( (vec r (-S A /\S -S B) ++ vec r B) :: G) ++ ((vec r (-S A) ++ vec r A) :: nil)); [ perm_Type_solve | ].
@@ -342,7 +309,7 @@ Proof.
     apply hrr_ID_gen; [reflexivity | apply hrr_INIT].
   - eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hrr_min.
-    + apply hrr_S; try reflexivity.
+    + apply hrr_S.
       apply hrr_ex_seq with (vec r (-S A) ++ vec r A ++ vec r (-S B) ++ vec r B ++ nil) ; [ perm_Type_solve | ].
       apply hrr_ID_gen; [ reflexivity | apply hrr_ID_gen ; [ reflexivity | ] ].
       apply hrr_ex_hseq with (G ++ (nil :: nil)); [ perm_Type_solve | ].
@@ -388,7 +355,7 @@ Qed.
 Lemma hrr_T_vec P : forall G T vr,
     vr <> nil ->
     HR P (seq_mul_vec vr T :: G) ->
-    HR (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C P))) (T :: G).
+    HR (hr_frag_add_T P) (T :: G).
 Proof.
   intros G T vr; revert P G T; induction vr; intros P G T Hnnil pi.
   - exfalso; auto.
@@ -397,17 +364,14 @@ Proof.
     + apply hrr_T with a; try reflexivity.
       simpl in pi; rewrite app_nil_r in pi.
       apply HR_le_frag with P; try assumption.
-      apply le_hr_frag_trans with (hr_frag_add_S (hr_frag_add_T P)) ; [ | apply add_C_le_frag ].
-      apply le_hr_frag_trans with (hr_frag_add_T P) ; [ | apply add_S_le_frag ].
       apply add_T_le_frag.
-    + apply hrr_C; try reflexivity.
+    + apply hrr_C.
       apply hrr_T with a; try reflexivity.
       eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-      refine (IHvr (hr_frag_add_S P) (seq_mul a T :: G) T _ _) ; [ now auto | ].
+      refine (IHvr P (seq_mul a T :: G) T _ _) ; [ now auto | ].
       eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-      apply hrr_S; try reflexivity.
-      apply HR_le_frag with P; try assumption.
-      apply add_S_le_frag.
+      apply hrr_S.
+      apply pi.
 Qed.
 
 Lemma hrr_T_vec_inv P : forall G T vr,
@@ -431,25 +395,25 @@ Proof with try assumption.
 Qed.
 
 Lemma mix_A_B : forall G T A B vr vs,
-    HR_C_S_T_M (((vec vs A) ++ (vec vr A) ++ T) :: G) ->
-    HR_C_S_T_M (((vec vs B) ++ (vec vr B) ++ T) :: G) ->
-    HR_C_S_T_M (((vec vs B) ++ (vec vr A) ++ T) :: G).
+    HR_T_M (((vec vs A) ++ (vec vr A) ++ T) :: G) ->
+    HR_T_M (((vec vs B) ++ (vec vr B) ++ T) :: G) ->
+    HR_T_M (((vec vs B) ++ (vec vr A) ++ T) :: G).
 Proof.
   intros G T A B vr vs piA piB.
   destruct vr as [| r vr]; [ | destruct vs as [ | s vs ]]; try assumption.
-  apply hrr_C; try reflexivity.
-  change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))).
+  apply hrr_C.
+  change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M).
   apply hrr_T_vec with (r :: vr) ; [now auto | ].
   eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-  change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))).
+  change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M).
   apply hrr_T_vec with (s :: vs) ; [ now auto | ].
-  apply hrr_S; try reflexivity.
+  apply hrr_S.
   apply hrr_ex_seq with ((seq_mul_vec (r :: vr) ((vec (s :: vs) A) ++ (vec (r :: vr) A) ++ T)) ++ (seq_mul_vec (s :: vs) ((vec (s :: vs) B) ++ (vec (r :: vr) B) ++ T))).
   2:{ apply hrr_M; try reflexivity.
-      - change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))).
+      - change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M).
         apply hrr_T_vec_inv.
         apply piA.
-      - change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))).
+      - change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M).
         apply hrr_T_vec_inv.
         apply piB. }
   transitivity ((seq_mul_vec (r :: vr) (vec (s :: vs) A) ++ seq_mul_vec (r :: vr) (vec (r :: vr) A) ++ seq_mul_vec (r :: vr) T) ++ seq_mul_vec (s :: vs) (vec (s :: vs) B ++ vec (r :: vr) B ++ T)).
@@ -492,40 +456,40 @@ Proof.
 Qed.
 
 Lemma C_A_B : forall G T A B vr vs,
-    HR_C_S_T_M (((vec vs B) ++ (vec vr A) ++ T) ::((vec vs B) ++ (vec vr B) ++ T) ::((vec vs A) ++ (vec vr A) ++ T) :: G) ->
-    HR_C_S_T_M (((vec vs B) ++ (vec vr B) ++ T) ::((vec vs A) ++ (vec vr A) ++ T) :: G).
+    HR_T_M (((vec vs B) ++ (vec vr A) ++ T) ::((vec vs B) ++ (vec vr B) ++ T) ::((vec vs A) ++ (vec vr A) ++ T) :: G) ->
+    HR_T_M (((vec vs B) ++ (vec vr B) ++ T) ::((vec vs A) ++ (vec vr A) ++ T) :: G).
 Proof.
   intros G T A B vr vs pi.
   destruct vr as [ | r vr]; [ | destruct vs as [ | s vs]].
   - simpl in *.
-    apply hrr_C; try reflexivity.
+    apply hrr_C.
     apply pi.
   - simpl in *.
     eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-    apply hrr_C; try reflexivity.
+    apply hrr_C.
     eapply hrr_ex_hseq ; [ | apply pi].
     apply Permutation_Type_skip.
     apply Permutation_Type_swap.
   - remember (s :: vs) as vs'; remember (r :: vr) as vr'.
-    apply hrr_C; try reflexivity.
-    change hr_frag_C_S_T_M with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))).
+    apply hrr_C.
+    change hr_frag_T_M with (hr_frag_add_T hr_frag_T_M).
     apply hrr_T_vec with vs' ; [ rewrite Heqvs'; now auto | ].
     apply hrr_ex_hseq with ((vec vs' A ++ vec vr' A ++ T) :: (vec vs' B ++ vec vr' B ++ T) :: (seq_mul_vec vs' (vec vs' B ++ vec vr' B ++ T)) :: G).
     { etransitivity ; [ | apply Permutation_Type_swap ].
       etransitivity; [ apply Permutation_Type_swap | ].
       apply Permutation_Type_skip.
       apply Permutation_Type_swap. }
-    apply hrr_C; try reflexivity.
-    change hr_frag_C_S_T_M with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))).
+    apply hrr_C.
+    change hr_frag_T_M with (hr_frag_add_T hr_frag_T_M).
     apply hrr_T_vec with vr'; [ rewrite Heqvr' ; now auto | ].
     eapply hrr_ex_hseq.
     { apply Permutation_Type_skip.
       etransitivity ; [ apply Permutation_Type_swap | ].
       apply Permutation_Type_skip.
       apply Permutation_Type_swap. }
-    apply hrr_S; try reflexivity.
+    apply hrr_S.
     apply hrr_ex_seq with (seq_mul_vec (vr' ++ vs') (vec vs' B ++ vec vr' A ++ T)).
-    2:{ change hr_frag_C_S_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_C_S_T_M)).
+    2:{ change hr_frag_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_T_M)).
         apply hrr_T_vec_inv.
         eapply hrr_ex_hseq ; [ apply Permutation_Type_skip; apply Permutation_Type_swap | apply pi]. }
     rewrite seq_mul_vec_app_l.

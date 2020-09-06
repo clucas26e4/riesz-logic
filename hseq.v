@@ -4,9 +4,11 @@ Require Import semantic.
 
 Require Import CMorphisms.
 Require Import List_more.
+Require Import List_Type_more.
 Require Import Permutation_Type_more.
 Require Import Permutation_Type_solve.
 Require Import Lra.
+Require Import Lia.
 
 Local Open Scope R_scope.
 
@@ -15,11 +17,11 @@ Local Open Scope R_scope.
                                                 
 Definition sequent : Set := list (Rpos * term).
 
-Definition seq_is_atomic (T : sequent) := Forall (fun x => match x with (a , A) => is_atom A end) T.
+Definition seq_is_atomic (T : sequent) := Forall_Type (fun x => match x with (a , A) => is_atom A end) T.
 
 Definition hypersequent : Set := list sequent.
 
-Definition hseq_is_atomic G := Forall seq_is_atomic G.
+Definition hseq_is_atomic G := Forall_Type seq_is_atomic G.
 
 (** ** Substitution *)
 Fixpoint subs_seq (D : sequent) n t :=
@@ -42,9 +44,38 @@ Fixpoint sum_vec (l : list Rpos) :=
   | r :: l => Rplus (projT1 r) (sum_vec l)
   end.
 
+Fixpoint copy_seq n (T : sequent) :=
+  match n with
+  | 0 => nil
+  | S n => (copy_seq n T) ++ T
+  end.
+
+(** ** Sum of the weights *)
+Fixpoint sum_weight_seq_var n (T : sequent) :=
+  match T with
+  | nil => 0
+  | ((r , var n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_var n T else sum_weight_seq_var n T
+  | ( _ :: T) => sum_weight_seq_var n T
+  end.
+Fixpoint sum_weight_seq_covar n (T : sequent) :=
+  match T with
+  | nil => 0
+  | ((r , covar n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_covar n T else sum_weight_seq_covar n T
+  | ( _ :: T) => sum_weight_seq_covar n T
+  end.
+Fixpoint sum_weight_var n G :=
+  match G with
+  | nil => 0
+  | T :: G => sum_weight_seq_var n T + sum_weight_var n G
+  end.
+Fixpoint sum_weight_covar n G :=
+  match G with
+  | nil => 0
+  | T :: G => sum_weight_seq_covar n T + sum_weight_covar n G
+  end.
+
 (** * Properties *)
 (** ** vec *)
-
 Lemma sum_vec_le_0 : forall r, (0 <= sum_vec r)%R.
   induction r; [ | destruct a as [a Ha]; simpl;  apply (R_blt_lt 0 a) in Ha]; simpl; try nra.
 Qed.
@@ -167,6 +198,216 @@ Lemma vec_perm : forall vr1 vr2 A,
 Proof.
   intros vr1 vr2 A Hperm; induction Hperm; try now constructor.
   transitivity (vec l' A); try assumption.
+Qed.
+
+Lemma sum_mul_vec : forall l r, sum_vec (mul_vec r l) =  Rmult (projT1 r) (sum_vec l).
+Proof.
+  induction l; intros [r Hr].
+  - simpl; nra.
+  - remember (existT (fun r0 : R => (0 <? r0)%R = true) r Hr) as t.
+    unfold mul_vec; fold (mul_vec t l).
+    unfold sum_vec; fold (sum_vec (mul_vec t l)); fold (sum_vec l).
+    rewrite IHl.
+    rewrite Heqt.
+    destruct a.
+    simpl.
+    nra.
+Qed.
+
+Lemma sum_vec_perm : forall vr vs,
+    Permutation_Type vr vs ->
+    sum_vec vr = sum_vec vs.
+Proof.
+  intros vr vs Hperm; induction Hperm; simpl; nra.
+Qed.
+
+Lemma perm_decomp_vec_eq_2 : forall T D r s r' s' A B,
+    A <> B ->
+    Permutation_Type (vec s' B ++ vec r' A ++ T) (vec s B ++ vec r A ++ D) ->
+    {' (a1 , b1 , c1, a2 , b2, c2, T', D') : _ &
+                     prod (Permutation_Type r  (a1 ++ b1))
+                          ((Permutation_Type r'  (b1 ++ c1)) *
+                           (Permutation_Type s  (a2 ++ b2)) *
+                           (Permutation_Type s'  (b2 ++ c2)) *
+                           (Permutation_Type T (vec a2 B ++ vec a1 A ++ T')) *
+                           (Permutation_Type D (vec c2 B ++ vec c1 A ++ D')) *
+                           (Permutation_Type T' D')) }.
+Proof.
+  intros T D r s r' s' A B Hneq Hperm.
+  revert s r' r T D A B Hneq Hperm.
+  induction s'; [ intros s ; induction s ; [ intros r'; induction r'; [ intros r; induction r | ] | ] | ].
+  - intros T D A B Hneq Hperm.
+    split with (nil, nil,nil,nil,nil,nil , T , D).
+    repeat split; try perm_Type_solve.
+  - intros T D A B Hneq Hperm.
+    simpl in *.
+    destruct (in_Type_split (a , A) T) as [[T1 T2] HeqT].
+    { apply Permutation_Type_in_Type with ((a , A) :: vec r A ++ D); try perm_Type_solve.
+      left; reflexivity. }
+    subst.
+    destruct (IHr (T1 ++ T2) D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
+    { apply Permutation_Type_cons_inv with (a , A).
+      perm_Type_solve. }
+    split with ((a :: a1), b1,c1,a2,b2,c2, T' , D').
+    repeat split; try perm_Type_solve.
+  - intros r T D A B Hneq Hperm; simpl in *.
+    case (in_Type_app_or (vec r A) D (a , A)).
+    { apply Permutation_Type_in_Type with ((a , A) :: vec r' A ++ T); try perm_Type_solve.
+      left; reflexivity. }
+    + intros Hin.
+      assert { r' & Permutation_Type r (a :: r')}.
+      { clear - Hin.
+        induction r.
+        - inversion Hin.
+        - simpl in Hin.
+          destruct Hin as [Heq | Hin].
+          + inversion Heq; split with r; simpl; reflexivity.
+          + specialize (IHr Hin) as [r' Hperm].
+            split with (a0 :: r').
+            perm_Type_solve. }
+      destruct X as [vr Hperm'].
+      destruct (IHr' vr T D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
+      { apply Permutation_Type_cons_inv with (a , A).
+        change ((a , A) :: vec vr A ++ D) with (vec (a :: vr) A ++ D).
+        etransitivity ; [ apply Hperm | ].
+        apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+      split with (a1, a :: b1, c1, a2, b2, c2, T', D').
+      repeat split; simpl; try perm_Type_solve.
+    + intros Hin.
+      apply in_Type_split in Hin as [[D1 D2] HeqD]; subst.
+      destruct (IHr' r T (D1 ++ D2) A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
+      { apply Permutation_Type_cons_inv with (a,  A).
+        perm_Type_solve. }
+      split with (a1, b1, a :: c1 , a2, b2, c2, T', D').
+      simpl; repeat split; try perm_Type_solve.
+  - intros r' r T D A B Hneq Hperm; simpl in *.
+    assert (In_Type (a , B) T).
+    { case (in_Type_app_or (vec r' A) T (a , B)); try (intro H; assumption).
+      { apply Permutation_Type_in_Type with ((a, B) :: vec s B ++ vec r A ++ D); try perm_Type_solve.
+        left; reflexivity. }
+      intro H; exfalso; clear - H Hneq.
+      induction r'; simpl in H; inversion H.
+      + inversion H0; subst; now apply Hneq.
+      + apply IHr'; try assumption. }
+    apply in_Type_split in X as [[T1 T2] Heq]; subst.
+    destruct (IHs r' r (T1 ++ T2) D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
+    { apply Permutation_Type_cons_inv with (a , B).
+      perm_Type_solve. }
+    split with (a1, b1,c1,a :: a2,b2,c2, T' , D').
+    repeat split; try perm_Type_solve.
+  - intros s r' r T D A B Hneq Hperm; simpl in *.
+    case (in_Type_app_or (vec s B) (vec r A ++ D) (a , B)).
+    { apply Permutation_Type_in_Type with ((a, B) :: vec s' B ++ vec r' A ++ T); try perm_Type_solve.
+      left; reflexivity. }
+    + intros Hin.
+      assert { s' & Permutation_Type s (a :: s')}.
+      { clear - Hin.
+        induction s.
+        - inversion Hin.
+        - simpl in Hin.
+          destruct Hin as [Heq | Hin].
+          + inversion Heq; split with s; simpl; reflexivity.
+          + specialize (IHs Hin) as [s' Hperm].
+            split with (a0 :: s').
+            perm_Type_solve. }
+      destruct X as [vs Hperm'].
+      destruct (IHs' vs r' r T D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
+      { apply Permutation_Type_cons_inv with (a , B).
+        change ((a , B) :: vec vs B ++ vec r A ++  D) with (vec (a :: vs) B ++ vec r A ++ D).
+        etransitivity ; [ apply Hperm | ].
+        apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+      split with (a1, b1, c1, a2, a::b2, c2, T', D').
+      repeat split; simpl; try perm_Type_solve.
+    + intros H.
+      assert (In_Type (a , B) D) as Hin; [ | clear H].
+      { case (in_Type_app_or (vec r A) D (a , B)); [ apply H | | ]; try (intros H0; assumption).
+        intro H0; exfalso; clear - H0 Hneq.
+        induction r; simpl in H0; inversion H0.
+        - inversion H; subst; now apply Hneq.
+        - apply IHr; try assumption. }
+      apply in_Type_split in Hin as [[D1 D2] HeqD]; subst.
+      destruct (IHs' s r' r T (D1 ++ D2) A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
+      { apply Permutation_Type_cons_inv with (a,  B).
+        perm_Type_solve. }
+      split with (a1, b1, c1 , a2, b2, a :: c2, T', D').
+      simpl; repeat split; try perm_Type_solve.
+Qed.
+
+Lemma perm_decomp_vec_neq_2 : forall T D r s r' s' n1 n2,
+    n1 <> n2 ->
+    Permutation_Type (vec s (covar n1) ++ vec r (var n1) ++ T) (vec s' (covar n2) ++ vec r' (var n2) ++ D) ->
+    {' (T', D') : _ &
+                          prod (Permutation_Type T (vec s' (covar n2) ++ vec r' (var n2) ++ T'))
+                               ((Permutation_Type D (vec s (covar n1) ++ vec r (var n1) ++ D')) *
+                                (Permutation_Type T' D'))}.
+Proof.
+  intros T D r s r' s'.
+  revert s r' r T D.
+  induction s'; [ intros s ; induction s ; [ intros r' ; induction r' ; [ intros r; induction r | ] | ] | ].
+  - intros T D n1 n2 Hneq Hperm.
+    split with (T , D).
+    simpl in *; repeat split; perm_Type_solve.
+  - intros T D n1 n2 Hneq Hperm.
+    simpl in *.
+    destruct (in_Type_split (a , var n1) D) as [[D1 D2] Heq].
+    { apply Permutation_Type_in_Type with ((a, var n1) :: vec r (var n1) ++ T); try perm_Type_solve.
+      left; reflexivity. }
+    subst.
+    destruct (IHr T (D1 ++ D2) n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
+    { apply Permutation_Type_cons_inv with (a , var n1).
+      perm_Type_solve. }
+    split with (T', D').
+    repeat split; try perm_Type_solve.
+  - intros r T D n1 n2 Hneq Hperm.
+    simpl in *.
+    destruct (in_Type_split (a , var n2) T) as [[T1 T2] Heq].
+    { case (in_Type_app_or (vec r (var n1)) T (a , var n2)) ; [ apply Permutation_Type_in_Type with ((a, var n2) :: vec r' (var n2) ++ D); [ perm_Type_solve | left; reflexivity ] | | auto ].
+      intros H; clear - H Hneq.
+      exfalso.
+      induction r; simpl in H; inversion H.
+      - inversion H0.
+        apply Hneq; apply H3.
+      - apply IHr; apply X. }
+    subst.
+    destruct (IHr' r (T1 ++ T2) D n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
+    { apply Permutation_Type_cons_inv with (a , var n2); perm_Type_solve. }
+    split with (T', D').
+    repeat split; try perm_Type_solve.
+  - intros r' r T D n1 n2 Hneq Hperm.
+    simpl in *.
+    destruct (in_Type_split (a , covar n1) D) as [[D1 D2] Heq].
+    { case (in_Type_app_or (vec r' (var n2)) D (a , covar n1)) ; [ apply Permutation_Type_in_Type with ((a, covar n1) :: vec s (covar n1) ++ vec r (var n1) ++ T); [ perm_Type_solve | left; reflexivity ] | | auto ].
+      intros H; clear - H Hneq.
+      exfalso.
+      induction r'; simpl in H; inversion H.
+      - inversion H0.
+      - apply IHr'; apply X. }
+    subst.
+    destruct (IHs r' r T (D1 ++ D2) n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
+    { apply Permutation_Type_cons_inv with (a , covar n1); perm_Type_solve. }
+    split with (T', D').
+    repeat split; try perm_Type_solve.
+  - intros s r' r T D n1 n2 Hneq Hperm.
+    simpl in *.
+    destruct (in_Type_split (a , covar n2) T) as [[T1 T2] Heq].
+    { case (in_Type_app_or (vec s (covar n1)) (vec r (var n1) ++ T) (a , covar n2)) ; [ apply Permutation_Type_in_Type with ((a, covar n2) :: vec s' (covar n2) ++ vec r' (var n2) ++ D); [ perm_Type_solve | left; reflexivity ] | | ].
+      - intros H; clear - H Hneq.
+        exfalso.
+        induction s; simpl in H; inversion H.
+        + inversion H0.
+          apply Hneq; apply H3.
+        + apply IHs; apply X.
+      - intro H0 ;case (in_Type_app_or (vec r (var n1)) T (a , covar n2)) ; [ apply H0 | | auto ].
+        intros H; clear - H Hneq.
+        exfalso.
+        induction r; simpl in H; inversion H.
+        + inversion H0.
+        + apply IHr; apply X. }
+    subst.
+    destruct (IHs' s r' r (T1 ++ T2) D n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
+    { apply Permutation_Type_cons_inv with (a , covar n2); perm_Type_solve. }
+    split with (T', D').
+    repeat split; try perm_Type_solve.
 Qed.
 
 (** ** Sequent *)
@@ -375,4 +616,281 @@ Lemma subs_hseq_ex : forall G1 G2 n t, Permutation_Type G1 G2 -> Permutation_Typ
 Proof.
   intros G1 G2 n t Hperm; induction Hperm; try destruct x; try destruct y; simpl; try now constructor.
   transitivity (subs_hseq l' n t); assumption.
+Qed.
+
+(** ** Atomic *)
+
+Lemma copy_seq_atomic : forall n T, seq_is_atomic T -> seq_is_atomic (copy_seq n T).
+Proof.
+  induction n; intros T Hat; simpl; [ apply Forall_Type_nil | ].
+  apply Forall_Type_app; auto.
+  apply IHn; assumption.
+Qed.
+
+Lemma seq_atomic_app : forall T1 T2,
+    seq_is_atomic T1 ->
+    seq_is_atomic T2 ->
+    seq_is_atomic (T1 ++ T2).
+Proof.
+  intros T1 T2 Hat1.
+  induction Hat1; intros Hat2.
+  - apply Hat2.
+  - simpl; apply Forall_Type_cons; try assumption.
+    apply IHHat1.
+    apply Hat2.
+Qed.
+
+Lemma seq_atomic_perm : forall T1 T2,
+    Permutation_Type T1 T2 ->
+    seq_is_atomic T1 ->
+    seq_is_atomic T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; intro Hat.
+  - apply Forall_Type_nil.
+  - inversion Hat; subst; apply Forall_Type_cons; [ | apply IHHperm]; assumption.
+  - inversion Hat; inversion X0; subst.
+    apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption.
+  - apply IHHperm2; apply IHHperm1; apply Hat.
+Qed.
+
+Lemma hseq_atomic_perm : forall G H,
+    Permutation_Type G H ->
+    hseq_is_atomic G ->
+    hseq_is_atomic H.
+Proof.
+  intros G H Hperm; induction Hperm; intro Hat.
+  - apply Forall_Type_nil.
+  - inversion Hat; subst; apply Forall_Type_cons; [ | apply IHHperm]; assumption.
+  - inversion Hat; inversion X0; subst.
+    apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption.
+  - apply IHHperm2; apply IHHperm1; apply Hat.
+Qed.
+
+Lemma seq_atomic_app_inv_l : forall T1 T2,
+    seq_is_atomic (T1 ++ T2) ->
+    seq_is_atomic T1.
+Proof.
+  intros T1; induction T1; intros T2 Hat; try now constructor.
+  simpl in Hat; inversion Hat; subst.
+  apply Forall_Type_cons; try assumption.
+  apply IHT1 with T2; apply X0.
+Qed.
+
+Lemma seq_atomic_app_inv_r : forall T1 T2,
+    seq_is_atomic (T1 ++ T2) ->
+    seq_is_atomic T2.
+Proof.
+  intros T1; induction T1; intros T2 Hat; try assumption.
+  simpl in Hat; inversion Hat; subst.
+  apply IHT1; assumption.
+Qed.
+
+Lemma seq_atomic_mul : forall T r,
+    seq_is_atomic T ->
+    seq_is_atomic (seq_mul r T).
+Proof.
+  intros T r Hat; induction Hat; try destruct x; simpl; try now constructor.
+Qed.
+
+(** ** sum_weight_seq_(co)var *)
+
+Lemma sum_weight_seq_var_app : forall n T1 T2,
+    sum_weight_seq_var n (T1 ++ T2) = sum_weight_seq_var n T1 + sum_weight_seq_var n T2.
+Proof.
+  intros n T1; induction T1; intros T2; simpl; try nra.
+  destruct a as [a A]; simpl.
+  specialize (IHT1 T2).
+  destruct A; try case (n =? n0); simpl; try nra.
+Qed.
+
+Lemma sum_weight_seq_covar_app : forall n T1 T2,
+    sum_weight_seq_covar n (T1 ++ T2) = sum_weight_seq_covar n T1 + sum_weight_seq_covar n T2.
+Proof.
+  intros n T1; induction T1; intros T2; simpl; try nra.
+  destruct a as [a A]; simpl.
+  specialize (IHT1 T2).
+  destruct A; try case (n =? n0); simpl; try nra.
+Qed.
+
+Lemma sum_weight_seq_var_mul : forall n T r,
+    sum_weight_seq_var n (seq_mul r T) = (projT1 r) * sum_weight_seq_var n T.
+Proof.
+  intros n T r; induction T; simpl; try nra.
+  destruct a as [a A]; simpl.
+  destruct A; try case (n =? n0); destruct a; destruct r; simpl in *; try nra.
+Qed.
+
+Lemma sum_weight_seq_covar_mul : forall n T r,
+    sum_weight_seq_covar n (seq_mul r T) = (projT1 r) * sum_weight_seq_covar n T.
+Proof.
+  intros n T r; induction T; simpl; try nra.
+  destruct a as [a A]; simpl.
+  destruct A; try case (n =? n0); destruct a; destruct r; simpl in *; try nra.
+Qed.
+
+Lemma sum_weight_seq_var_copy : forall n T r,
+    sum_weight_seq_var n (copy_seq r T) = (INR r) * sum_weight_seq_var n T.
+Proof.
+  intros n T r; induction r; simpl in *; try nra.
+  rewrite sum_weight_seq_var_app; rewrite IHr.
+  change (match r with
+          | 0%nat => 1
+          | S _ => INR r + 1
+          end) with (INR (S r)).
+  rewrite S_INR; nra.
+Qed.
+
+Lemma sum_weight_seq_covar_copy : forall n T r,
+    sum_weight_seq_covar n (copy_seq r T) = (INR r) * sum_weight_seq_covar n T.
+Proof.
+  intros n T r; induction r; simpl in *; try nra.
+  rewrite sum_weight_seq_covar_app; rewrite IHr.
+  change (match r with
+          | 0%nat => 1
+          | S _ => INR r + 1
+          end) with (INR (S r)).
+  rewrite S_INR; nra.
+Qed.
+
+Lemma sum_weight_seq_var_vec_var_eq : forall n r,
+    sum_weight_seq_var n (vec r (var n)) = sum_vec r.
+Proof.
+  intros n; induction r; simpl; try (rewrite Nat.eqb_refl; rewrite IHr); reflexivity.
+Qed.
+
+Lemma sum_weight_seq_covar_vec_covar_eq : forall n r,
+    sum_weight_seq_covar n (vec r (covar n)) = sum_vec r.
+Proof.
+  intros n; induction r; simpl; try (rewrite Nat.eqb_refl; rewrite IHr); nra.
+Qed.
+
+Lemma sum_weight_seq_var_vec_neq : forall n A r,
+    var n <> A ->
+    sum_weight_seq_var n (vec r A) = 0.
+Proof.
+  intros n A; induction r; intros Hneq; simpl; try reflexivity.
+  destruct A; try (case_eq (n =? n0) ; [ intros H; exfalso; apply Nat.eqb_eq in H; now subst | ]); auto.
+Qed.
+
+Lemma sum_weight_seq_covar_vec_neq : forall n A r,
+    covar n <> A ->
+    sum_weight_seq_covar n (vec r A) = 0.
+Proof.
+  intros n A; induction r; intros Hneq; simpl; try reflexivity.
+  destruct A; try (case_eq (n =? n0) ; [ intros H; exfalso; apply Nat.eqb_eq in H; now subst | ]); auto.
+Qed.
+
+Lemma sum_weight_seq_var_perm : forall n T1 T2,
+    Permutation_Type T1 T2 ->
+    sum_weight_seq_var n T1 = sum_weight_seq_var n T2.
+Proof.
+  intros n T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try case (n =? n0); try case (n =? n1); try nra.
+Qed.
+
+Lemma sum_weight_seq_covar_perm : forall n T1 T2,
+    Permutation_Type T1 T2 ->
+    sum_weight_seq_covar n T1 = sum_weight_seq_covar n T2.
+Proof.
+  intros n T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try case (n =? n0); try case (n =? n1); try nra.
+Qed.
+
+Lemma sum_weight_var_perm : forall n G H,
+    Permutation_Type G H ->
+    sum_weight_var n G = sum_weight_var n H.
+Proof.
+  intros n G H Hperm; induction Hperm; simpl; nra.
+Qed.
+
+Lemma sum_weight_covar_perm : forall n G H,
+    Permutation_Type G H ->
+    sum_weight_covar n G = sum_weight_covar n H.
+Proof.
+  intros n G H Hperm; induction Hperm; simpl; nra.
+Qed.
+
+Lemma seq_decomp_atomic :
+  forall T n,
+    {' (r,s,D) : _ &
+                    prod (sum_vec r = sum_weight_seq_var n T)
+                         ((sum_vec s = sum_weight_seq_covar n T) *
+                          (Permutation_Type T (vec s (covar n) ++ vec r (var n) ++ D))) }.
+Proof.
+  induction T; intros n.
+  - split with (nil, nil, nil).
+    repeat split; try reflexivity.
+  - destruct (IHT n) as [[[r s] D] [Hr [Hs Hperm]]].
+    destruct a as [a A].
+    destruct A; try (esplit with (r , s, (a , _) :: D); repeat split; try assumption;
+                     rewrite ? app_assoc; etransitivity ; [ | apply Permutation_Type_middle]; apply Permutation_Type_skip; rewrite <- app_assoc; now apply Hperm).
+    + case_eq (n =? n0); intros Heq.
+      * split with (a :: r, s, D).
+        repeat split.
+        -- simpl; rewrite Hr.
+           rewrite Heq; reflexivity.
+        -- apply Hs.
+        -- simpl; apply Nat.eqb_eq in Heq; subst.
+           perm_Type_solve.
+      * split with (r , s , (a, var n0) :: D).
+        repeat split.
+        -- simpl; rewrite Hr.
+           rewrite Heq; reflexivity.
+        -- apply Hs.
+        -- simpl; perm_Type_solve.
+    + case_eq (n =? n0); intros Heq.
+      * split with (r, a :: s, D).
+        repeat split.
+        -- apply Hr.
+        -- simpl; rewrite Hs.
+           rewrite Heq; reflexivity.
+        -- simpl; apply Nat.eqb_eq in Heq; subst.
+           perm_Type_solve.
+      * split with (r , s , (a, covar n0) :: D).
+        repeat split.
+        -- apply Hr.
+        -- simpl; rewrite Hs.
+           rewrite Heq; reflexivity.
+        -- simpl; perm_Type_solve.
+Qed.
+           
+Lemma seq_atomic_decomp_decr :
+  forall T,
+    seq_is_atomic T ->
+    {' (n, r,s,D) : _ &
+                    prod (sum_vec r = sum_weight_seq_var n T)
+                         ((sum_vec s = sum_weight_seq_covar n T) *
+                          (Permutation_Type T (vec s (covar n) ++ vec r (var n) ++ D)) *
+                          ((length D < length T)%nat)) } + { T = nil }.
+Proof.
+  destruct T; intros Hat.
+  - right; reflexivity.
+  - left.
+    destruct p as (a , A).
+    inversion Hat; subst.
+    destruct A; try now inversion X.
+    + destruct (seq_decomp_atomic T n) as [[[r s] D] [Hr [Hs Hperm]]].
+      split with (n, a :: r, s , D).
+      repeat split.
+      * simpl.
+        rewrite Nat.eqb_refl.
+        rewrite Hr; reflexivity.
+      * apply Hs.
+      * perm_Type_solve.
+      * simpl.
+        apply Permutation_Type_length in Hperm.
+        rewrite Hperm.
+        rewrite ? app_length.
+        lia.
+    + destruct (seq_decomp_atomic T n) as [[[r s] D] [Hr [Hs Hperm]]].
+      split with (n, r, a :: s , D).
+      repeat split.
+      * apply Hr.
+      * simpl.
+        rewrite Nat.eqb_refl.
+        rewrite Hs; reflexivity.
+      * perm_Type_solve.
+      * simpl.
+        apply Permutation_Type_length in Hperm.
+        rewrite Hperm.
+        rewrite ? app_length.
+        lia.
 Qed.

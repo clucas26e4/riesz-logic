@@ -57,10 +57,12 @@ completeness.vo : completeness.v Rpos.vo term.vo hseq.vo hr.vo semantic.vo inter
 invertibility.vo : invertibility.v Rpos.vo term.vo semantic.vo hseq.vo hr.vo
 M_elim.vo : M_elim.v invertibility.v Rpos.vo term.vo semantic.vo hseq.vo hr.vo 
 can_elim.vo : can_elim.v invertibility.vo Rpos.vo term.vo semantic.vo hseq.vo hr.vo M_elim.vo
+lambda_prop.vo : lambda_prop.v hr.vo hseq.vo Rpos.vo term.vo semantic.vo hrr_List_more.vo
 
 Rterm.vo : Rterm.v
 Rsemantic.vo : Rsemantic.v Rterm.vo
 semantic_Rsemantic_eq.vo : semantic_Rsemantic_eq.v Rsemantic.vo semantic.vo Rterm.vo term.vo Rpos.vo
 main_results.vo : main_results.v semantic_Rsemantic_eq.vo Rsemantic.vo semantic.vo hseq.vo hr.vo completeness.vo soundness.vo Rterm.vo term.vo Rpos.vo interpretation.vo invertibility.vo M_elim.vo can_elim.vo
 
-tactics.vo : tactics.v hseq.vo Rpos.vo term.vo hr.vo 
+tactics.vo : tactics.v hseq.vo Rpos.vo term.vo hr.vo
+hrr_List_more.vo : hrr_List_more.v

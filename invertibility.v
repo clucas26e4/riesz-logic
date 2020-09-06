@@ -231,7 +231,7 @@ Proof.
     apply IHpi.
     simpl in Hperm; now inversion Hperm.
   - destruct L; try now inversion Hperm.
-    simpl; apply hrr_C; try assumption.
+    simpl; apply hrr_C.
     change ((snd p)
                     :: (snd p) :: map (fun x =>(snd x)) L)
       with
@@ -434,7 +434,7 @@ Proof.
     assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
-    apply hrr_C; try assumption.
+    apply hrr_C.
     change ((vec (fst p) A ++ vec (fst p) B ++ snd p)
               :: (vec (fst p) A ++ vec (fst p) B ++ snd p)
               :: map
@@ -452,7 +452,7 @@ Proof.
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
       (apply hrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_map; perm_Type_solve | ]).
     simpl in *;
-      (apply hrr_S ; [ apply f | ]);
+      apply hrr_S;
       (apply hrr_ex_seq with (vec (fst p'') A ++ vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
       change ((vec (fst p'') A ++ vec (fst p'') B ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) (p'' :: L));
@@ -676,7 +676,7 @@ Proof with try assumption.
     apply IHpi...
   - destruct L; inversion Hperm; subst.
     simpl.
-    apply hrr_C; try assumption.
+    apply hrr_C.
     change ((vec (mul_vec a (fst p)) A ++ snd p)
               :: (vec (mul_vec a (fst p)) A ++ snd p)
               :: map
@@ -694,7 +694,7 @@ Proof with try assumption.
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
       (apply hrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_map; perm_Type_solve | ]);
       simpl in *;
-      (apply hrr_S ; [ apply f | ]);
+      apply hrr_S;
       (apply hrr_ex_seq with (vec (mul_vec a (fst p'')) A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? mul_vec_app; rewrite ? vec_app; perm_Type_solve | ]);
       change ((vec (mul_vec a (fst p'')) A ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) (L))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) (p'' :: L));
@@ -901,8 +901,8 @@ Qed.
 
 Lemma hrr_max_inv_gen :
   forall L A B,
-    HR_C_S_T_M (map (fun x => (vec (fst x) (A \/S B) ++ snd x)) L) ->
-    HR_C_S_T_M (map (fun x => (vec (fst x) A ++ snd x)) L ++ map (fun x => (vec (fst x) B ++ snd x)) L).
+    HR_T_M (map (fun x => (vec (fst x) (A \/S B) ++ snd x)) L) ->
+    HR_T_M (map (fun x => (vec (fst x) A ++ snd x)) L ++ map (fun x => (vec (fst x) B ++ snd x)) L).
 Proof.
   intros L A B.
   remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A \/S B) ++ snd x) L) as G.
@@ -923,12 +923,12 @@ Proof.
     assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
-    apply hrr_C; try assumption.
+    apply hrr_C.
     change ((vec (fst p) A ++ snd p) :: (vec (fst p) A  ++ snd p) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ (vec (fst p) B ++ snd p) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (p :: p :: L) ++ (vec (fst p) B ++ snd p) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L).
     eapply hrr_ex_hseq; [ apply Permutation_Type_app_comm | ].
-    simpl; apply hrr_C; try assumption.
+    simpl; apply hrr_C.
     change ((vec (fst p) B ++ snd p)
               :: (vec (fst p) B ++ snd p)
               :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L ++
@@ -947,12 +947,12 @@ Proof.
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
       (apply hrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((p1, p2) :: (p1',p2') :: L) ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_app; apply Permutation_Type_map; perm_Type_solve | ]);
       simpl in *;
-      (apply hrr_S ; [ apply f | ]);
+      apply hrr_S;
       (apply hrr_ex_seq with (vec (fst p'') A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
       change ((vec (fst p'') A ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (L) ++ (vec p1 B ++ p2) :: (vec p1' B ++ p2') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (p'' :: L) ++ (vec p1 B ++ p2) :: (vec p1' B ++ p2') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L));
       (eapply hrr_ex_hseq ; [ apply Permutation_Type_app_comm | ]);
-      simpl; (apply hrr_S ; [ apply f | ]);
+      simpl; apply hrr_S;
         (apply hrr_ex_seq with (vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
         change ((vec (fst p'') B ++ snd p'')
                   :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L) ++
@@ -972,27 +972,27 @@ Proof.
     apply hrr_ex_seq with ((vec r1 A ++ D1) ++ (vec r2 A ++ D2)).
     { transitivity (vec (r1 ++ r2) A ++ (D1 ++ D2)) ; [rewrite ? vec_app; perm_Type_solve | ].
       apply Permutation_Type_app ; [ apply vec_perm| ] ; perm_Type_solve. }
-    assert (HR_C_S_T_M ((vec r1 A ++ D1) :: (vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi11.
+    assert (HR_T_M ((vec r1 A ++ D1) :: (vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi11.
     { eapply hrr_ex_hseq ; [ | apply (IHpi1 ((r1, D1) :: L))].
       { perm_Type_solve. }
       simpl.
       apply Forall2_Type_cons; [ | assumption].
       perm_Type_solve. }
-    assert (HR_C_S_T_M ((vec r2 A ++ D2) :: (vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi22.
+    assert (HR_T_M ((vec r2 A ++ D2) :: (vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi22.
     { eapply hrr_ex_hseq ; [ | apply (IHpi2 ((r2, D2) :: L))].
       { perm_Type_solve. }
       simpl.
       apply Forall2_Type_cons; [ | assumption].
       perm_Type_solve. }
-    assert (HR_C_S_T_M ((vec r2 A ++ D2) :: (vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi21.
+    assert (HR_T_M ((vec r2 A ++ D2) :: (vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi21.
     { destruct r1 ; [ | destruct r2 ].
-      - apply hrr_W; apply hrr_C; try reflexivity.
+      - apply hrr_W; apply hrr_C.
         apply pi11.
       - eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ].
-        apply hrr_W; apply hrr_C; try reflexivity.
+        apply hrr_W; apply hrr_C.
         apply pi22.
-      - apply hrr_C; try reflexivity.
-        change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))); apply hrr_T_vec with (r0 :: r1); try now auto.
+      - apply hrr_C.
+        change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M); apply hrr_T_vec with (r0 :: r1); try now auto.
         apply hrr_ex_hseq with ( (vec (r0 :: r1) B ++ D1) 
                                    :: (vec (r2 :: r3) A ++ D2)
                                    :: seq_mul_vec (r0 :: r1) (vec (r2 :: r3) A ++ D2)
@@ -1001,49 +1001,49 @@ Proof.
         { etransitivity ; [ apply Permutation_Type_swap | etransitivity ; [ | apply Permutation_Type_swap ]].
           apply Permutation_Type_skip.
           apply Permutation_Type_swap. }
-        apply hrr_C;try reflexivity; change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))); apply hrr_T_vec with (r2 :: r3); try now auto.
+        apply hrr_C;try reflexivity; change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M); apply hrr_T_vec with (r2 :: r3); try now auto.
         eapply hrr_ex_hseq ; [ apply Permutation_Type_skip; etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
-        apply hrr_S; try reflexivity.
+        apply hrr_S.
         apply hrr_ex_seq with (seq_mul_vec (r2 :: r3) (vec (r0 :: r1) A ++ D1) ++ seq_mul_vec (r0 :: r1) (vec (r2 :: r3) B ++ D2)).
         { etransitivity ; [ apply Permutation_Type_app; apply seq_mul_vec_app_r | ].
           etransitivity ; [ | apply Permutation_Type_app; symmetry; apply seq_mul_vec_app_r].
           etransitivity ; [ apply Permutation_Type_app; (apply Permutation_Type_app ; [ apply seq_mul_vec_vec | reflexivity ] ) | ].
           perm_Type_solve. }
         apply hrr_M; try reflexivity.
-        + change hr_frag_C_S_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_C_S_T_M)); apply hrr_T_vec_inv.
+        + change hr_frag_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_T_M)); apply hrr_T_vec_inv.
           eapply hrr_ex_hseq ; [ etransitivity ; [apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
           apply hrr_W.
           apply pi11.
-        + change hr_frag_C_S_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_C_S_T_M)); apply hrr_T_vec_inv.
+        + change hr_frag_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_T_M)); apply hrr_T_vec_inv.
           eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
           apply hrr_W.
           eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ].
           apply pi22. }
-    assert (HR_C_S_T_M ((vec r1 A ++ D1) :: (vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi12.
+    assert (HR_T_M ((vec r1 A ++ D1) :: (vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi12.
     { destruct r1 ; [ | destruct r2 ].
       - eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ].
-        apply hrr_W; apply hrr_C; try reflexivity.
+        apply hrr_W; apply hrr_C.
         apply pi11.
-      - apply hrr_W; apply hrr_C; try reflexivity.
+      - apply hrr_W; apply hrr_C.
         apply pi22.
-      - apply hrr_C; try reflexivity.
-        change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))); apply hrr_T_vec with (r2 :: r3); try now auto.
+      - apply hrr_C.
+        change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M); apply hrr_T_vec with (r2 :: r3); try now auto.
         eapply hrr_ex_hseq ; [ etransitivity ; [ apply Permutation_Type_swap | etransitivity ; [ apply Permutation_Type_skip; apply Permutation_Type_swap | apply Permutation_Type_swap ]] | ].
-        apply hrr_C;try reflexivity; change (hr_frag_C_S_T_M) with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T_M))); apply hrr_T_vec with (r0 :: r1); try now auto.
+        apply hrr_C;try reflexivity; change (hr_frag_T_M) with (hr_frag_add_T hr_frag_T_M); apply hrr_T_vec with (r0 :: r1); try now auto.
         eapply hrr_ex_hseq ; [ apply Permutation_Type_skip; etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
-        apply hrr_S; try reflexivity.
+        apply hrr_S.
         apply hrr_ex_seq with (seq_mul_vec (r2 :: r3) (vec (r0 :: r1) B ++ D1) ++ seq_mul_vec (r0 :: r1) (vec (r2 :: r3) A ++ D2)).
         { etransitivity ; [ apply Permutation_Type_app; apply seq_mul_vec_app_r | ].
           etransitivity ; [ | apply Permutation_Type_app; symmetry; apply seq_mul_vec_app_r].
           etransitivity ; [ apply Permutation_Type_app; (apply Permutation_Type_app ; [ apply seq_mul_vec_vec | reflexivity ] ) | ].
           perm_Type_solve. }
         apply hrr_M; try reflexivity.
-        + change hr_frag_C_S_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_C_S_T_M)); apply hrr_T_vec_inv.
+        + change hr_frag_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_T_M)); apply hrr_T_vec_inv.
           eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
           apply hrr_W.
           eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ].
           apply pi11.
-        + change hr_frag_C_S_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_C_S_T_M)); apply hrr_T_vec_inv.
+        + change hr_frag_T_M with (hr_frag_add_T (hr_frag_add_M hr_frag_T_M)); apply hrr_T_vec_inv.
           eapply hrr_ex_hseq ; [ etransitivity ; [apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
           apply hrr_W.
           apply pi22. }
@@ -1229,7 +1229,7 @@ Proof.
     destruct p as [r1 T1]; simpl in *.
     assert (A \/S B <> A0 /\S B0) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    assert (HR_C_S_T_M ((vec r1 A ++ vec r A0 ++ Db) :: (vec r1 B ++ vec r A0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piAA.
+    assert (HR_T_M ((vec r1 A ++ vec r A0 ++ Db) :: (vec r1 B ++ vec r A0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piAA.
     { eapply hrr_ex_hseq ; [ | apply (IHpi1 ((r1 , vec r A0 ++ Db) :: L)) ].
       { simpl.
         apply Permutation_Type_skip.
@@ -1238,7 +1238,7 @@ Proof.
         apply Permutation_Type_app_comm. }
       simpl.
       apply Forall2_Type_cons; [ |  assumption]; perm_Type_solve. }
-    assert (HR_C_S_T_M ((vec r1 A ++ vec r B0 ++ Db) :: (vec r1 B ++ vec r B0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piBB.
+    assert (HR_T_M ((vec r1 A ++ vec r B0 ++ Db) :: (vec r1 B ++ vec r B0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piBB.
     { eapply hrr_ex_hseq ; [ | apply (IHpi2 ((r1 , vec r B0 ++ Db) :: L)) ].
       { simpl.
         apply Permutation_Type_skip.
@@ -1247,12 +1247,12 @@ Proof.
         apply Permutation_Type_app_comm. }
       simpl.
       apply Forall2_Type_cons; [ |  assumption]; perm_Type_solve. }
-    assert (HR_C_S_T_M ((vec r1 A ++ vec r A0 ++ Db) :: (vec r1 B ++ vec r B0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piAB.
-    { apply hrr_C; try reflexivity.
+    assert (HR_T_M ((vec r1 A ++ vec r A0 ++ Db) :: (vec r1 B ++ vec r B0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piAB.
+    { apply hrr_C.
       eapply hrr_ex_hseq; [ etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
-      apply hrr_C; try reflexivity.
+      apply hrr_C.
       eapply hrr_ex_hseq; [ etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
-      apply hrr_S; try reflexivity.
+      apply hrr_S.
       apply hrr_ex_seq with ((vec r1 A ++ vec r B0 ++ Db) ++ (vec r1 B ++ vec r A0 ++ Db)).
       { rewrite <- ? app_assoc.
         apply Permutation_Type_app; try reflexivity.
@@ -1267,12 +1267,12 @@ Proof.
                                       eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ];
                                       apply hrr_W;
                                       eapply hrr_ex_hseq ; [ apply Permutation_Type_swap  | ] ]; try assumption. }
-    assert (HR_C_S_T_M ((vec r1 A ++ vec r B0 ++ Db) :: (vec r1 B ++ vec r A0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piBA.
-    { apply hrr_C; try reflexivity.
+    assert (HR_T_M ((vec r1 A ++ vec r B0 ++ Db) :: (vec r1 B ++ vec r A0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piBA.
+    { apply hrr_C.
       eapply hrr_ex_hseq; [ etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
-      apply hrr_C; try reflexivity.
+      apply hrr_C.
       eapply hrr_ex_hseq; [ etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
-      apply hrr_S; try reflexivity.
+      apply hrr_S.
       apply hrr_ex_seq with ((vec r1 A ++ vec r A0 ++ Db) ++ (vec r1 B ++ vec r B0 ++ Db)).
       { rewrite <- ? app_assoc.
         apply Permutation_Type_app; try reflexivity.
@@ -1325,8 +1325,8 @@ Proof.
 Qed.
     
 Lemma hrr_min_inv_gen_l : forall L A B,
-    HR_C_S_T_M (map (fun x => (vec (fst x) (A /\S B) ++ snd x)) L) ->
-    HR_C_S_T_M (map (fun x => (vec (fst x) A ++ snd x)) L).
+    HR_T_M (map (fun x => (vec (fst x) (A /\S B) ++ snd x)) L) ->
+    HR_T_M (map (fun x => (vec (fst x) A ++ snd x)) L).
 Proof.
   intros L A B.
   remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A /\S B) ++ snd x) L) as G.
@@ -1344,7 +1344,7 @@ Proof.
     assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
-    apply hrr_C; try assumption.
+    apply hrr_C.
     change ((vec (fst p) A ++ snd p)
               :: (vec (fst p) A ++ snd p)
               :: map
@@ -1361,7 +1361,7 @@ Proof.
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
       (apply hrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((p1, p2) :: (p1',p2') :: L )) ; [ apply Permutation_Type_map; perm_Type_solve | ]);
       simpl in *;
-      (apply hrr_S ; [ apply f | ]);
+      apply hrr_S;
       (apply hrr_ex_seq with (vec (fst p'') A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
       change ((vec (fst p'') A ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (L ))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (p'' :: L ));
@@ -1504,7 +1504,7 @@ Proof.
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
         perm_Type_solve. }
-      assert (HR_C_S_T_M ((vec a1 A0 ++ (vec r A0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)) as piA.
+      assert (HR_T_M ((vec a1 A0 ++ (vec r A0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)) as piA.
       { change ((vec a1 A0  ++ vec r A0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) ((a1 , vec r A0 ++ T') :: L)).
         apply IHpi1.
@@ -1514,7 +1514,7 @@ Proof.
         { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
         etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
         perm_Type_solve. }
-      assert (HR_C_S_T_M ((vec a1 A0 ++ (vec r B0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)) as piB.
+      assert (HR_T_M ((vec a1 A0 ++ (vec r B0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)) as piB.
       { change ((vec a1 A0  ++ vec r B0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) ((a1 , vec r B0 ++ T') :: L)).
         apply IHpi2.
@@ -1598,8 +1598,8 @@ Proof.
 Qed.
     
 Lemma hrr_min_inv_gen_r : forall L A B,
-    HR_C_S_T_M (map (fun x => (vec (fst x) (A /\S B) ++ snd x)) L) ->
-    HR_C_S_T_M (map (fun x => (vec (fst x) B ++ snd x)) L).
+    HR_T_M (map (fun x => (vec (fst x) (A /\S B) ++ snd x)) L) ->
+    HR_T_M (map (fun x => (vec (fst x) B ++ snd x)) L).
 Proof.
   intros L A B.
   remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A /\S B) ++ snd x) L) as G.
@@ -1617,7 +1617,7 @@ Proof.
     assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
-    apply hrr_C; try assumption.
+    apply hrr_C.
     change ((vec (fst p) B ++ snd p)
               :: (vec (fst p) B ++ snd p)
               :: map
@@ -1634,7 +1634,7 @@ Proof.
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
       (apply hrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L )) ; [ apply Permutation_Type_map; perm_Type_solve | ]);
       simpl in *;
-      (apply hrr_S ; [ apply f | ]);
+      apply hrr_S;
       (apply hrr_ex_seq with (vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
       change ((vec (fst p'') B ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L ))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (p'' :: L ));
@@ -1777,7 +1777,7 @@ Proof.
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
         perm_Type_solve. }
-      assert (HR_C_S_T_M ((vec a1 B0 ++ (vec r B0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)) as piB.
+      assert (HR_T_M ((vec a1 B0 ++ (vec r B0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)) as piB.
       { change ((vec a1 B0  ++ vec r B0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) ((a1 , vec r B0 ++ T') :: L)).
         apply IHpi2.
@@ -1787,7 +1787,7 @@ Proof.
         { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
         etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
         perm_Type_solve. }
-      assert (HR_C_S_T_M ((vec a1 B0 ++ (vec r A0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)) as piA.
+      assert (HR_T_M ((vec a1 B0 ++ (vec r A0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)) as piA.
       { change ((vec a1 B0  ++ vec r A0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) ((a1 , vec r A0 ++ T') :: L)).
         apply IHpi1.
@@ -1870,7 +1870,7 @@ Proof.
     apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
 Qed.
 
-Lemma hrr_Z_inv : forall G T r,  HR_C_S_T_M ((vec r zero ++ T) :: G) -> HR_C_S_T_M (T :: G).
+Lemma hrr_Z_inv : forall G T r,  HR_T_M ((vec r zero ++ T) :: G) -> HR_T_M (T :: G).
 Proof.
   intros G.
   assert ({ L & prod
@@ -1888,7 +1888,7 @@ Proof.
   apply pi.
 Qed.
 
-Lemma hrr_plus_inv : forall G T A B r, HR_C_S_T_M ((vec r (A +S B) ++ T) :: G) -> HR_C_S_T_M ((vec r A ++ vec r B ++ T) :: G).
+Lemma hrr_plus_inv : forall G T A B r, HR_T_M ((vec r (A +S B) ++ T) :: G) -> HR_T_M ((vec r A ++ vec r B ++ T) :: G).
 Proof.
   intros G T A B r pi.
   assert ({ L & prod
@@ -1905,7 +1905,7 @@ Proof.
   apply pi.
 Qed.
 
-Lemma hrr_mul_inv : forall G T A r0 r, HR_C_S_T_M ((vec r (r0 *S A) ++ T) :: G) -> HR_C_S_T_M ((vec (mul_vec r0 r) A ++ T) :: G).
+Lemma hrr_mul_inv : forall G T A r0 r, HR_T_M ((vec r (r0 *S A) ++ T) :: G) -> HR_T_M ((vec (mul_vec r0 r) A ++ T) :: G).
 Proof.
   intros G T A r0 r pi.
   assert ({ L & prod
@@ -1922,7 +1922,7 @@ Proof.
   apply pi.
 Qed.
 
-Lemma hrr_max_inv : forall G T A B r, HR_C_S_T_M ((vec r (A \/S B) ++ T) :: G) -> HR_C_S_T_M ((vec r B ++ T) :: (vec r A ++ T) :: G).
+Lemma hrr_max_inv : forall G T A B r, HR_T_M ((vec r (A \/S B) ++ T) :: G) -> HR_T_M ((vec r B ++ T) :: (vec r A ++ T) :: G).
 Proof.
 Proof.
   intros G T A B r pi.
@@ -1936,7 +1936,7 @@ Proof.
       split with ((nil, a) :: L).
       repeat split; simpl; [rewrite H1 | rewrite H2 | rewrite H3]; reflexivity. }
   apply hrr_ex_hseq with (G ++ (vec r B ++ T) :: (vec r A ++ T) :: nil) ; [ perm_Type_solve | ].
-  change (hr_frag_C_S_T_M) with (hr_frag_add_C (hr_frag_C_S_T_M)).
+  change (hr_frag_T_M) with hr_frag_T_M.
   apply hrr_C_gen.
   apply hrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r, T) :: L) ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r, T) :: L)).
   { simpl.
@@ -1947,7 +1947,7 @@ Proof.
   apply pi.
 Qed.
 
-Lemma hrr_min_inv_l : forall G T A B r, HR_C_S_T_M ((vec r (A /\S B) ++ T) :: G) -> HR_C_S_T_M ((vec r A ++ T) :: G).
+Lemma hrr_min_inv_l : forall G T A B r, HR_T_M ((vec r (A /\S B) ++ T) :: G) -> HR_T_M ((vec r A ++ T) :: G).
 Proof.
 Proof.
   intros G T A B r pi.
@@ -1965,7 +1965,7 @@ Proof.
   apply pi.
 Qed.
 
-Lemma hrr_min_inv_r : forall G T A B r, HR_C_S_T_M ((vec r (A /\S B) ++ T) :: G) -> HR_C_S_T_M ((vec r B ++ T) :: G).
+Lemma hrr_min_inv_r : forall G T A B r, HR_T_M ((vec r (A /\S B) ++ T) :: G) -> HR_T_M ((vec r B ++ T) :: G).
 Proof.
 Proof.
   intros G T A B r pi.

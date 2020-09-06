@@ -13,8 +13,8 @@ Require Import Bool_more.
 Require Import Lra.
 
 Lemma hrr_mul_vec : forall L,
-    HR_C_S_T (map (fun x => snd x) L) ->
-    HR_C_S_T (map (fun x => seq_mul_vec (fst x) (snd x)) L).
+    HR_T (map (fun x => snd x) L) ->
+    HR_T (map (fun x => seq_mul_vec (fst x) (snd x)) L).
 Proof.
   intros L pi.
   remember (map (fun x => snd x) L) as G.
@@ -28,7 +28,7 @@ Proof.
     simpl in HeqG; inversion HeqG.
     reflexivity.
   - destruct L; try now inversion HeqG.
-    simpl; apply hrr_C; try reflexivity.
+    simpl; apply hrr_C.
     change (seq_mul_vec (fst p) (snd p)
                     :: seq_mul_vec (fst p) (snd p) :: map (fun x => seq_mul_vec (fst x) (snd x)) L)
       with
@@ -47,13 +47,13 @@ Proof.
       apply hrr_W_gen.
       apply hrr_INIT.
     + simpl.
-      unfold HR_C_S_T; change hr_frag_C_S_T with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T))).
+      unfold HR_T; change hr_frag_T with (hr_frag_add_T hr_frag_T).
       apply hrr_T_vec with (r0 :: r2); try now auto.
       eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-      change hr_frag_C_S_T with (hr_frag_add_S (hr_frag_add_T (hr_frag_add_C hr_frag_C_S_T))).
+      change hr_frag_T with (hr_frag_add_T hr_frag_T).
       apply hrr_T_vec with (r :: r1); try now auto.
       eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-      apply hrr_S; try assumption.
+      apply hrr_S.
       apply hrr_ex_seq with (seq_mul_vec (vec_mul_vec (r :: r1) (r0 :: r2)) (T1' ++ T2')).
       { etransitivity; [ symmetry; apply seq_mul_vec_twice | ].
         etransitivity ; [ apply seq_mul_vec_perm_r; apply (seq_mul_vec_app_r _ _ (r0 :: r2)) | ].
@@ -150,9 +150,9 @@ Proof.
 Qed.
     
 Lemma hrr_M_gen : forall L H D,
-    HR_C_S_T (map (fun x => snd x) L) ->
-    HR_C_S_T (D :: H) ->
-    HR_C_S_T (map (fun x => snd x ++ seq_mul_vec (fst x) D) L ++ H).
+    HR_T (map (fun x => snd x) L) ->
+    HR_T (D :: H) ->
+    HR_T (map (fun x => snd x ++ seq_mul_vec (fst x) D) L ++ H).
 Proof.
   intros L H D pi pi2.
   remember (map (fun x => snd x) L) as G.
@@ -181,7 +181,7 @@ Proof.
     apply hrr_W.
     apply IHpi; reflexivity.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
-    apply hrr_C; try assumption.
+    apply hrr_C.
     change ((T1 ++ seq_mul_vec r1 D)
               :: (T1 ++ seq_mul_vec r1 D)
               :: map (fun x : list Rpos * list (Rpos * term) => snd x ++ seq_mul_vec (fst x) D) L ++ H)
@@ -189,7 +189,7 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => snd x ++ seq_mul_vec (fst x) D) ((r1, T1) :: (r1 , T1) :: L) ++ H).
     apply IHpi; reflexivity.
   - destruct L; [ | destruct L]; try destruct p as [r1 T1']; try destruct p0 as [r2 T2']; inversion HeqG; subst; simpl.
-    apply hrr_S; try assumption.
+    apply hrr_S.
     apply hrr_ex_seq with ((T1' ++ T2') ++ seq_mul_vec (r1 ++ r2) D).
     { rewrite seq_mul_vec_app_l.
       perm_Type_solve. }
@@ -263,8 +263,8 @@ Proof.
 Qed.
 
 Lemma hrr_M_elim : forall G,
-    HR_C_S_T_M G ->
-    HR_C_S_T G.
+    HR_T_M G ->
+    HR_T G.
 Proof.
   intros G pi; induction pi; try now constructor.
   - assert {L & prod
@@ -277,7 +277,7 @@ Proof.
         simpl; split ; [ rewrite H1; reflexivity |  rewrite H2].
         rewrite app_nil_r; reflexivity. }
     apply hrr_ex_hseq with (G ++ ((T1 ++ T2) :: nil)); [ perm_Type_solve | ].
-    change (hr_frag_C_S_T) with (hr_frag_add_C hr_frag_C_S_T); apply hrr_C_gen.
+    change (hr_frag_T) with hr_frag_T; apply hrr_C_gen.
     apply hrr_ex_hseq with (((T1 ++ T2) :: G) ++ G); [ perm_Type_solve | ].
     pattern G at 1; rewrite Heq2.
     replace ((T1 ++ T2)

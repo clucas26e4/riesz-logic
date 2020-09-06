@@ -10,19 +10,6 @@ Require Import Lra.
 Require Import Permutation_more.
 Local Open Scope R_scope.
 
-(* TODO MOVING (to interpretation) *)
-Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec r l) A) === r *S sem_seq (vec l A).
-Proof.
-  intros A.
-  induction l; intros r.
-  - simpl; rewrite mul_0; auto.
-  - simpl.
-    rewrite IHl.
-    rewrite <-mul_assoc.
-    rewrite mul_distri_term.
-    reflexivity.
-Qed.
-
 (* all rules are sound *)
 
 Lemma W_sound : forall G T, G <> nil ->  zero <== (sem_hseq G) -> zero <== sem_hseq (T :: G).
