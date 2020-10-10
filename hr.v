@@ -83,8 +83,8 @@ Definition hr_frag_M_can := (mk_hr_frag false true true).
 Definition hr_frag_full := (mk_hr_frag true true true).
 Definition hr_frag_T_M := (mk_hr_frag true true false).
 Definition hr_frag_T := (mk_hr_frag true false false).
+Definition hr_frag_M := (mk_hr_frag false true false).
 Definition hr_frag_nothing := (mk_hr_frag false false false).
-
 
 (** * Definition of hr *)
 (** ** HR *)
@@ -115,6 +115,8 @@ Definition HR_full := HR hr_frag_full.
 Definition HR_T_M := HR hr_frag_T_M.
 (* HR with neither the CAN rule nor the M rule *)
 Definition HR_T := HR hr_frag_T.
+(* HR with only the M rule*)
+Definition HR_M := HR hr_frag_M.
 (* HR with neither the CAN rule nor the M rule nor the T rule*)
 Definition HR_nothing := HR hr_frag_nothing.
 
