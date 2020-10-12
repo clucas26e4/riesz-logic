@@ -48,7 +48,7 @@ Rpos.vo : Rpos.v
 
 term.vo : term.v Rpos.vo
 semantic.vo : semantic.v Rpos.vo term.vo
-hseq.vo : hseq.v Rpos.vo term.vo semantic.vo
+hseq.vo : hseq.v Rpos.vo term.vo semantic.vo lt_nat2.vo
 interpretation.vo : interpretation.v hseq.vo Rpos.vo term.vo semantic.vo
 
 hr.vo : hr.v hseq.vo Rpos.vo term.vo semantic.vo 
@@ -59,6 +59,9 @@ M_elim.vo : M_elim.v invertibility.v Rpos.vo term.vo semantic.vo hseq.vo hr.vo
 can_elim.vo : can_elim.v invertibility.vo Rpos.vo term.vo semantic.vo hseq.vo hr.vo M_elim.vo
 lambda_prop.vo : lambda_prop.v hr.vo hseq.vo Rpos.vo term.vo semantic.vo hrr_List_more.vo
 
+FOL_R.vo : FOL_R.v
+decidability.vo : decidability.v FOL_R.vo lambda_prop.vo hr.vo hseq.vo Rpos.vo term.vo semantic.vo hrr_List_more.vo can_elim.vo M_elim.vo invertibility.vo
+
 Rterm.vo : Rterm.v
 Rsemantic.vo : Rsemantic.v Rterm.vo
 semantic_Rsemantic_eq.vo : semantic_Rsemantic_eq.v Rsemantic.vo semantic.vo Rterm.vo term.vo Rpos.vo
@@ -66,3 +69,4 @@ main_results.vo : main_results.v semantic_Rsemantic_eq.vo Rsemantic.vo semantic.
 
 tactics.vo : tactics.v hseq.vo Rpos.vo term.vo hr.vo
 hrr_List_more.vo : hrr_List_more.v
+lt_nat2.vo : lt_nat2.v

@@ -38,7 +38,17 @@ Fixpoint sum_term k A :=
   | S n => A +S (sum_term n A)
   end.
 
-(** Substitution *)
+(** Complexity *)
+Fixpoint HR_complexity_term A :=
+  match A with
+  | var n => 0
+  | covar n => 0
+  | zero => 1
+  | plus A B => 1 + HR_complexity_term A + HR_complexity_term B
+  | min A B => 1 + HR_complexity_term A + HR_complexity_term B
+  | max A B => 1 + HR_complexity_term A + HR_complexity_term B
+  | mul r A => 1 + HR_complexity_term A
+  end.                                                       
 
 
 (** Substitution *)
@@ -65,6 +75,18 @@ Fixpoint is_atom A :=
   | covar _ => True
   | _ => False
   end.
+
+Lemma is_atom_complexity_0 : forall A,
+    is_atom A -> HR_complexity_term A = 0.
+Proof.
+  induction A; intros Hat; try now inversion Hat; reflexivity.
+Qed.
+
+Lemma is_atom_complexity_0_inv : forall A,
+    HR_complexity_term A = 0 -> is_atom A.
+Proof.
+  induction A; intros Hc0; now inversion Hc0.
+Qed.
 
 Lemma term_eq_dec : forall (A B : term) , { A = B } + { A <> B}.
 Proof.

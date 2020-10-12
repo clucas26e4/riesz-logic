@@ -2,6 +2,8 @@ Require Import Rpos.
 Require Import term.
 Require Import semantic.
 
+Require Import lt_nat2.
+
 Require Import CMorphisms.
 Require Import List_more.
 Require Import List_Type_more.
@@ -9,6 +11,7 @@ Require Import Permutation_Type_more.
 Require Import Permutation_Type_solve.
 Require Import Lra.
 Require Import Lia.
+Require Import wf_prod.
 
 Local Open Scope R_scope.
 
@@ -22,6 +25,45 @@ Definition seq_is_atomic (T : sequent) := Forall_Type (fun x => match x with (a 
 Definition hypersequent : Set := list sequent.
 
 Definition hseq_is_atomic G := Forall_Type seq_is_atomic G.
+
+(** ** Complexity *)
+Fixpoint HR_complexity_seq (T : sequent) :=
+  match T with
+  | nil => 0%nat
+  | (a, A) :: T => ((HR_complexity_term A) + (HR_complexity_seq T))%nat
+  end.
+
+Fixpoint HR_complexity_hseq G :=
+  match G with
+  | nil => (0%nat, 0%nat)
+  | T :: G => if HR_complexity_seq T =? fst (HR_complexity_hseq G) then (fst (HR_complexity_hseq G), S (snd (HR_complexity_hseq G)))
+              else if (HR_complexity_seq T <? fst (HR_complexity_hseq G))%nat then (fst (HR_complexity_hseq G) , snd (HR_complexity_hseq G))
+                   else (HR_complexity_seq T, 1%nat)
+  end.
+
+(** ** Max variable appearing in a hypersequent *)
+Fixpoint max_var_term A :=
+  match A with
+  | var n => n
+  | covar n => n
+  | zero => 0%nat
+  | A +S B => Nat.max (max_var_term A) (max_var_term B)
+  | r *S A => max_var_term A
+  | A /\S B => Nat.max (max_var_term A) (max_var_term B)
+  | A \/S B => Nat.max (max_var_term A) (max_var_term B)
+  end.
+
+Fixpoint max_var_seq (T : sequent) :=
+  match T with
+  | nil => 0%nat
+  | (r, A) :: T => Nat.max (max_var_term A) (max_var_seq T)
+  end.
+
+Fixpoint max_var_hseq G :=
+  match G with
+  | nil => 0%nat
+  | T :: G => Nat.max (max_var_seq T) (max_var_hseq G)
+  end.
 
 (** ** Substitution *)
 Fixpoint subs_seq (D : sequent) n t :=
@@ -48,6 +90,18 @@ Fixpoint copy_seq n (T : sequent) :=
   match n with
   | 0 => nil
   | S n => (copy_seq n T) ++ T
+  end.
+
+Fixpoint mul_vec r (l : list Rpos) :=
+  match l with
+  | nil => nil
+  | r0 :: l => (time_pos r r0) :: (mul_vec r l)
+  end.
+
+Fixpoint vec_mul_vec l1 l2 :=
+  match l1 with
+  | nil => nil
+  | r :: l1 => (mul_vec r l2) ++ (vec_mul_vec l1 l2)
   end.
 
 (** ** Sum of the weights *)
@@ -90,18 +144,6 @@ Lemma sum_vec_non_nil : forall r, r <> nil -> (0 <? sum_vec r)%R = true.
   assert (Hle := (sum_vec_le_0 r)).
   nra.
 Qed.
-
-Fixpoint mul_vec r (l : list Rpos) :=
-  match l with
-  | nil => nil
-  | r0 :: l => (time_pos r r0) :: (mul_vec r l)
-  end.
-
-Fixpoint vec_mul_vec l1 l2 :=
-  match l1 with
-  | nil => nil
-  | r :: l1 => (mul_vec r l2) ++ (vec_mul_vec l1 l2)
-  end.
 
 Lemma vec_app : forall vr1 vr2 A, vec (vr1 ++ vr2) A = vec vr1 A ++ vec vr2 A.
 Proof.
@@ -219,6 +261,12 @@ Lemma sum_vec_perm : forall vr vs,
     sum_vec vr = sum_vec vs.
 Proof.
   intros vr vs Hperm; induction Hperm; simpl; nra.
+Qed.
+
+Lemma mul_vec_length : forall r vr,
+    length (mul_vec r vr) = length vr.
+Proof.
+  intros r; induction vr; simpl; try rewrite IHvr; reflexivity.
 Qed.
 
 Lemma perm_decomp_vec_eq_2 : forall T D r s r' s' A B,
@@ -694,6 +742,30 @@ Qed.
 
 (** ** sum_weight_seq_(co)var *)
 
+Lemma sum_weight_seq_var_lt_max_var : forall n T1,
+    (max_var_seq T1 < n)%nat ->
+    sum_weight_seq_var n T1 = 0.
+Proof.
+  intros n; induction T1; intros Hlt; auto.
+  destruct a as [a A].
+  destruct A; simpl in *; try (apply IHT1 ; lia).
+  replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia).
+  apply IHT1.
+  lia.
+Qed.
+
+Lemma sum_weight_seq_covar_lt_max_var : forall n T1,
+    (max_var_seq T1 < n)%nat ->
+    sum_weight_seq_covar n T1 = 0.
+Proof.
+  intros n; induction T1; intros Hlt; auto.
+  destruct a as [a A].
+  destruct A; simpl in *; try (apply IHT1 ; lia).
+  replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia).
+  apply IHT1.
+  lia.
+Qed. 
+    
 Lemma sum_weight_seq_var_app : forall n T1 T2,
     sum_weight_seq_var n (T1 ++ T2) = sum_weight_seq_var n T1 + sum_weight_seq_var n T2.
 Proof.
@@ -794,6 +866,28 @@ Proof.
   intros n T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try case (n =? n0); try case (n =? n1); try nra.
 Qed.
 
+Lemma sum_weight_var_lt_max_var : forall n G,
+    (max_var_hseq G < n)%nat ->
+    sum_weight_var n G = 0.
+Proof.
+  intros n; induction G; intros Hlt; auto.
+  simpl in *.
+  rewrite IHG; try lia.
+  rewrite sum_weight_seq_var_lt_max_var; try lia.
+  lra.
+Qed.
+
+Lemma sum_weight_covar_lt_max_var : forall n G,
+    (max_var_hseq G < n)%nat ->
+    sum_weight_covar n G = 0.
+Proof.
+  intros n; induction G; intros Hlt; auto.
+  simpl in *.
+  rewrite IHG; try lia.
+  rewrite sum_weight_seq_covar_lt_max_var; try lia.
+  lra.
+Qed. 
+
 Lemma sum_weight_var_perm : forall n G H,
     Permutation_Type G H ->
     sum_weight_var n G = sum_weight_var n H.
@@ -893,4 +987,474 @@ Proof.
         rewrite Hperm.
         rewrite ? app_length.
         lia.
+Qed.
+
+Lemma seq_non_atomic_perm :
+  forall T,
+    (seq_is_atomic T -> False) ->
+    {' (A , D) : _ &
+                 Permutation_Type T (A :: D) &
+                 ~ (is_atom (snd A)) }.
+Proof.
+  induction T; intros Hnat; [exfalso; apply Hnat; apply Forall_Type_nil | ].
+  destruct a as [a A].
+  destruct A.
+  - destruct IHT as [[A D] Hperm H].
+    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+      apply I. }
+    split with (A, ((a, var n) :: D)); auto.
+    perm_Type_solve.
+  - destruct IHT as [[A D] Hperm H].
+    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+      apply I. }
+    split with (A, ((a, covar n) :: D)); auto.
+    perm_Type_solve.
+  - split with ((a, zero), T); auto.
+  - split with ((a, A1 +S A2), T); auto.
+  - split with ((a, r *S A), T); auto.
+  - split with ((a, A1 \/S A2), T); auto.
+  - split with ((a, A1 /\S A2), T); auto.
+Qed.
+
+(** Complexity related theorem *)
+
+Lemma complexity_seq_perm : forall T1 T2,
+    Permutation_Type T1 T2 ->
+    HR_complexity_seq T1 = HR_complexity_seq T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; try destruct x; try destruct y; simpl; lia.
+Qed.
+
+Lemma complexity_hseq_perm : forall G1 G2,
+    Permutation_Type G1 G2 ->
+    HR_complexity_hseq G1 = HR_complexity_hseq G2.
+Proof.
+  intros G1 G2 Hperm; induction Hperm.
+  - reflexivity.
+  - simpl.
+    rewrite IHHperm.
+    case (HR_complexity_seq x =? fst (HR_complexity_hseq l'));
+      case (HR_complexity_seq x <? fst (HR_complexity_hseq l'))%nat; reflexivity.
+  - simpl.
+    case_eq (HR_complexity_seq x =? fst (HR_complexity_hseq l)); intros H1;
+      case_eq (HR_complexity_seq y =? fst (HR_complexity_hseq l)); intros H2;
+        case_eq (HR_complexity_seq x <? fst (HR_complexity_hseq l))%nat; intros H3;
+          case_eq (HR_complexity_seq y <? fst (HR_complexity_hseq l))%nat; intros H4;
+            case_eq (HR_complexity_seq x =? HR_complexity_seq y); intros H5;
+              case_eq (HR_complexity_seq x <? HR_complexity_seq y)%nat; intros H6;
+                case_eq (HR_complexity_seq y <? HR_complexity_seq x)%nat; intros H7;
+                  repeat (simpl; try rewrite H1; try rewrite H2; try rewrite H3; try rewrite H4; try rewrite H5; try (rewrite Nat.eqb_sym in H5; rewrite H5); try rewrite H6; try rewrite H7);
+                  try reflexivity;
+                  (apply Nat.eqb_eq in H1 + apply Nat.eqb_neq in H1);
+                  (apply Nat.eqb_eq in H2 + apply Nat.eqb_neq in H2);
+                  (apply Nat.ltb_lt in H3 + apply Nat.ltb_nlt in H3);
+                  (apply Nat.ltb_lt in H4 + apply Nat.ltb_nlt in H4);
+                  (apply Nat.eqb_eq in H5 + apply Nat.eqb_neq in H5);
+                  (apply Nat.ltb_lt in H6 + apply Nat.ltb_nlt in H6);
+                  (apply Nat.ltb_lt in H7 + apply Nat.ltb_nlt in H7);
+                  try lia.
+    rewrite H5; reflexivity.
+  - transitivity (HR_complexity_hseq l'); assumption.
+Qed.
+
+Lemma complexity_hseq_perm_fst : forall G,
+    G <> nil ->
+    {' (T, H) : _ &
+                Permutation_Type G (T :: H) &
+                HR_complexity_seq T = fst (HR_complexity_hseq G) }.
+  induction G; intros H; [ exfalso; apply H; reflexivity | clear H ].
+  simpl.
+  case_eq (HR_complexity_seq a =? fst (HR_complexity_hseq G)); intros H1.
+  - split with (a, G); try reflexivity.
+    apply Nat.eqb_eq in H1; rewrite H1; reflexivity.
+  - case_eq (HR_complexity_seq a <? fst (HR_complexity_hseq G))%nat; intros H2.
+    + destruct G; [ inversion H2 | ].
+      destruct IHG as [[T H] Hperm Heq].
+      { intros H; inversion H. }
+      split with (T, (a :: H)).
+      * transitivity (a :: T :: H); perm_Type_solve.
+      * rewrite (complexity_hseq_perm _ _ Hperm).
+        rewrite (complexity_hseq_perm _ _ Hperm) in Heq.
+        rewrite Heq; reflexivity.
+    + split with (a, G); reflexivity.
+Qed.
+
+Lemma complexity_hseq_perm_fst_seq : forall T1 T2 G,
+    Permutation_Type T1 T2 ->
+    HR_complexity_hseq (T1 :: G) = HR_complexity_hseq (T2 :: G).
+Proof.
+  intros T1 T2 G Hperm.
+  simpl.
+  rewrite (complexity_seq_perm _ _ Hperm).
+  reflexivity.
+Qed.
+
+Lemma complexity_seq_app : forall T1 T2,
+    HR_complexity_seq (T1 ++ T2) = (HR_complexity_seq T1 + HR_complexity_seq T2)%nat.
+Proof.
+  induction T1; intros T2; simpl; try rewrite IHT1; try destruct a; lia.
+Qed.
+
+Lemma complexity_seq_vec : forall r A,
+    HR_complexity_seq (vec r A) = (length r * HR_complexity_term A)%nat.
+Proof.
+  induction r; intros A; simpl; try rewrite IHr; lia.
+Qed.
+
+Lemma seq_is_atomic_complexity_0 :
+  forall T,
+    seq_is_atomic T ->
+    HR_complexity_seq T = 0%nat.
+Proof.
+  induction T; intros Hat;
+    inversion Hat; simpl; try destruct a; try rewrite IHT; try rewrite is_atom_complexity_0;
+      auto.
+Qed.
+
+Lemma seq_is_atomic_complexity_0_inv :
+  forall T,
+    HR_complexity_seq T = 0%nat ->
+    seq_is_atomic T.
+Proof.
+  induction T; intros Heq; [ apply Forall_Type_nil |] .
+  destruct a as [a A]; simpl in *.
+  apply Forall_Type_cons ; [ apply is_atom_complexity_0_inv  | apply IHT]; lia.
+Qed.
+
+Lemma hseq_is_atomic_complexity_0 :
+  forall G,
+    hseq_is_atomic G ->
+    fst (HR_complexity_hseq G) = 0%nat.
+Proof.
+  induction G; intros Hat; [ reflexivity | ].
+  inversion Hat; subst; specialize (IHG X0).
+  simpl.
+  rewrite seq_is_atomic_complexity_0 ; [ | apply X].
+  rewrite IHG; reflexivity.
+Qed.
+
+Lemma hseq_is_atomic_complexity_0_inv :
+  forall G,
+    fst (HR_complexity_hseq G) = 0%nat ->
+    hseq_is_atomic G.
+Proof.
+  induction G; intros Heq; [ apply Forall_Type_nil | ].
+  simpl in *.
+  case_eq (HR_complexity_seq a =? fst (HR_complexity_hseq G)); intros H; rewrite H in Heq; simpl in Heq ; [ apply Nat.eqb_eq in H | apply Nat.eqb_neq in H ].
+  { apply Forall_Type_cons; [ apply seq_is_atomic_complexity_0_inv | apply IHG ]; lia. }
+  exfalso.
+  case_eq (HR_complexity_seq a <? fst (HR_complexity_hseq G))%nat; intros H2; rewrite H2 in Heq; [apply Nat.ltb_lt in H2 | apply Nat.ltb_nlt in H2]; simpl in *; lia.
+Qed.
+
+Lemma hrr_Z_decrease_complexity : forall G T r,
+    r <> nil ->
+    HR_complexity_seq (vec r zero ++ T) = fst (HR_complexity_hseq ((vec r zero ++ T) :: G)) ->
+    HR_complexity_hseq (T :: G) <2 HR_complexity_hseq ((vec r zero ++ T) :: G).
+Proof.
+  intros G T r Hnnil Heq.
+  simpl.
+  case_eq (HR_complexity_seq T =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r zero ++ T) =? fst (HR_complexity_hseq G)); intros H2.
+  - exfalso.
+    destruct r; [ apply Hnnil; reflexivity | ].
+    apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
+    simpl in H2.
+    rewrite complexity_seq_app in H2.
+    lia.
+  - case_eq (HR_complexity_seq (vec r zero ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + exfalso.
+      apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
+      destruct r; [ apply Hnnil; reflexivity | ].
+      simpl; rewrite complexity_seq_app in H2; rewrite complexity_seq_app in H3.
+      lia.
+    + apply fst_lt2.
+      apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+      lia.
+  - case_eq (HR_complexity_seq T <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + apply snd_lt2.
+      lia.
+    + exfalso.
+      apply Nat.eqb_eq in H2; apply Nat.ltb_nlt in H3.
+      rewrite complexity_seq_app in H2; destruct r ; [ apply Hnnil; reflexivity | ].
+      simpl in H2; lia.
+  - simpl in Heq; rewrite H2 in Heq.
+    case_eq (HR_complexity_seq T <? fst (HR_complexity_hseq G))%nat; intros H3;
+      case_eq (HR_complexity_seq (vec r zero ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+    + exfalso.
+      apply Nat.eqb_neq in H2; apply H2; apply Heq.
+    + apply fst_lt2.
+      apply Nat.ltb_nlt in H4; apply Nat.eqb_neq in H2; lia.
+    + exfalso.
+      apply Nat.ltb_nlt in H3; apply Nat.ltb_lt in H4.
+      rewrite complexity_seq_app in H4; lia.
+    + apply fst_lt2.
+      rewrite complexity_seq_app; destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+      simpl; lia.
+Qed.
+    
+Lemma hrr_plus_decrease_complexity : forall G T A B r,
+    r <> nil ->
+    HR_complexity_seq (vec r (A +S B) ++ T) = fst (HR_complexity_hseq ((vec r (A +S B) ++ T) :: G)) ->
+    HR_complexity_hseq ((vec r A ++ vec r B ++ T) :: G) <2 HR_complexity_hseq ((vec r (A +S B) ++ T) :: G).
+Proof.
+  intros G T A B r Hnnil Heq.
+  simpl.
+  case_eq (HR_complexity_seq (vec r A ++ vec r B ++ T) =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r (A +S B) ++ T) =? fst (HR_complexity_hseq G)); intros H2; rewrite 2 complexity_seq_app in H1.
+  - exfalso.
+    destruct r; [ apply Hnnil; reflexivity | ].
+    apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
+    simpl in H1, H2.
+    rewrite complexity_seq_app in H2.
+    rewrite ? complexity_seq_vec in *.
+    simpl in H2.
+    lia.
+  - case_eq (HR_complexity_seq (vec r (A +S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + exfalso.
+      apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
+      destruct r; [ apply Hnnil; reflexivity | ].
+      simpl; rewrite complexity_seq_app in H2; rewrite complexity_seq_app in H3.
+      rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+    + apply fst_lt2.
+      apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+      lia.
+  - case_eq (HR_complexity_seq (vec r A ++ vec r B ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + apply snd_lt2.
+      lia.
+    + exfalso.
+      apply Nat.eqb_eq in H2; apply Nat.ltb_nlt in H3.
+      rewrite ? complexity_seq_app in *; destruct r ; [ apply Hnnil; reflexivity | ].
+      simpl in H2; rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+  - simpl in Heq; rewrite H2 in Heq.
+    case_eq (HR_complexity_seq (vec r A ++ vec r B ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3;
+      case_eq (HR_complexity_seq (vec r (A +S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+    + exfalso.
+      apply Nat.eqb_neq in H2; apply H2; apply Heq.
+    + apply fst_lt2.
+      apply Nat.ltb_nlt in H4; apply Nat.eqb_neq in H2; lia.
+    + exfalso.
+      apply Nat.ltb_nlt in H3; apply Nat.ltb_lt in H4.
+      rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; lia.
+    + apply fst_lt2.
+      rewrite ? complexity_seq_app; destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+      rewrite ? complexity_seq_vec; simpl; lia.
+Qed.
+
+Lemma hrr_mul_decrease_complexity : forall G T A r0 r,
+    r <> nil ->
+    HR_complexity_seq (vec r (r0 *S A) ++ T) = fst (HR_complexity_hseq ((vec r (r0 *S A) ++ T) :: G)) ->
+    HR_complexity_hseq ((vec (mul_vec r0 r) A ++ T) :: G) <2 HR_complexity_hseq ((vec r (r0 *S A) ++ T) :: G).
+Proof.
+  intros G T A r0 r Hnnil Heq.
+  simpl.
+  case_eq (HR_complexity_seq (vec (mul_vec r0 r) A ++ T) =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r (r0 *S A) ++ T) =? fst (HR_complexity_hseq G)); intros H2; rewrite complexity_seq_app in H1.
+  - exfalso.
+    destruct r; [ apply Hnnil; reflexivity | ].
+    apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
+    simpl in H1, H2.
+    rewrite complexity_seq_app in H2.
+    rewrite ? complexity_seq_vec in *.
+    simpl in H2.
+    rewrite mul_vec_length in H1.
+    lia.
+  - case_eq (HR_complexity_seq (vec r (r0 *S A) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + exfalso.
+      apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
+      destruct r; [ apply Hnnil; reflexivity | ].
+      simpl; rewrite complexity_seq_app in H2; rewrite complexity_seq_app in H3.
+      rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      rewrite mul_vec_length in H1.
+      lia.
+    + apply fst_lt2.
+      apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+      lia.
+  - case_eq (HR_complexity_seq (vec (mul_vec r0 r) A ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + apply snd_lt2.
+      lia.
+    + exfalso.
+      apply Nat.eqb_eq in H2; apply Nat.ltb_nlt in H3.
+      rewrite ? complexity_seq_app in *; destruct r ; [ apply Hnnil; reflexivity | ].
+      simpl in H2; rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      rewrite mul_vec_length in *; lia.
+  - simpl in Heq; rewrite H2 in Heq.
+    case_eq (HR_complexity_seq (vec (mul_vec r0 r) A ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3;
+      case_eq (HR_complexity_seq (vec r (r0 *S A) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+    + exfalso.
+      apply Nat.eqb_neq in H2; apply H2; apply Heq.
+    + apply fst_lt2.
+      apply Nat.ltb_nlt in H4; apply Nat.eqb_neq in H2; lia.
+    + exfalso.
+      apply Nat.ltb_nlt in H3; apply Nat.ltb_lt in H4.
+      rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; lia.
+    + apply fst_lt2.
+      rewrite ? complexity_seq_app; destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+      rewrite ? complexity_seq_vec; rewrite mul_vec_length in *; simpl; lia.
+Qed.
+
+Lemma hrr_min_r_decrease_complexity : forall G T A B r,
+    r <> nil ->
+    HR_complexity_seq (vec r (A /\S B) ++ T) = fst (HR_complexity_hseq ((vec r (A /\S B) ++ T) :: G)) ->
+    HR_complexity_hseq ((vec r A ++ T) :: G) <2 HR_complexity_hseq ((vec r (A /\S B) ++ T) :: G).
+  intros G T A B r Hnnil Heq.
+  simpl.
+  case_eq (HR_complexity_seq (vec r A ++ T) =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r (A /\S B) ++ T) =? fst (HR_complexity_hseq G)); intros H2; rewrite ? complexity_seq_app in H1.
+  - exfalso.
+    destruct r; [ apply Hnnil; reflexivity | ].
+    apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
+    simpl in H1, H2.
+    rewrite complexity_seq_app in H2.
+    rewrite ? complexity_seq_vec in *.
+    simpl in H2.
+    lia.
+  - case_eq (HR_complexity_seq (vec r (A /\S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + exfalso.
+      apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
+      destruct r; [ apply Hnnil; reflexivity | ].
+      simpl; rewrite complexity_seq_app in H2; rewrite complexity_seq_app in H3.
+      rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+    + apply fst_lt2.
+      apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+      lia.
+  - case_eq (HR_complexity_seq (vec r A ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + apply snd_lt2.
+      lia.
+    + exfalso.
+      apply Nat.eqb_eq in H2; apply Nat.ltb_nlt in H3.
+      rewrite ? complexity_seq_app in *; destruct r ; [ apply Hnnil; reflexivity | ].
+      simpl in H2; rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+  - simpl in Heq; rewrite H2 in Heq.
+    case_eq (HR_complexity_seq (vec r A ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3;
+      case_eq (HR_complexity_seq (vec r (A /\S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+    + exfalso.
+      apply Nat.eqb_neq in H2; apply H2; apply Heq.
+    + apply fst_lt2.
+      apply Nat.ltb_nlt in H4; apply Nat.eqb_neq in H2; lia.
+    + exfalso.
+      apply Nat.ltb_nlt in H3; apply Nat.ltb_lt in H4.
+      rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; lia.
+    + apply fst_lt2.
+      rewrite ? complexity_seq_app; destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+      rewrite ? complexity_seq_vec; simpl; lia.
+Qed.
+
+Lemma hrr_min_l_decrease_complexity : forall G T A B r,
+    r <> nil ->
+    HR_complexity_seq (vec r (A /\S B) ++ T) = fst (HR_complexity_hseq ((vec r (A /\S B) ++ T) :: G)) ->
+    HR_complexity_hseq ((vec r B ++ T) :: G) <2 HR_complexity_hseq ((vec r (A /\S B) ++ T) :: G).
+  intros G T A B r Hnnil Heq.
+  simpl.
+  case_eq (HR_complexity_seq (vec r B ++ T) =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r (A /\S B) ++ T) =? fst (HR_complexity_hseq G)); intros H2; rewrite complexity_seq_app in H1.
+  - exfalso.
+    destruct r; [ apply Hnnil; reflexivity | ].
+    apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
+    simpl in H1, H2.
+    rewrite complexity_seq_app in H2.
+    rewrite ? complexity_seq_vec in *.
+    simpl in H2.
+    lia.
+  - case_eq (HR_complexity_seq (vec r (A /\S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + exfalso.
+      apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
+      destruct r; [ apply Hnnil; reflexivity | ].
+      simpl; rewrite complexity_seq_app in H2; rewrite complexity_seq_app in H3.
+      rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+    + apply fst_lt2.
+      apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+      lia.
+  - case_eq (HR_complexity_seq (vec r B ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + apply snd_lt2.
+      lia.
+    + exfalso.
+      apply Nat.eqb_eq in H2; apply Nat.ltb_nlt in H3.
+      rewrite ? complexity_seq_app in *; destruct r ; [ apply Hnnil; reflexivity | ].
+      simpl in H2; rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+  - simpl in Heq; rewrite H2 in Heq.
+    case_eq (HR_complexity_seq (vec r B ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3;
+      case_eq (HR_complexity_seq (vec r (A /\S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+    + exfalso.
+      apply Nat.eqb_neq in H2; apply H2; apply Heq.
+    + apply fst_lt2.
+      apply Nat.ltb_nlt in H4; apply Nat.eqb_neq in H2; lia.
+    + exfalso.
+      apply Nat.ltb_nlt in H3; apply Nat.ltb_lt in H4.
+      rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; lia.
+    + apply fst_lt2.
+      rewrite ? complexity_seq_app; destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+      rewrite ? complexity_seq_vec; simpl; lia.
+Qed.
+
+Lemma hrr_max_decrease_complexity : forall G T A B r,
+    r <> nil ->
+    HR_complexity_seq (vec r (A \/S B) ++ T) = fst (HR_complexity_hseq ((vec r (A \/S B) ++ T) :: G)) ->
+    HR_complexity_hseq ((vec r B ++ T) :: (vec r A ++ T) :: G) <2 HR_complexity_hseq ((vec r (A \/S B) ++ T) :: G).
+Proof.
+  intros G T A B r Hnnil Heq.
+  simpl.
+  case_eq (HR_complexity_seq (vec r A ++ T) =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r (A \/S B) ++ T) =? fst (HR_complexity_hseq G)); intros H2; rewrite complexity_seq_app in H1.
+  - exfalso.
+    destruct r; [ apply Hnnil; reflexivity | ].
+    apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
+    simpl in H1, H2.
+    rewrite complexity_seq_app in H2.
+    rewrite ? complexity_seq_vec in *.
+    simpl in H2.
+    lia.
+  - case_eq (HR_complexity_seq (vec r (A \/S B) ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+    + exfalso.
+      apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
+      destruct r; [ apply Hnnil; reflexivity | ].
+      simpl; rewrite complexity_seq_app in H2; rewrite complexity_seq_app in H3.
+      rewrite ? complexity_seq_vec in *; simpl in H1,H2,H3.
+      lia.
+    + simpl.
+      case_eq (HR_complexity_seq (vec r B ++ T) =? fst (HR_complexity_hseq G)); intros H4.
+      * apply fst_lt2.
+        apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+        lia.
+      * case_eq (HR_complexity_seq (vec r B ++ T) <? fst (HR_complexity_hseq G))%nat; intros H5.
+        -- apply fst_lt2.
+           apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
+           lia.
+        -- apply fst_lt2.
+           rewrite ? complexity_seq_app; rewrite ? complexity_seq_vec; destruct r; [ exfalso; apply Hnnil; reflexivity | ]; simpl; lia.        
+  - replace (HR_complexity_seq (vec r A ++ T) <? fst (HR_complexity_hseq G))%nat with true.
+    2:{ symmetry.
+        apply Nat.ltb_lt; apply Nat.eqb_neq in H1; apply Nat.eqb_eq in H2.
+        rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; simpl in *; lia. }
+    simpl.
+    replace (HR_complexity_seq (vec r B ++ T) =? fst (HR_complexity_hseq G)) with false.
+    2:{ symmetry.
+        apply Nat.eqb_neq; apply Nat.eqb_eq in H2.
+        destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+        rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; simpl in *; lia. }
+    replace (HR_complexity_seq (vec r B ++ T) <? fst (HR_complexity_hseq G))%nat with true.
+    2:{ symmetry.
+        apply Nat.ltb_lt; apply Nat.eqb_eq in H2.
+        destruct r; [ exfalso; apply Hnnil; reflexivity | ].
+        rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *; simpl in *; lia. }
+    apply snd_lt2; lia.
+  - simpl in Heq.
+    rewrite H2 in Heq.
+    assert ((HR_complexity_seq (vec r (A \/S B) ++ T) <? fst (HR_complexity_hseq G))%nat = false) as H3.
+    { apply Nat.ltb_nlt; apply Nat.eqb_neq in H2.
+      intros H; apply Nat.ltb_lt in H.
+      rewrite H in Heq.
+      simpl in Heq.
+      apply H2; apply Heq. }
+    rewrite H3; clear Heq.
+    case_eq (HR_complexity_seq (vec r A ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; simpl.
+    + case (HR_complexity_seq (vec r B ++ T) =? fst (HR_complexity_hseq G));
+        [ | case (HR_complexity_seq (vec r B ++ T) <? fst (HR_complexity_hseq G))%nat];
+        apply fst_lt2; apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3; apply Nat.ltb_lt in H4;
+          rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *;
+            (destruct r; [ exfalso; apply Hnnil; reflexivity | ]); simpl in *; lia.
+    + case (HR_complexity_seq (vec r B ++ T) =? HR_complexity_seq (vec r A ++ T));
+        [ | case (HR_complexity_seq (vec r B ++ T) <? HR_complexity_seq (vec r A ++ T))%nat];
+      apply fst_lt2;
+        rewrite ? complexity_seq_app in *; rewrite ? complexity_seq_vec in *;
+          (destruct r; [ exfalso; apply Hnnil; reflexivity | ]); simpl in *; lia.
 Qed.
