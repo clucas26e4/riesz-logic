@@ -17,7 +17,9 @@ Inductive Rcontext : Type :=
 | R_minC : Rcontext -> Rcontext -> Rcontext
 | R_maxC : Rcontext -> Rcontext -> Rcontext
 | R_plusC : Rcontext -> Rcontext -> Rcontext
-| R_mulC : R -> Rcontext -> Rcontext.
+| R_mulC : R -> Rcontext -> Rcontext
+| R_oneC
+| R_diamondC : Rcontext -> Rcontext.
 
 Fixpoint evalRcontext (c : Rcontext) (t : Rterm) : Rterm :=
   match c with
@@ -29,6 +31,8 @@ Fixpoint evalRcontext (c : Rcontext) (t : Rterm) : Rterm :=
   | R_maxC c1 c2 => R_max (evalRcontext c1 t) (evalRcontext c2 t)
   | R_plusC c1 c2 => R_plus (evalRcontext c1 t) (evalRcontext c2 t)
   | R_mulC x c => R_mul x (evalRcontext c t)
+  | R_oneC => R_one
+  | R_diamondC c => R_diamond (evalRcontext c t)
   end.
 
 (** ** Equational Reasoning *)
@@ -55,6 +59,12 @@ Inductive R_eqMALG : Rterm -> Rterm -> Type :=
 | R_asso_min t1 t2 t3 : R_eqMALG (R_min t1 (R_min t2 t3)) (R_min (R_min t1 t2) t3)
 | R_commu_min t1 t2 : R_eqMALG (R_min t1 t2) (R_min t2 t1)
 | R_abso_min t1 t2 : R_eqMALG (R_min t1 (R_max t1 t2)) t1
+(** modal axioms *)
+| R_diamond_linear t1 t2 : R_eqMALG (<R> (t1 +R t2)) ((<R> t1) +R (<R> t2))
+| R_diamond_mul r t : R_eqMALG (<R> (r *R t)) (r *R <R> t)
+| R_diamond_one : R_eqMALG ((<R> R_one) /\R R_one) (<R> R_one)
+| R_diamond_pos t : R_eqMALG (R_zero /\R <R> (t \/R R_zero)) R_zero
+| R_one_pos : R_eqMALG (R_zero /\R R_one) R_zero
 (** compability axiom *)
 | R_compa_R_plus_ax t1 t2 t3 : R_eqMALG (R_min (R_plus (R_min t1 t2) t3) (R_plus t2 t3)) (R_plus (R_min t1 t2) t3)
 | R_compa_mul_ax r t : 0 <= r -> R_eqMALG (R_min R_zero (R_mul r (R_max t R_zero))) R_zero.    
@@ -177,7 +187,17 @@ Qed.
 Global Instance minus_cong_instance : Proper (R_eqMALG ==> R_eqMALG) (R_mul (-1)) | 10.
 Proof. repeat intro; now apply minus_cong. Qed.
 
-Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_cong R_mul_left R_mul_right : core.
+Lemma diamond_cong : forall A B, A =R= B -> (<R> A =R= <R> B).
+Proof.
+  intros A B eq.
+  apply (@R_ctxt (R_diamondC R_hole)).
+  apply eq.
+Qed.
+
+Global Instance diamond_cong_instance : Proper (R_eqMALG ==> R_eqMALG) R_diamond | 10.
+Proof. repeat intro; now apply diamond_cong. Qed.
+
+Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_cong R_mul_left R_mul_right diamond_cong : core.
 
 Lemma evalContext_cong : forall c t1 t2, t1 =R= t2 -> evalRcontext c t1 =R= evalRcontext c t2.
 Proof.

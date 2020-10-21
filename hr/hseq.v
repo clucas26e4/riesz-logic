@@ -1,3 +1,4 @@
+(** * Definition of hypersquents and sequents *)
 Require Import Rpos.
 Require Import term.
 Require Import semantic.
@@ -20,9 +21,11 @@ Local Open Scope R_scope.
                                                 
 Definition sequent : Set := list (Rpos * term).
 
-Definition seq_is_atomic (T : sequent) := Forall_Type (fun x => match x with (a , A) => is_atom A end) T.
-
 Definition hypersequent : Set := list sequent.
+
+(** ** Property stating whether or not a (hyper)sequent is atomic *)
+
+Definition seq_is_atomic (T : sequent) := Forall_Type (fun x => match x with (a , A) => is_atom A end) T.
 
 Definition hseq_is_atomic G := Forall_Type seq_is_atomic G.
 
@@ -72,63 +75,85 @@ Fixpoint subs_seq (D : sequent) n t :=
   | (r, A) :: D => (r , subs A n t) :: (subs_seq D n t)
   end.
 
-(** ** Definitions and properties of \vec{r}.A *)
-
+(** ** Definitions \vec{r}.A and variants *)
+(** return the list \vec{l}.A *)
 Fixpoint vec (l : list Rpos) (A : term) :=
   match l with
   | nil => nil
   | r :: l => (r , A) :: (vec l A)
   end.
 
+(** return \sum\vec{l} *)
 Fixpoint sum_vec (l : list Rpos) :=
   match l with
   | nil => 0%R
   | r :: l => Rplus (projT1 r) (sum_vec l)
   end.
 
+(** return the list T,...,T n-times *)
 Fixpoint copy_seq n (T : sequent) :=
   match n with
   | 0 => nil
   | S n => (copy_seq n T) ++ T
   end.
 
+(** return the vector (r\vec{l]) *)
 Fixpoint mul_vec r (l : list Rpos) :=
   match l with
   | nil => nil
   | r0 :: l => (time_pos r r0) :: (mul_vec r l)
   end.
 
+(** return the vector (\vec{l1}\vec{l2}) *)
 Fixpoint vec_mul_vec l1 l2 :=
   match l1 with
   | nil => nil
   | r :: l1 => (mul_vec r l2) ++ (vec_mul_vec l1 l2)
   end.
 
-(** ** Sum of the weights *)
+(** return the list r.T *)
+Fixpoint seq_mul (r : Rpos) (T : sequent) :=
+  match T with
+  | nil => nil
+  | ((a , A) :: T) => (time_pos r a, A) :: (seq_mul r T)
+  end.
+
+(** return the list \vec{vr}.T *)
+Fixpoint seq_mul_vec vr T :=
+  match vr with
+  | nil => nil
+  | r :: vr => (seq_mul r T) ++ (seq_mul_vec vr T)
+  end.
+
+(** ** Sum of the weights of the atoms *)
+(** sum_weight_seq_var n T return the sum of the weights of the formula (var n) that appears in the sequent T. *)
 Fixpoint sum_weight_seq_var n (T : sequent) :=
   match T with
   | nil => 0
   | ((r , var n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_var n T else sum_weight_seq_var n T
   | ( _ :: T) => sum_weight_seq_var n T
   end.
+(** sum_weight_seq_covar n T return the sum of the weights of the formula (covar n) that appears in the sequent T. *)
 Fixpoint sum_weight_seq_covar n (T : sequent) :=
   match T with
   | nil => 0
   | ((r , covar n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_covar n T else sum_weight_seq_covar n T
   | ( _ :: T) => sum_weight_seq_covar n T
   end.
+(** sum_weight_var n G return the sum of the weights of the formula (var n) that appears in the hypersequent G. *)
 Fixpoint sum_weight_var n G :=
   match G with
   | nil => 0
   | T :: G => sum_weight_seq_var n T + sum_weight_var n G
   end.
+(** sum_weight_covar n G return the sum of the weights of the formula (covar n) that appears in the hypersequent G. *)
 Fixpoint sum_weight_covar n G :=
   match G with
   | nil => 0
   | T :: G => sum_weight_seq_covar n T + sum_weight_covar n G
   end.
 
-(** * Properties *)
+(** * Lemmas *)
 (** ** vec *)
 Lemma sum_vec_le_0 : forall r, (0 <= sum_vec r)%R.
   induction r; [ | destruct a as [a Ha]; simpl;  apply (R_blt_lt 0 a) in Ha]; simpl; try nra.
@@ -460,12 +485,6 @@ Qed.
 
 (** ** Sequent *)
 
-Fixpoint seq_mul (r : Rpos) (T : sequent) :=
-  match T with
-  | nil => nil
-  | ((a , A) :: T) => (time_pos r a, A) :: (seq_mul r T)
-  end.
-
 Lemma seq_mul_One : forall T, seq_mul One T = T.
   induction T; try reflexivity.
   destruct a as (a , A).
@@ -490,12 +509,6 @@ Proof.
   replace (time_pos r1 (time_pos r2 a)) with (time_pos (time_pos r1 r2) a) by (apply Rpos_eq;destruct r1; destruct r2; destruct a; simpl; nra).
   reflexivity.
 Qed.
-
-Fixpoint seq_mul_vec vr T :=
-  match vr with
-  | nil => nil
-  | r :: vr => (seq_mul r T) ++ (seq_mul_vec vr T)
-  end.
 
 Lemma seq_mul_vec_nil_r : forall vr,
     seq_mul_vec vr nil = nil.
@@ -1016,7 +1029,7 @@ Proof.
   - split with ((a, A1 /\S A2), T); auto.
 Qed.
 
-(** Complexity related theorem *)
+(** ** Complexity *)
 
 Lemma complexity_seq_perm : forall T1 T2,
     Permutation_Type T1 T2 ->

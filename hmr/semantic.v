@@ -23,7 +23,10 @@ Inductive context : Type :=
 | minC : context -> context -> context
 | maxC : context -> context -> context
 | plusC : context -> context -> context
-| mulC : Rpos -> context -> context.
+| mulC : Rpos -> context -> context
+| oneC : context
+| cooneC : context
+| diamondC : context -> context.
 
 Fixpoint evalContext (c : context) (t : term) : term :=
   match c with
@@ -37,6 +40,9 @@ Fixpoint evalContext (c : context) (t : term) : term :=
   | maxC c1 c2 => max (evalContext c1 t) (evalContext c2 t)
   | plusC c1 c2 => plus (evalContext c1 t) (evalContext c2 t)
   | mulC x c => mul x (evalContext c t)
+  | oneC => one
+  | cooneC => coone
+  | diamondC c => diamond (evalContext c t)
   end.
 
 Fixpoint minusC c :=
@@ -51,6 +57,9 @@ Fixpoint minusC c :=
   | mulC r c1 => mulC r (minusC c1)
   | maxC c1 c2 => minC (minusC c1) (minusC c2)
   | minC c1 c2 => maxC (minusC c1) (minusC c2)
+  | oneC => cooneC
+  | cooneC => oneC
+  | diamondC c => diamondC (minusC c)
   end.
 
 (** ** Equational Reasoning *)
@@ -79,6 +88,12 @@ Inductive eqMALG : term -> term -> Type :=
 | asso_min t1 t2 t3 : eqMALG (min t1 (min t2 t3)) (min (min t1 t2) t3)
 | commu_min t1 t2 : eqMALG (min t1 t2) (min t2 t1)
 | abso_min t1 t2 : eqMALG (min t1 (max t1 t2)) t1
+(** modal axioms *)
+| diamond_linear t1 t2 : eqMALG (<S> (t1 +S t2)) ((<S> t1) +S (<S> t2))
+| diamond_mul r t : eqMALG (<S> (r *S t)) (r *S <S> t)
+| diamond_one : eqMALG ((<S> one) /\S one) (<S> one)
+| diamond_pos t : eqMALG (zero /\S <S> (t \/S zero)) zero
+| one_pos : eqMALG (zero /\S one) zero
 (** compability axiom *)
 | compa_plus_ax t1 t2 t3 : eqMALG (min (plus (min t1 t2) t3) (plus t2 t3)) (plus (min t1 t2) t3)
 | compa_mul_ax r t : eqMALG (min zero (mul r (max t zero))) zero.    
@@ -201,7 +216,17 @@ Qed.
 Global Instance minus_cong_instance : Proper (eqMALG ==> eqMALG) minus | 10.
 Proof. repeat intro; now apply minus_cong. Qed.
 
-Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_cong mul_left mul_right : core.
+Lemma diamond_cong : forall A B, A === B -> (<S> A === <S> B).
+Proof.
+  intros A B eq.
+  apply (@ctxt (diamondC hole)).
+  apply eq.
+Qed.
+
+Global Instance diamond_cong_instance : Proper (eqMALG ==> eqMALG) diamond | 10.
+Proof. repeat intro; now apply diamond_cong. Qed.
+
+Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_cong mul_left mul_right diamond_cong : core.
 
 Lemma evalContext_cong : forall c t1 t2, t1 === t2 -> evalContext c t1 === evalContext c t2.
 Proof.
@@ -1062,40 +1087,22 @@ Proof with try reflexivity.
   - simpl; case (n' =? n)...
     rewrite minus_minus...
   - simpl; rewrite IHA...
+  - simpl; rewrite IHA...
 Qed.
 
-Lemma plus_pos_min : forall A B C, zero <== A -> zero <== B -> zero <== C -> A +S B /\S C <== (A /\S C) +S (B /\S C).
+Lemma diamond_zero : <S> zero === zero.
 Proof.
-  intros A B C H1 H2 H3.
-  apply leq_plus_right.
-  apply leq_min.
-  - apply leq_minus_left.
-    rewrite (commu_plus A (B /\S C)).
-    apply leq_plus_right.
-    apply leq_min.
-    + apply leq_minus_left.
-      rewrite (commu_plus B A).
-      apply min_leq.
-    + apply leq_trans with (A +S B /\S C).
-      * apply leq_minus_left.
-        rewrite <- (neutral_plus (A +S B /\S C)) at 1 3.
-        apply leq_plus_cong; try assumption.
-        apply leq_refl.
-      * rewrite (commu_min (A +S B) C).
-        apply min_leq.
-  - apply leq_minus_left.
-    rewrite (commu_plus C (B /\S C)).
-    apply leq_plus_right.
-    apply leq_min.
-    + apply leq_minus_left.
-      rewrite (commu_plus B C).
-      rewrite <-(neutral_plus (A +S B /\S C)).
-      apply leq_plus_cong; try assumption.
-      rewrite (commu_min (A +S B) C).
-      apply min_leq.
-    + apply leq_minus_left.
-      rewrite <-(neutral_plus (A +S B /\S C)).
-      apply leq_plus_cong; try assumption.
-      rewrite (commu_min (A +S B) C).
-      apply min_leq.
+  rewrite <- (opp_plus zero) at 1.
+  rewrite diamond_linear.
+  apply opp_plus.
+Qed.
+
+Lemma leq_diamond : forall A, zero <== A -> zero <== (<S> A).
+Proof.
+  intros A Hleq.
+  apply leq_cong_r with (<S> (A \/S zero)).
+  2:{ apply diamond_pos. }
+  apply diamond_cong.
+  symmetry; rewrite commu_max; apply min_max.
+  apply Hleq.
 Qed.

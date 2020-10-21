@@ -10,6 +10,12 @@ Proof.
   case (Rle_dec b a); [intros Hle'; left; nra | intros Hnle; right; nra].
 Qed.
 
+Lemma INR_S_n_pos : forall n, 0 < INR (S n).
+Proof.
+  intros n; rewrite S_INR; apply Rle_lt_0_plus_1.
+  apply pos_INR.
+Qed.
+
 (* Boolean version of Lt for real *)
 Definition R_lt_dec (a b : R) : bool.
   case (Rlt_dec a b).
@@ -34,6 +40,10 @@ Proof.
   exfalso; apply Hblt; apply Hlt.
 Qed.
 
+Lemma INR_S_n_pos_b : forall n, 0 <? INR (S n) = true.
+Proof.
+  intros n; apply R_blt_lt; apply INR_S_n_pos.
+Qed.
 
 (* Strictly postive real numbers *)
 Definition Rpos := {r : R & 0 <? r = true}.
@@ -89,6 +99,24 @@ Proof.
   rewrite (Heq Hb); now rewrite (Heq Hb').
 Qed.
 
+Lemma inv_pos_l : forall a,
+    time_pos (inv_pos a) a = One.
+Proof.
+  destruct a as [a Ha].
+  apply Rpos_eq; simpl.
+  apply R_blt_lt in Ha.
+  apply Rinv_l; intros H; nra.
+Qed.
+
+Lemma inv_pos_r : forall a,
+    time_pos a (inv_pos a) = One.
+Proof.
+  destruct a as [a Ha].
+  apply Rpos_eq; simpl.
+  apply R_blt_lt in Ha.
+  apply Rinv_r; intros H; nra.
+Qed.
+
 Definition le_pos (a b : Rpos) : Prop.
   destruct a as [a Ha]; destruct b as [b Hb].
   now apply ((a <= b)%R).
@@ -98,5 +126,9 @@ Definition ble_pos (a b : Rpos) : bool.
   destruct a as [a Ha]; destruct b as [b Hb].
   case (Rle_dec a b); intros _; [ apply true | apply false].
 Defined.
+
+(* Natural numbers to Rpos
+   INRpos n = (n+1) *)
+Definition INRpos (n : nat) : Rpos := existT (fun x => 0 <? x = true) (INR (S n)) (INR_S_n_pos_b n).
 
 (* Properties on strictly positive real numbers *)

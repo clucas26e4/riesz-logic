@@ -1,8 +1,10 @@
+(** * Implementation of Section 3.7 *)
 Require Import Rpos.
 Require Import term.
 Require Import semantic.
 Require Import hseq.
 Require Import hr.
+Require Import tech_lemmas.
 
 Require Import CMorphisms.
 Require Import List_Type_more.
@@ -12,6 +14,7 @@ Require Import Permutation_Type_solve.
 Require Import Bool_more.
 Require Import Lra.
 
+(** Proof of Lemma 3.40 *)
 Lemma hrr_mul_vec : forall L,
     HR_T (map (fun x => snd x) L) ->
     HR_T (map (fun x => seq_mul_vec (fst x) (snd x)) L).
@@ -148,7 +151,8 @@ Proof.
     apply Heq.
   - inversion f.
 Qed.
-    
+
+(** Proof of Lemma 3.39 *)
 Lemma hrr_M_gen : forall L H D,
     HR_T (map (fun x => snd x) L) ->
     HR_T (D :: H) ->
@@ -262,6 +266,7 @@ Proof.
   - inversion f.
 Qed.
 
+(** Proof of Theorem 3.12 *)
 Lemma hrr_M_elim : forall G,
     HR_T_M G ->
     HR_T G.

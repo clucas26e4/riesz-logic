@@ -1,21 +1,26 @@
+(** * Implementation of Section 3.5 *)
 Require Import Rpos.
 Require Import term.
 Require Import hseq.
 Require Import hr.
 Require Import semantic.
 Require Import interpretation.
+Require Import lambda_prop_tools.
+Require Import tech_lemmas.
 Require Import tactics.
+Require Import riesz_logic_List_more.
 
-Require Import List_more.
+Require Import List_Type_more.
 Require Import Bool_more.
 Require Import Permutation_Type_more.
 Require Import Permutation_Type_solve.
 Require Import Lra.
+Require Import Lia.
 
 Local Open Scope R_scope.
 
-(* First formulation *)
-                                                                   
+(** ** First formulation : A = B implies |- 1.A,1.-B and |- 1.B, 1.-A are derivable *)
+(** Proof of Lemma 3.28 *)
 Lemma completeness_1 : forall A B r, A === B -> HR_M_can (((r, -S B) :: (r, A) :: nil) :: nil)
 with completeness_2 : forall A B r, A === B -> HR_M_can (((r, -S A) :: (r, B) :: nil) :: nil).
 Proof with try assumption; try reflexivity.
@@ -416,8 +421,8 @@ Proof with try assumption; try reflexivity.
       apply hrr_INIT.
 Qed.
 
-(* Second formulation *)
-
+(** ** Second formulation *)
+(** We use the can rule and the M rule to go from a proof |- 1.[G] to a proof of G *)
 Lemma HR_sem_seq P : forall G T D,
     HR P (((One, sem_seq T) :: D) :: G) ->
     HR (hr_frag_add_CAN (hr_frag_add_M P)) ((T ++ D) :: G).
@@ -465,6 +470,7 @@ Proof with try assumption; try reflexivity.
     apply pi.
 Qed.
 
+(** Proof of the completeness of the system of HR - hr_complete return a T free proof of G *)
 Lemma hr_complete : forall G,
     G <> nil ->
     zero <== sem_hseq G ->
@@ -477,4 +483,308 @@ Proof with try assumption.
   change ((One , sem_hseq G) :: nil) with ((vec (One :: nil) (sem_hseq G)) ++ nil).
   apply (@hrr_min_can_inv_r hr_frag_M_can) with zero.
   apply (@hrr_Z_can_inv hr_frag_M_can) with (One :: nil)...
+Qed.
+
+(** Proof of Lemma 3.31 *)
+
+(** Proof of Lemma 3.32 *)
+Lemma int_lambda_prop :
+  forall G,
+    hseq_is_atomic G ->
+    HR_M G ->
+    { L &
+      prod (length L = length G)
+           ((Exists_Type (fun x => (0 < x)%nat) L) *
+            (forall n, sum_weight_with_coeff n G (map (fun x => INR x) L) = 0))}.
+Proof.
+  intros G Ha pi.
+  induction pi.
+  - split with (1%nat :: nil).
+    repeat split; try reflexivity.
+    + apply Exists_Type_cons_hd.
+      lia.
+    + intros n.
+      simpl; nra.
+  - inversion Ha; subst.
+    destruct (IHpi X0) as [L [Hlen [Hex Hsum]]].
+    split with (0%nat :: L).
+    repeat split; auto.
+    + simpl; rewrite Hlen; reflexivity.
+    + intros n.
+      simpl.
+      rewrite (Hsum n).
+      nra.
+  - inversion Ha; subst.
+    destruct IHpi as [L [Hlen [Hex Hsum]]].
+    { apply Forall_Type_cons ;[ | apply Forall_Type_cons]; try assumption. }
+    destruct L; [ | destruct L]; try now inversion Hlen.
+    split with (((n + n0)%nat) :: L).
+    repeat split; auto.
+    + inversion Hex; subst.
+      * apply Exists_Type_cons_hd.
+        lia.
+      * inversion X1; subst; auto.
+        apply Exists_Type_cons_hd; lia.
+    + intros n1.
+      simpl.
+      specialize (Hsum n1).
+      simpl in Hsum.
+      rewrite plus_INR.
+      nra.
+  - inversion Ha; inversion X0; subst.
+    destruct IHpi as [L [Hlen [Hex Hsum]]].
+    { apply Forall_Type_cons; try assumption.
+      apply seq_atomic_app; assumption. }
+    destruct L; try now inversion Hlen.
+    split with (n :: n :: L).
+    repeat split; auto.
+    + simpl in *; rewrite Hlen; reflexivity.
+    + intro n1.
+      specialize (Hsum n1).
+      simpl in *.
+      rewrite sum_weight_seq_var_app in Hsum.
+      rewrite sum_weight_seq_covar_app in Hsum.
+      nra.
+  - inversion Ha; subst.
+    destruct IHpi1 as [L1 [Hlen1 [Hex1 Hsum1]]].
+    { apply Forall_Type_cons ; [ apply seq_atomic_app_inv_l with T2 | ]; try assumption. }
+    destruct L1; try now inversion Hlen1.
+    destruct n.
+    { split with (0%nat :: L1).
+      repeat split; auto.
+      intros n; specialize (Hsum1 n).
+      simpl in *; nra. }
+    destruct IHpi2 as [L2 [Hlen2 [Hex2 Hsum2]]].
+    { apply Forall_Type_cons ; [ apply seq_atomic_app_inv_r with T1 | ]; try assumption. }
+    destruct L2; try now inversion Hlen2.
+    destruct n0.
+    { split with (0%nat :: L2).
+      repeat split; auto.
+      intros n0; specialize (Hsum2 n0).
+      simpl in *; nra. }
+    split with (((S n) * (S n0))%nat :: add_nat_list (map (Nat.mul (S n0)) L1) (map (Nat.mul (S n)) L2)).
+    repeat split; auto.
+    + simpl in Hlen1, Hlen2; simpl.
+      rewrite add_nat_list_length ; [ rewrite map_length; assumption | ].
+      rewrite 2 map_length.
+      lia.
+    + apply Exists_Type_cons_hd.
+      lia.
+    + intros n1; specialize (Hsum1 n1); specialize (Hsum2 n1); simpl in Hsum1, Hsum2.
+      simpl.
+      rewrite sum_weight_seq_var_app; rewrite sum_weight_seq_covar_app.
+      rewrite sum_weight_with_coeff_add_nat_list ; [ | simpl in Hlen1, Hlen2; simpl; rewrite 2 map_length; lia].
+      change (fun m : nat => (m + n0 * m)%nat) with (Nat.mul (S n0)).
+      change (fun m : nat => (m + n * m)%nat) with (Nat.mul (S n)).
+      change (fun x : nat => INR x) with INR in *.
+      rewrite 2 sum_weight_with_coeff_mul_nat_list.
+      change (match (n0 + n * S n0)%nat with
+              | 0%nat => 1
+              | S _ => INR (n0 + n * S n0) + 1
+              end)
+        with (INR ((S n) * (S n0))).
+      change (match n with
+              | 0%nat => 1
+              | S _ => INR n + 1
+              end) with (INR (S n)) in Hsum1.
+      change (match n0 with
+              | 0%nat => 1
+              | S _ => INR n0 + 1
+              end) with (INR (S n0)) in Hsum2.
+      rewrite mult_INR.
+      nra.
+  - inversion f.
+  - inversion Ha; subst.
+    destruct IHpi as [L [Hlen [Hex Hsum]]].
+    { apply Forall_Type_cons; try assumption.
+      eapply seq_atomic_app_inv_r; eapply seq_atomic_app_inv_r; apply X. }
+    split with L.
+    repeat split; auto.
+    intros n0; specialize (Hsum n0).
+    destruct L; try now inversion Hlen.
+    simpl; rewrite ? sum_weight_seq_app.
+    case_eq (n0 =? n); intros H.
+    + apply Nat.eqb_eq in H; subst.
+      rewrite ? sum_weight_seq_var_app;rewrite ? sum_weight_seq_covar_app.
+      rewrite sum_weight_seq_covar_vec_covar_eq;rewrite sum_weight_seq_var_vec_var_eq.
+      rewrite sum_weight_seq_var_vec_neq; [ | now auto ]; rewrite sum_weight_seq_covar_vec_neq; [ | now auto].
+      simpl in Hsum.
+      nra.
+    + apply Nat.eqb_neq in H.
+      rewrite ? sum_weight_seq_var_app;rewrite ? sum_weight_seq_covar_app.
+      rewrite ? sum_weight_seq_covar_vec_neq ; [ | now auto | intro H'; inversion H'; now auto]; rewrite ? sum_weight_seq_var_vec_neq; [ | intro H'; inversion H'; now auto | now auto ].
+      simpl in Hsum.
+      nra.
+  - destruct r; [ | inversion Ha; inversion X; inversion X1].
+    destruct (IHpi Ha) as [L [Hlen [Hex Hsum]]].
+    split with L.
+    repeat split; try assumption.
+  - destruct r; [ | inversion Ha; inversion X; inversion X1].
+    destruct (IHpi Ha) as [L [Hlen [Hex Hsum]]].
+    split with L.
+    repeat split; try assumption.
+  - destruct r; [ | inversion Ha; inversion X; inversion X1].
+    destruct (IHpi Ha) as [L [Hlen [Hex Hsum]]].
+    split with L.
+    repeat split; try assumption.
+  - destruct r; [ | inversion Ha; inversion X; inversion X1].
+    destruct IHpi as [L [Hlen [Hex Hsum]]].
+    { inversion Ha; subst.
+      apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption. }
+    destruct L ; [ | destruct L]; try now inversion Hlen.
+    split with ((n + n0)%nat :: L).
+    repeat split; auto.
+    + inversion Hex; subst.
+      * apply Exists_Type_cons_hd.
+        lia.
+      * inversion X; subst; auto.
+        apply Exists_Type_cons_hd; lia.
+    + intros n1.
+      simpl.
+      specialize (Hsum n1).
+      simpl in Hsum.
+      rewrite plus_INR.
+      nra.
+  - destruct r; [ | inversion Ha; inversion X; inversion X1].
+    destruct (IHpi1 Ha) as [L [Hlen [Hex Hsum]]].
+    split with L.
+    repeat split; try assumption.
+  - destruct IHpi as [L [Hlen [Hex Hsum]]].
+    { inversion Ha; subst.
+      apply Forall_Type_cons; try assumption.
+      apply seq_atomic_perm with T2; [ perm_Type_solve | apply X]. }
+    split with L.
+    destruct L; try now inversion Hlen.
+    repeat split; auto.
+    intro n1; specialize (Hsum n1).
+    simpl in *.
+    rewrite <- (sum_weight_seq_var_perm _ _ _ p); rewrite <- (sum_weight_seq_covar_perm _ _ _ p); apply Hsum.
+  - destruct IHpi as [L [Hlen [Hex Hsum]]].
+    { apply hseq_atomic_perm with H; try assumption.
+      symmetry; apply p. }
+    destruct (sum_weight_with_coeff_perm_r G H (map (fun x => INR x) L) p) as [L' [Hperm' H']].
+    { rewrite map_length.
+      apply Hlen. }
+    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym Hperm')) as [L'' Heq Hperm''].
+    split with L''.
+    repeat split.
+    + apply Permutation_Type_length in p.
+      apply Permutation_Type_length in Hperm'.
+      apply Permutation_Type_length in Hperm''.
+      lia.
+    + apply Exists_Type_Permutation_Type with L; assumption.
+    + intros n.
+      rewrite <- Heq.
+      rewrite <- (H' n); apply Hsum.
+  - inversion f.
+Qed.
+         
+Lemma int_lambda_prop_inv :
+  forall G,
+    hseq_is_atomic G ->
+    { L &
+      prod (length L = length G)
+           ((Exists_Type (fun x => (0 < x)%nat) L) *
+            (forall n, sum_weight_with_coeff n G (map (fun x => INR x) L) = 0))} ->
+    HR_M G.
+Proof.
+  enough (forall G H,
+             hseq_is_atomic G ->
+             hseq_is_atomic H ->
+             { L &
+               prod (length L = length G)
+                    ((Exists_Type (fun x => (0 < x)%nat) L) *
+                     (forall n, (sum_weight_var n H - sum_weight_covar n H) + sum_weight_with_coeff n G (map (fun x => INR x) L) = 0))} + HR_M H ->
+             HR_M (H ++  G)).
+  { intros G Hat [L [Hlen [Hex Hsum]]].
+    change G with (nil ++ G).
+    refine (X G nil Hat _ _).
+    - apply Forall_Type_nil.
+    - left.
+      split with L.
+      repeat split; auto.
+      intros n; specialize (Hsum n); simpl in *; nra. }
+  intros G.
+  remember (length G) as n.
+  revert G Heqn.
+  induction n; intros G Heqn H HatG HatH [ [L [Hlen [Hex Hsum]]] | pi].
+  - destruct L; inversion Hlen; inversion Hex.
+  - destruct G; inversion Heqn; rewrite app_nil_r; apply pi.
+  - destruct (Exists_Type_split _ _ _ Hex) as [[[r La] Lb] [Hp HeqL]].
+    assert (Permutation_Type (map (fun x => INR x) L) (map (fun x => INR x) (r :: La ++ Lb))) as Hperm by (rewrite HeqL ; perm_Type_solve).
+    destruct (sum_weight_with_coeff_perm_l G _ _ Hperm) as [G' [HpermG Hsum']].
+    { rewrite map_length; lia. }
+    destruct G' as [ | T G'].
+    { symmetry in HpermG; apply Permutation_Type_nil in HpermG.
+      subst; inversion Heqn. }
+    apply hrr_ex_hseq with (T :: H ++ G') ; [ perm_Type_solve | ].
+    apply lt_INR in Hp.
+    change (INR 0) with 0 in Hp.
+    apply (Permutation_Type_Forall_Type _ _ _ HpermG) in HatG.
+    inversion HatG; clear x l H1 H2.
+    destruct r.
+    { exfalso.
+      simpl in Hp; nra. }
+    apply R_blt_lt in Hp.
+    apply hrr_C_copy with r.
+    change (copy_seq (S r) T :: H ++ G') with ((copy_seq (S r) T :: H) ++ G').
+    apply IHn.
+    + rewrite (Permutation_Type_length HpermG) in Heqn; simpl in Heqn.
+      apply eq_add_S; apply Heqn.
+    + apply X0.
+    + apply Forall_Type_cons; try assumption.
+      apply copy_seq_atomic; assumption.
+    + destruct (Forall_Exists_Type_dec (fun x => x = 0%nat)) with (La ++ Lb).
+      { intro x; destruct x; [ left | right]; lia. }
+      * right.
+        apply atomic_proof_all_eq.
+        -- apply copy_seq_atomic; assumption.
+        -- apply HatH.
+        -- intros n0.
+           specialize (Hsum' n0); specialize (Hsum n0).
+           simpl in *.
+           change (match r with
+                   | 0%nat => 1
+                   | S _ => INR r + 1
+                   end) with (INR (S r)) in *.
+           rewrite (sum_weight_with_coeff_all_0 _ (map (fun x => INR x) (La ++ Lb))) in Hsum'.
+           ++ rewrite sum_weight_seq_var_app; rewrite sum_weight_seq_covar_app; rewrite sum_weight_seq_var_copy; rewrite sum_weight_seq_covar_copy; simpl.
+              rewrite S_INR in Hsum'.
+              nra.
+           ++ remember (La ++ Lb); clear - f.
+              induction l; simpl in *; auto.
+              inversion f; subst.
+              apply Forall_Type_cons; auto.
+      * left.
+        split with (La ++ Lb).
+        repeat split.
+        -- rewrite HeqL in Hlen.
+           rewrite app_length; rewrite app_length in Hlen; simpl in *.
+           lia.
+        -- clear - e.
+           induction La.
+           ++ induction Lb; try now inversion e.
+              inversion e; subst.
+              ** apply Exists_Type_cons_hd.
+                 lia.
+              ** apply Exists_Type_cons_tl.
+                 apply IHLb; try assumption.
+           ++ simpl in *.
+              inversion e; subst.
+              ** apply Exists_Type_cons_hd.
+                 lia.
+              ** apply Exists_Type_cons_tl.
+                 now apply IHLa.
+        -- intros n0.
+           specialize (Hsum' n0); specialize (Hsum n0).
+           simpl in *.
+           rewrite sum_weight_seq_var_app; rewrite sum_weight_seq_covar_app; rewrite sum_weight_seq_var_copy; rewrite sum_weight_seq_covar_copy; simpl.
+           change (match r with
+          | 0%nat => 1
+          | S _ => INR r + 1
+          end) with (INR (S r)) in *.
+           rewrite S_INR in Hsum'; nra.
+  - eapply hrr_ex_hseq; [ apply Permutation_Type_app_comm | ].
+    apply hrr_W_gen.
+    apply pi.
 Qed.

@@ -1,4 +1,4 @@
-(** * Equational reasoning for modal lattice-ordered Abelian groups *)
+(** * Summary of the main results as in Section 3.1 *)
 Require Import Rterm.
 Require Import Rpos.
 Require Import term.
@@ -19,6 +19,7 @@ Require Import Reals.
 Require Import Lra.
 Require Import Lia.
 
+(** Theorem 3.9 *)
 Lemma HR_soundness P : forall G,
     HR P G ->
     R_zero <R= toRterm (sem_hseq G).
@@ -31,6 +32,7 @@ Proof.
   apply pi.
 Qed.
 
+(** Theorem 3.10 *)
 Lemma HR_completeness : forall G,
     G <> nil ->
     R_zero <R= toRterm (sem_hseq G) ->
@@ -47,6 +49,7 @@ Proof.
     apply H.
 Qed.
 
+(** Theorem 3.11 *)
 Lemma HR_plus_inv : forall G T A B r, HR_T_M ((vec r (A +S B) ++ T) :: G) -> HR_T_M ((vec r A ++ vec r B ++ T) :: G).
 Proof.
   apply hrr_plus_inv.
@@ -77,12 +80,18 @@ Proof.
   apply hrr_min_inv_r.
 Qed.
 
+(** Theorem 3.12 *)
 Lemma HR_M_elim : forall G, HR_T_M G -> HR_T G.
 Proof.
   apply hrr_M_elim.
 Qed.
 
+(** Theorem 3.13 *)
 Lemma HR_can_elim : forall G, HR_full G -> HR_T_M G.
 Proof.
   apply hrr_can_elim.
 Qed.
+
+(** Theorem 3.15 *)
+(** Proposition 3.16 *)
+(** Theorem 3.17 *)

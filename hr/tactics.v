@@ -1,3 +1,4 @@
+(** * Tactics used to apply all possible logical rules *)
 Require Import Rpos.
 Require Import term.
 Require Import hseq.

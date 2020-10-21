@@ -1,4 +1,4 @@
-(** * Interpretation of a hypersequent as a term in NNF *)
+(** Interpretation of a hypersequent as a term in NNF *)
 Require Import Rpos.
 Require Import term.
 Require Import hseq.
@@ -38,7 +38,6 @@ Proof.
     auto with MGA_solver.
 Qed.
 
-(** In NNF, we can not multiply by 0 so the following lemma (stating that [\vec{r}.A] = \sum\vec{r}.[A]) require the vector to be non empty *)
 Lemma sem_seq_vec : forall r A (Hnnil : r <> nil), sem_seq (vec r A) === (existT _ (sum_vec r) (sum_vec_non_nil _ Hnnil)) *S A.
 Proof.
   induction r; intros A Hnnil.
@@ -61,6 +60,16 @@ Proof.
   - rewrite 2? asso_plus.
     rewrite (commu_plus (r0 *S t0)); reflexivity.
   - transitivity (sem_seq l'); assumption.
+Qed.
+
+Lemma sem_seq_diamond : forall T, sem_seq (seq_diamond T) === <S> (sem_seq T).
+Proof.
+  induction T; try (symmetry; apply diamond_zero).
+  destruct a as [r A].
+  simpl.
+  rewrite diamond_linear.
+  rewrite diamond_mul.
+  rewrite IHT; reflexivity.
 Qed.
 
 Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec r l) A) === r *S sem_seq (vec l A).

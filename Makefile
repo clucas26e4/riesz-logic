@@ -1,11 +1,11 @@
 
-COQ = coqc -R $(OLLIBSDIR) ''
+COQ_HR = coqc -R $(OLLIBSDIR) '' -R $(HRDIR) '' -R $(UTILDIR) ''
+COQ_HMR = coqc -R $(OLLIBSDIR) '' -R $(HMRDIR) ''  -R $(UTILDIR) ''
 COQDOC = coqdoc -g
 
-VFILES = $(wildcard *.v)
-
-%.vo: %.v
-	$(COQ) $<
+VFILES_HR = hr_main_results.v
+VFILES_HMR = hmr_main_results.v
+VFILES_DOC = $(wildcard */*.v)
 
 %.glob: %.vo
 	@true
@@ -15,59 +15,43 @@ VFILES = $(wildcard *.v)
 
 
 doc: $(VFILES:.v=.glob)
-	$(COQDOC) -toc $(VFILES)
+	$(COQDOC) -toc $(VFILES_HR) $(VFILES_HMR)
+	cd $(HRDIR) && $(MAKE) doc
+	cd $(HMRDIR) && $(MAKE) doc
 
 clean:
-	rm -f $(VFILES:.v=.vo)
-	rm -f .*.aux
-	rm -f *.crashcoqide
-	rm -f *.glob
-	rm -f *.html
-	rm -f coqdoc.css
-	rm -f lia.cache
-	rm -f .lia.cache
+	rm -f *.vo* */*.vo*
+	rm -f .*.aux */.*.aux
+	rm -f *.crashcoqide */*.crashcoqide
+	rm -f *.glob */*.glob
+	rm -f *.html */*.html
+	rm -f coqdoc.css */coqdoc.css
+	rm -f lia.cache */lia.cache
+	rm -f .lia.cache */.lia.cache
 
 .PHONY: clean
 .PRECIOUS: %.vo %.glob
 
 
+HRDIR = hr
+HMRDIR = hmr
+UTILDIR = Utilities
 OLLIBSDIR = ../ollibs
 
 .DEFAULT_GOAL := all
 
-all: cutelim
+all: hr hmr
 
-ollibs:
-	cd $(OLLIBSDIR) && $(MAKE)
+pre_hr:
+	cd $(HRDIR) && $(MAKE)
 
-cutelim: ollibs $(VFILES:.v=.vo)
+pre_hmr:
+	cd $(HMRDIR) && $(MAKE)
 
-include $(OLLIBSDIR)/ollibs.mk
+hr: pre_hr $(VFILES_HR:.v=.vo)
+hmr: pre_hmr $(VFILES_HMR:.v=.vo)
 
-Rpos.vo : Rpos.v
-
-term.vo : term.v Rpos.vo
-semantic.vo : semantic.v Rpos.vo term.vo
-hseq.vo : hseq.v Rpos.vo term.vo semantic.vo lt_nat2.vo
-interpretation.vo : interpretation.v hseq.vo Rpos.vo term.vo semantic.vo
-
-hr.vo : hr.v hseq.vo Rpos.vo term.vo semantic.vo 
-soundness.vo : soundness.v Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo
-completeness.vo : completeness.v Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo tactics.vo
-invertibility.vo : invertibility.v Rpos.vo term.vo semantic.vo hseq.vo hr.vo
-M_elim.vo : M_elim.v invertibility.v Rpos.vo term.vo semantic.vo hseq.vo hr.vo 
-can_elim.vo : can_elim.v invertibility.vo Rpos.vo term.vo semantic.vo hseq.vo hr.vo M_elim.vo
-lambda_prop.vo : lambda_prop.v hr.vo hseq.vo Rpos.vo term.vo semantic.vo hrr_List_more.vo
-
-FOL_R.vo : FOL_R.v
-p_hseq.vo : p_hseq.v Rpos.vo term.vo semantic.vo lt_nat2.vo FOL_R.vo
-decidability.vo : decidability.v FOL_R.vo lambda_prop.vo hr.vo hseq.vo Rpos.vo term.vo semantic.vo hrr_List_more.vo can_elim.vo M_elim.vo invertibility.vo
-
-Rterm.vo : Rterm.v
-Rsemantic.vo : Rsemantic.v Rterm.vo
-semantic_Rsemantic_eq.vo : semantic_Rsemantic_eq.v Rsemantic.vo semantic.vo Rterm.vo term.vo Rpos.vo
-main_results.vo : main_results.v semantic_Rsemantic_eq.vo Rsemantic.vo semantic.vo hseq.vo hr.vo completeness.vo soundness.vo Rterm.vo term.vo Rpos.vo interpretation.vo invertibility.vo M_elim.vo can_elim.vo
-
-tactics.vo : tactics.v hseq.vo Rpos.vo term.vo hr.vo
-hrr_List_more.vo : hrr_List_more.v
-lt_nat2.vo : lt_nat2.v
+hr_main_results.vo : hr_main_results.v
+	$(COQ_HR) hr_main_results.v
+hmr_main_results.vo : hmr_main_results.v
+	$(COQ_HMR) hmr_main_results.v

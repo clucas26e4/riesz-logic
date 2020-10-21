@@ -15,7 +15,7 @@ Local Open Scope R_scope.
 (** ** Definitions *)
 (** Function that takes a regular term and returns the NNF of the term *)
 Fixpoint NNF (A : Rterm) : term.
-  destruct A as [x | | A B |  r A | A B | A B].
+  destruct A as [x | | A B |  r A | A B | A B | | A].
   (* A = var x *)
   - now apply (var x).
   (* A = zero *)
@@ -35,11 +35,15 @@ Fixpoint NNF (A : Rterm) : term.
   - now apply (max (NNF A) (NNF B)).
   (* A = A /\ B *)
   - now apply (min (NNF A) (NNF B)).
+  (* A = one *)
+  - now apply one.
+  (* A + Diamond A *)
+  - now apply (diamond (NNF A)).
 Defined.
 
 (** Function that takes a context and returns the NNF of the context *)
 Fixpoint CNNF (C : Rcontext) : context.
-  destruct C as [ | A | x | | C1 C2 | C1 C2 | C1 C2 | r C ].
+  destruct C as [ | A | x | | C1 C2 | C1 C2 | C1 C2 | r C | | C].
   - now apply hole.
   - now apply (TC (NNF A)).
   - now apply (varC x).
@@ -52,6 +56,8 @@ Fixpoint CNNF (C : Rcontext) : context.
     + case_eq (0 <? -r) ; intros Hr'.
       * now apply (mulC (existT _ (-r) Hr') (minusC (CNNF C))).
       * now apply zeroC.
+  - now apply oneC.
+  - now apply (diamondC (CNNF C)).
 Defined.
 
 (** The embedding of terms in NNF into regular terms *)
@@ -64,9 +70,12 @@ Fixpoint toRterm A :=
   | mul (existT _ r _) A => R_mul r (toRterm A)
   | max A B => R_max (toRterm A) (toRterm B)
   | min A B => R_min (toRterm A) (toRterm B)
+  | one => R_one
+  | coone => R_mul (-1) R_one
+  | diamond A => R_diamond (toRterm A)
   end.
 
-(** The embedding of context in NNF into regular context *)
+(** The embedding of terms in NNF into regular terms *)
 Fixpoint toRcontext C :=
   match C with
   | hole => R_hole
@@ -79,9 +88,12 @@ Fixpoint toRcontext C :=
   | mulC (existT _ r _) C => R_mulC r (toRcontext C)
   | maxC C1 C2 => R_maxC (toRcontext C1) (toRcontext C2)
   | minC C1 C2 => R_minC (toRcontext C1) (toRcontext C2)
+  | oneC => R_oneC
+  | cooneC => R_mulC (-1) R_oneC
+  | diamondC C => R_diamondC (toRcontext C)
   end.
 
-(** * Soundness of the translation, i.e. NNF (toRterm A) = A and toRterm (NNF A) = A  *)
+(** * Soundness of the translation, i.e. NNF (toRterm A) = A and toRterm (NNF A) = A *)
 Lemma aux_dep_if_true : forall (b : bool) (t : b = true -> term) (f : b = false -> term) (H : true = b),
        (if b as b' return b = b' -> term
         then t
@@ -102,7 +114,7 @@ Defined.
 
 Lemma R_eq_minus : forall A, (toRterm (-S A)) =R= (-R (toRterm A)).
 Proof with auto with Rsem_solver.
-  induction A as [ x | x | | A IHA B IHB | [r Hr] A IHA | A IHA B IHB | A IHA B IHB];simpl; try rewrite IHA; try rewrite IHB...
+  induction A as [ x | x | | A IHA B IHB | [r Hr] A IHA | A IHA B IHB | A IHA B IHB | | | A IHA];simpl; try rewrite IHA; try rewrite IHB...
 Qed.
 
 Lemma toRterm_NNF : forall A, toRterm (NNF A) =R= A.
@@ -150,19 +162,28 @@ Proof with auto with MGA_solver.
     2:{ rewrite Hr... }
     replace ( existT (fun r0 : R => (0 <? r0) = true) r _) with (existT (fun r0 : R => (0 <? r0) = true) r Hr)...
     apply Rpos_eq...
+  - rewrite aux_dep_if_false.
+    2:{ symmetry; apply R_blt_nlt; lra. }
+    erewrite aux_dep_if_true.
+    Unshelve.
+    2:{ symmetry; apply R_blt_lt; lra. }
+    simpl.
+    transitivity (One *S coone)...
+    apply mul_left.
+    apply Rpos_eq; simpl.
+    nra.
 Qed.    
 
 (** ** Semantic to Rsemantic, i.e. proof that A === B -> toRterm A =R= toRterm B *)
-
 Lemma R_eq_term_context : forall C T, (toRterm (evalContext C T)) =R= (evalRcontext (toRcontext C) (toRterm T)).
 Proof with auto with Rsem_solver.
-  induction C as [ | | B | x | x | | C1 IHC1 C2 IHC2 | C1 IHC1 C2 IHC2 | C1 IHC1 C2 IHC2 | [r Hr] C IHC ]; intros A; simpl ; try (constructor; assumption); try rewrite IHC1; try rewrite IHC2; try rewrite IHC...
+  induction C as [ | | B | x | x | | C1 IHC1 C2 IHC2 | C1 IHC1 C2 IHC2 | C1 IHC1 C2 IHC2 | [r Hr] C IHC | | | C IHC ]; intros A; simpl ; try (constructor; assumption); try rewrite IHC1; try rewrite IHC2; try rewrite IHC...
   - apply R_eq_minus.
 Qed.
 
 Lemma R_eq_term_subs : forall A B n, (toRterm (subs A n B)) =R= (Rsubs (toRterm A) n (toRterm B)).
 Proof with auto with Rsem_solver.
-  induction A as [ x | x | | A1 IHA1 A2 IHA2 | [r Hr] A IHA | A1 IHA1 A2 IHA2 | A1 IHA1 A2 IHA2 ]; intros B; simpl; try (constructor; assumption); intros n; try rewrite IHA1; try rewrite IHA2; try rewrite IHA...
+  induction A as [ x | x | | A1 IHA1 A2 IHA2 | [r Hr] A IHA | A1 IHA1 A2 IHA2 | A1 IHA1 A2 IHA2 | | | A IHA]; intros B; simpl; try (constructor; assumption); intros n; try rewrite IHA1; try rewrite IHA2; try rewrite IHA...
   - case (n =? x); apply R_refl.
   - case (n =? x)...
     + apply R_eq_minus.
@@ -176,6 +197,8 @@ Fixpoint R_subs_gen (A : Rterm) (v : nat -> Rterm) : Rterm :=
   | R_mul r A => R_mul r (R_subs_gen A v)
   | R_max A B => R_max (R_subs_gen A v) (R_subs_gen B v)
   | R_min A B => R_min (R_subs_gen A v) (R_subs_gen B v)
+  | R_one => R_one
+  | R_diamond A => R_diamond (R_subs_gen A v)
   end.
 
 Lemma R_subs_gen_sub : forall A v n t, R_subs_gen (Rsubs A n t) v = R_subs_gen A (fun x => if n =? x then (R_subs_gen t v) else v x).
@@ -207,6 +230,8 @@ Proof.
         apply IHc2.
     + apply (R_ctxt (R_mulC r R_hole)).
       apply IHc.
+    + rewrite IHc.
+      reflexivity.
   - apply R_sym; apply IHHeq.
   - rewrite 2?R_subs_gen_sub.
     apply IHHeq.
@@ -217,7 +242,7 @@ Proof.
   induction A ; intros n' t; simpl; try (rewrite IHA1; rewrite IHA2); try rewrite IHA; try reflexivity.
 Qed.
       
-Lemma semantic_to_Rsemantic : forall A B, A === B -> (toRterm A) =R= (toRterm B).
+Lemma semantic_to_Rsemantic : forall A B, A === B -> (R_eqMALG (toRterm A) (toRterm B)).
 Proof with try assumption.
   intros A B Heq.
   induction Heq; simpl; try (constructor; assumption);
@@ -239,17 +264,18 @@ Proof with try assumption.
     rewrite R_eq_minus.  
     replace (- b) with (b * (- 1)) by nra.
     auto with Rsem_solver.
+  - destruct r as [r Hr].
+    rewrite R_diamond_mul.
+    reflexivity.
   - destruct r as [x Hx]; simpl; apply R_compa_mul_ax.
     apply Rlt_le.
     revert Hx; unfold R_lt_dec; case_eq (Rlt_dec 0 x); intros; now simpl.
 Qed.
 
-    
 (** ** Rsemantic to Semantic, i.e. A =R= B -> NNF A === NNF B *)
-    
 Lemma eq_term_subs : forall A B n, (NNF (Rsubs A n B)) === (subs (NNF A) n (NNF B)).
 Proof with auto with MGA_solver.
-  induction A as [ x | | A1 IHA1 A2 IHA2 | r A IHA | A1 IHA1 A2 IHA2 | A1 IHA1 A2 IHA2 ]; intros B; try (simpl; constructor; assumption); intros n; try (simpl; rewrite IHA1 ; rewrite IHA2; auto with MGA_solver; fail)...
+  induction A as [ x | | A1 IHA1 A2 IHA2 | r A IHA | A1 IHA1 A2 IHA2 | A1 IHA1 A2 IHA2 | | A IHA ]; intros B; try (simpl; constructor; assumption); intros n; try (simpl; rewrite IHA1 ; rewrite IHA2; auto with MGA_solver; fail)...
   - simpl; case (n =? x)...
   - unfold Rsubs; fold Rsubs.
     case_eq (0 <? r) ; intros Hr; [ | case_eq (0 <? -r) ; intros Hnr]; simpl.
@@ -267,6 +293,8 @@ Proof with auto with MGA_solver.
       rewrite aux_dep_if_false; [ | symmetry]...
       rewrite aux_dep_if_false; [ | symmetry]...
       rewrite aux_dep_if_false; [ | symmetry]...
+  - simpl.
+    rewrite IHA; reflexivity.
 Qed.
       
 Fixpoint subs_gen (A : term) (v : nat -> term) : term :=
@@ -278,6 +306,9 @@ Fixpoint subs_gen (A : term) (v : nat -> term) : term :=
   | mul r A => mul r (subs_gen A v)
   | max A B => max (subs_gen A v) (subs_gen B v)
   | min A B => min (subs_gen A v) (subs_gen B v)
+  | one => one
+  | coone => coone
+  | diamond A => diamond (subs_gen A v)
   end.
 
 Lemma eq_subs_gen_minus : forall A v, subs_gen (-S A) v === -S (subs_gen A v).
@@ -327,7 +358,9 @@ Proof with auto with MGA_solver.
     + rewrite aux_dep_if_false; [ | symmetry]...
       rewrite aux_dep_if_false; [ | symmetry]...
       rewrite aux_dep_if_false; [ | symmetry]...
-      rewrite aux_dep_if_false; [ | symmetry]...      
+      rewrite aux_dep_if_false; [ | symmetry]...
+    + simpl.
+      rewrite IHc; reflexivity.
   - rewrite 2?eq_term_subs.
     rewrite 2!(subs_to_gen).
     apply subs_gen_cong...
@@ -493,14 +526,21 @@ Proof with auto with MGA_solver.
     + exfalso; apply R_blt_nlt in Hnxy; apply R_blt_lt in Hnx; apply R_blt_lt in Hny; nra.
     + exfalso; apply R_blt_nlt in Hnxy; apply R_blt_lt in Hnx; apply R_blt_nlt in Hny; apply R_blt_nlt in Hy; nra.
     + exfalso; apply R_blt_nlt in Hnxy; apply R_blt_lt in Hny; apply R_blt_nlt in Hnx; apply R_blt_nlt in Hx; nra.
+  - case_eq (0 <? r) ; intros Hr ; [ |  case_eq (0 <? (- r)) ; intros Hnr].
+    + simpl.
+      rewrite aux_dep_if_true with _ _ _ (eq_sym Hr)...
+      rewrite aux_dep_if_true with _ _ _ (eq_sym Hr)...
+    + simpl.
+      rewrite aux_dep_if_false...
+      rewrite aux_dep_if_true with _ _ _ (eq_sym Hnr)...
+      rewrite aux_dep_if_false...
+      rewrite aux_dep_if_true with _ _ _ (eq_sym Hnr)...
+    + simpl.
+      do 4 (rewrite aux_dep_if_false; try (symmetry;  assumption)).
+      apply diamond_zero.
   - case_eq (0 <? r); [intros Hr | intros Hr]; unfold NNF; fold (NNF t).
     + rewrite aux_dep_if_true with _ _ _ (eq_sym Hr)...
     + rewrite aux_dep_if_false with _ _ _ (eq_sym Hr).
       rewrite aux_dep_if_false ; [ | apply R_blt_nlt in Hr; symmetry; apply R_blt_nlt; nra]...
 Qed.
       
-       
-       
-           
-   
-  

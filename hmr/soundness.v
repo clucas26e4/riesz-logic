@@ -1,8 +1,8 @@
-(** * Implementation of Section 3.4 *)
+(** * Implementation of Section 4.3 *)
 Require Import Rpos.
 Require Import term.
 Require Import hseq.
-Require Import hr.
+Require Import hmr.
 Require Import semantic.
 Require Import interpretation.
 
@@ -92,7 +92,42 @@ Proof with try assumption.
           + apply min_leq.
           + apply neg_subdistri_plus.
         - rewrite (commu_min (neg (sem_seq T1 +S sem_seq T2))).
-          apply min_leq. }            
+          apply min_leq. }
+      (* NEED MOVING *)
+      assert (forall A B C, zero <== A -> zero <== B -> zero <== C -> A +S B /\S C <== (A /\S C) +S (B /\S C)) as plus_pos_min.
+      { clear.
+        intros A B C H1 H2 H3.
+        apply leq_plus_right.
+        apply leq_min.
+        - apply leq_minus_left.
+          rewrite (commu_plus A (B /\S C)).
+          apply leq_plus_right.
+          apply leq_min.
+          + apply leq_minus_left.
+            rewrite (commu_plus B A).
+            apply min_leq.
+          + apply leq_trans with (A +S B /\S C).
+            * apply leq_minus_left.
+              rewrite <- (neutral_plus (A +S B /\S C)) at 1 3.
+              apply leq_plus_cong...
+              apply leq_refl.
+            * rewrite (commu_min (A +S B) C).
+              apply min_leq.
+        - apply leq_minus_left.
+          rewrite (commu_plus C (B /\S C)).
+          apply leq_plus_right.
+          apply leq_min.
+          + apply leq_minus_left.
+            rewrite (commu_plus B C).
+            rewrite <-(neutral_plus (A +S B /\S C)).
+            apply leq_plus_cong...
+            rewrite (commu_min (A +S B) C).
+            apply min_leq.
+          + apply leq_minus_left.
+            rewrite <-(neutral_plus (A +S B /\S C)).
+            apply leq_plus_cong...
+            rewrite (commu_min (A +S B) C).
+            apply min_leq. }            
       eapply leq_trans.
       * apply plus_pos_min; apply zero_leq_neg.
       * rewrite <- (neutral_plus zero) at 5.
@@ -334,15 +369,150 @@ Lemma min_sound : forall G T A  B r, sem_hseq ((vec r A ++ T) :: G) /\S sem_hseq
     rewrite min_plus.
     rewrite max_distri_min.
     reflexivity.
-Qed.    
+Qed.
 
-(** ** HR is sound *)
-Lemma hr_sound b : forall G, HR b G -> zero <== sem_hseq G.
+Lemma one_sound : forall G T r s, sum_vec s <= sum_vec r -> sem_hseq (T :: G) <== sem_hseq ((vec s coone ++ vec r one ++ T) :: G).
+Proof.
+  intros [ | T2 G] T r s H.
+  - simpl.
+    rewrite ? sem_seq_plus.
+    destruct r; destruct s.
+    + simpl; rewrite commu_plus; rewrite neutral_plus; rewrite commu_plus; rewrite neutral_plus.
+      apply leq_refl.
+    + simpl in *.
+      destruct r as [r Hr].
+      exfalso; simpl in *.
+      assert (0 <= sum_vec s).
+      { clear; induction s as [ | [s Hs] vs]; simpl; try apply R_blt_lt in Hs; try nra. }
+      apply R_blt_lt in Hr; nra.
+    + assert (r :: r0 <> nil) as Hnnil by now auto.
+      rewrite (sem_seq_vec (r :: r0) _ Hnnil).
+      rewrite commu_plus; simpl; rewrite neutral_plus.
+      rewrite <- (neutral_plus (sem_seq T)) at 1 3.
+      rewrite commu_plus.
+      apply leq_plus_cong; try apply leq_refl.
+      rewrite <- (mul_0 (existT (fun r1 : R => (0 <? r1) = true) (projT1 r + sum_vec r0)
+                                (sum_vec_non_nil (r :: r0) Hnnil))).
+      apply mul_leq.
+      apply one_pos.
+    + assert (r :: r0 <> nil) as Hnnilr by now auto.
+      assert (r1 :: s <> nil) as Hnnils by now auto.
+      rewrite (sem_seq_vec _ _ Hnnilr).
+      rewrite (sem_seq_vec _ _ Hnnils).
+      rewrite commu_plus.
+      rewrite (commu_plus (_ *S one)).
+      rewrite <- asso_plus.
+      case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1; [ | apply R_blt_nlt in H1].
+      * change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
+        change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
+        apply R_blt_lt in H1.
+        rewrite (minus_ax _ _ _ H1).
+        rewrite <- (neutral_plus (sem_seq T)) at 1 3.
+        apply leq_plus_cong; try apply leq_refl.
+        rewrite <- (mul_0 (minus_pos H1)).
+        apply mul_leq; apply one_pos.
+      * replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr)).
+        2:{ apply Rpos_eq; simpl in *.
+            nra. }
+        rewrite opp_plus.
+        rewrite neutral_plus; apply leq_refl.
+  - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
+    apply max_leq.
+    2:{ rewrite commu_max; apply leq_max. }
+    eapply leq_trans ; [ | apply leq_max].
+    rewrite ? sem_seq_plus.
+    destruct r; destruct s.
+    + simpl; rewrite commu_plus; rewrite neutral_plus; rewrite commu_plus; rewrite neutral_plus.
+      apply leq_refl.
+    + simpl in *.
+      destruct r as [r Hr].
+      exfalso; simpl in *.
+      assert (0 <= sum_vec s).
+      { clear; induction s as [ | [s Hs] vs]; simpl; try apply R_blt_lt in Hs; try nra. }
+      apply R_blt_lt in Hr; nra.
+    + assert (r :: r0 <> nil) as Hnnil by now auto.
+      rewrite (sem_seq_vec (r :: r0) _ Hnnil).
+      rewrite commu_plus; simpl; rewrite neutral_plus.
+      rewrite <- (neutral_plus (sem_seq T)) at 1 3.
+      rewrite commu_plus.
+      apply leq_plus_cong; try apply leq_refl.
+      rewrite <- (mul_0 (existT (fun r1 : R => (0 <? r1) = true) (projT1 r + sum_vec r0)
+                                (sum_vec_non_nil (r :: r0) Hnnil))).
+      apply mul_leq.
+      apply one_pos.
+    + assert (r :: r0 <> nil) as Hnnilr by now auto.
+      assert (r1 :: s <> nil) as Hnnils by now auto.
+      rewrite (sem_seq_vec _ _ Hnnilr).
+      rewrite (sem_seq_vec _ _ Hnnils).
+      rewrite commu_plus.
+      rewrite (commu_plus (_ *S one)).
+      rewrite <- asso_plus.
+      case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1; [ | apply R_blt_nlt in H1].
+      * change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
+        change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
+        apply R_blt_lt in H1.
+        rewrite (minus_ax _ _ _ H1).
+        rewrite <- (neutral_plus (sem_seq T)) at 1 3.
+        apply leq_plus_cong; try apply leq_refl.
+        rewrite <- (mul_0 (minus_pos H1)).
+        apply mul_leq; apply one_pos.
+      * replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr)).
+        2:{ apply Rpos_eq; simpl in *.
+            nra. }
+        rewrite opp_plus.
+        rewrite neutral_plus; apply leq_refl.
+Qed.
+  
+Lemma diamond_sound : forall T r s, sum_vec s <= sum_vec r -> zero <== sem_hseq ((vec s coone ++ vec r one ++ T) :: nil) -> zero <== sem_hseq ((vec s coone ++ vec r one ++ seq_diamond T) :: nil).
+Proof.
+  intros T r s H Hleq.
+  simpl in *.
+  apply leq_trans with (<S> (sem_seq (vec s coone ++ vec r one ++ T))).
+  { apply leq_diamond; apply Hleq. }
+  rewrite <- sem_seq_diamond.
+  rewrite ? seq_diamond_app.
+  rewrite <- ? vec_diamond.
+  rewrite ? sem_seq_plus.
+  rewrite ? asso_plus.
+  apply leq_plus_cong; try apply leq_refl.
+  destruct r; destruct s.
+  - apply leq_refl.
+  - simpl in *.
+    destruct r as [r Hr].
+    exfalso; simpl in *.
+    assert (0 <= sum_vec s).
+    { clear; induction s as [ | [s Hs] vs]; simpl; try apply R_blt_lt in Hs; try nra. }
+    clear Hleq; apply R_blt_lt in Hr; nra.
+  - apply leq_plus_cong; try apply leq_refl.
+    assert (r :: r0 <> nil) as Hnnil by now auto.
+    rewrite ? (sem_seq_vec _ _ Hnnil).
+    apply mul_leq.
+    apply diamond_one.
+  - assert (r :: r0 <> nil) as Hnnilr by now auto.
+    assert (r1 :: s <> nil) as Hnnils by now auto.
+    rewrite ? (sem_seq_vec _ _ Hnnilr).
+    rewrite ? (sem_seq_vec _ _ Hnnils).
+    rewrite commu_plus.
+    rewrite (commu_plus (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils) *S coone)).
+    case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1 ; [ apply R_blt_lt in H1 | apply R_blt_nlt in H1].
+    + change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
+      change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
+      rewrite 2 (minus_ax _ _ _ H1).
+      apply mul_leq.
+      apply diamond_one.
+    + replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr)).
+      2:{ apply Rpos_eq; simpl in *; nra. }
+      rewrite ? opp_plus.
+      apply leq_refl.
+Qed.
+
+(** ** HMR is sound *)
+Lemma hmr_sound b : forall G, HMR b G -> zero <== sem_hseq G.
 Proof with try assumption.
   intros G pi.
   induction pi.
   - apply leq_refl.
-  - apply W_sound ; [now apply (@HR_not_empty b) | ]...
+  - apply W_sound ; [now apply (@HMR_not_empty b) | ]...
   - now rewrite <-C_sound.
   - now apply S_sound.
   - now apply M_sound.
@@ -354,6 +524,9 @@ Proof with try assumption.
   - now rewrite <-max_sound.
   - rewrite <-min_sound.
     now apply leq_min.
+  - eapply leq_trans ; [ apply IHpi | ].
+    now apply one_sound.
+  - now apply diamond_sound.
   - destruct G.
     + simpl in *; now rewrite <-(sem_seq_permutation _ _ p).
     + unfold sem_hseq in *; fold (sem_hseq (l :: G)) in *.

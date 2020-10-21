@@ -1,3 +1,4 @@
+(** * Implementation of Section 3.8 *)
 Require Import Rpos.
 Require Import term.
 Require Import semantic.
@@ -5,6 +6,7 @@ Require Import hseq.
 Require Import hr.
 Require Import invertibility.
 Require Import M_elim.
+Require Import hr_perm_lemmas.
 
 Require Import CMorphisms.
 Require Import List_Type_more.
@@ -16,6 +18,9 @@ Require Import Lra.
 
 Local Open Scope R_scope.
 
+(** Proof of Lemma 3.43 
+    
+    L is the list (((r_i, s_i), (r'_i, s'_i)), T_i) *)
 Lemma hrr_atomic_can_elim_gen : forall L n,
     Forall_Type (fun x => sum_vec (fst (fst (fst x))) - sum_vec (snd (fst (fst x))) = sum_vec (fst (snd (fst x))) - sum_vec (snd (snd (fst x)))) L ->
     HR_T (map (fun x => (vec (fst (fst (fst x))) (covar n) ++ vec (snd (fst (fst x))) (var n) ++ snd x)) L) ->
@@ -297,7 +302,8 @@ Proof.
     + apply IHHperm1_2; apply IHHperm1_1; apply Hsum.
   - inversion f.
 Qed.
-  
+
+(** Proof of Lemma 3.41 *)
 Lemma hrr_atomic_can_elim : forall G T n r s,
     sum_vec r = sum_vec s ->
     HR_T ((vec s (covar n) ++ vec r (var n) ++ T) :: G) ->
@@ -390,6 +396,7 @@ Proof.
     apply pi.
 Qed.
 
+(** Proof of Theorem 3.13 *)
 Lemma hrr_can_elim : forall G,
     HR_full G ->
     HR_T_M G.
