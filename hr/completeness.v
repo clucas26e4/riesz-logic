@@ -1,4 +1,5 @@
 (** * Implementation of Section 3.5 *)
+Require Import QArithSternBrocot.sqrt2.
 Require Import Rpos.
 Require Import term.
 Require Import hseq.
@@ -9,6 +10,7 @@ Require Import lambda_prop_tools.
 Require Import tech_lemmas.
 Require Import tactics.
 Require Import riesz_logic_List_more.
+Require Import soundness.
 
 Require Import List_Type_more.
 Require Import Bool_more.
@@ -788,3 +790,44 @@ Proof.
     apply hrr_W_gen.
     apply pi.
 Qed.
+
+Lemma HR_M_not_complete : { G : _ & zero <== sem_hseq G & (HR_M G -> False) }.
+Proof.
+  assert (0 <? sqrt 2 = true) as H by (apply R_blt_lt; apply Rlt_sqrt2_0).
+  set (sq2 := (existT (fun x => 0 <? x = true) (sqrt 2) H)).
+  split with (((One, var 0) :: nil) :: ((sq2, covar 0) :: nil):: nil).
+  - apply hr_sound with hr_frag_full.
+    apply hrr_T with sq2; try reflexivity.
+    apply hrr_S.
+    apply hrr_ex_seq with (vec (sq2 :: nil) (covar 0) ++ vec (time_pos sq2 One :: nil) (var 0) ++ nil).
+    + unfold seq_mul.
+      replace (time_pos sq2 One) with sq2 by (unfold sq2; unfold One; apply Rpos_eq; simpl; nra).
+      simpl.
+      apply Permutation_Type_swap.
+    + apply hrr_ID ; [ | apply hrr_INIT].
+      simpl.
+      nra.
+  - intros pi.
+    apply int_lambda_prop in pi as [L [Hlen [Hex Hsum]]].
+    + specialize (Hsum 0)%nat.
+      simpl in Hlen.
+      destruct L; [ | destruct L ; [ | destruct L]]; inversion Hlen.
+      simpl in *.
+      replace (INR n * (1 + 0 - 0)) with (INR n) in Hsum by nra.
+      replace (0 - (sqrt 2 + 0)) with (- sqrt 2) in Hsum by nra.
+      replace (INR n0 * - sqrt 2 + 0) with (- INR n0 * sqrt 2) in Hsum by nra.
+      assert (INR (n * n) = INR (2 * n0 * n0)).
+      { rewrite ? mult_INR.
+        change (INR 2) with 2.
+        replace 2 with (sqrt 2 * sqrt 2) by (apply sqrt_def; nra).
+        nra. }
+      apply INR_inj in H0.
+      destruct n0; destruct n; try lia.
+      { inversion Hex; [ lia | ].
+        inversion X; [ lia | ].
+        inversion X0. }
+      apply sqrt2_not_rational with (S n) (S n0); auto.
+      lia.
+    + repeat apply Forall_Type_cons; try apply Forall_Type_nil; apply I.
+Qed.
+      

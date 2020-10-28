@@ -219,6 +219,103 @@ Proof.
   nra.
 Qed.
 
+(** ** sum_weight_(co)var_with_coeff *)
+Fixpoint sum_weight_var_with_coeff n G L :=
+  match G, L with
+  | _, nil => 0
+  | nil, _ => 0
+  | T :: G , r :: L => (r * sum_weight_seq_var n T) + sum_weight_var_with_coeff n G L
+  end.
+
+Lemma sum_weight_var_with_coeff_lt_max_var : forall n G L,
+    (max_var_hseq G < n)%nat ->
+    sum_weight_var_with_coeff n G L = 0.
+Proof.
+  intros n; induction G; intros L Hlt; destruct L; auto.
+  simpl in *.
+  rewrite sum_weight_seq_var_lt_max_var; try lia.
+  rewrite IHG; try lia.
+  lra.
+Qed.
+
+Lemma sum_weight_var_with_coeff_app1 : forall n G1 G2 L,
+    (length L <= length G1)%nat ->
+    sum_weight_var_with_coeff n (G1 ++ G2) L = sum_weight_var_with_coeff n G1 L.
+Proof.
+  intros n; induction G1; intros G2 L Hlen; destruct L; try (now inversion Hlen); [destruct G2 | ]; auto.
+  simpl; rewrite IHG1; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma p_sum_weight_var_with_coeff_app2 : forall n G1 G2 L1 L2,
+    (length L1 = length G1) ->
+    sum_weight_var_with_coeff n (G1 ++ G2) (L1 ++ L2) = sum_weight_var_with_coeff n G1 L1 + sum_weight_var_with_coeff n G2 L2.
+Proof.
+  intros n; induction G1; intros G2 L1 L2 Hlen; destruct L1; try (now inversion Hlen); [destruct L2 ; destruct G2 | ]; simpl; try lra.
+  simpl in *; rewrite IHG1; auto.
+  lra.
+Qed.
+
+Lemma p_sum_weight_var_with_coeff_app3 : forall n G L1 L2,
+    (length G <= length L1)%nat ->
+    sum_weight_var_with_coeff n G (L1 ++ L2) = sum_weight_var_with_coeff n G L1.
+Proof.
+  intros n; induction G; intros L1 L2 Hlen; destruct L1; try (now inversion Hlen); [now destruct L2 | ].
+  simpl; rewrite IHG; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Fixpoint sum_weight_covar_with_coeff n G L :=
+  match G, L with
+  | _, nil => 0
+  | nil, _ => 0
+  | T :: G , r :: L => (r * sum_weight_seq_covar n T) + sum_weight_covar_with_coeff n G L
+  end.
+
+Lemma sum_weight_covar_with_coeff_lt_max_var : forall n G L,
+    (max_var_hseq G < n)%nat ->
+    sum_weight_covar_with_coeff n G L = 0.
+Proof.
+  intros n; induction G; intros L Hlt; destruct L; auto.
+  simpl in *.
+  rewrite sum_weight_seq_covar_lt_max_var; try lia.
+  rewrite IHG; try lia.
+  lra.
+Qed.
+
+Lemma sum_weight_covar_with_coeff_app1 : forall n G1 G2 L,
+    (length L <= length G1)%nat ->
+    sum_weight_covar_with_coeff n (G1 ++ G2) L = sum_weight_covar_with_coeff n G1 L.
+Proof.
+  intros n; induction G1; intros G2 L Hlen; destruct L; try (now inversion Hlen); [destruct G2 | ]; auto.
+  simpl; rewrite IHG1; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma p_sum_weight_covar_with_coeff_app2 : forall n G1 G2 L1 L2,
+    (length L1 = length G1) ->
+    sum_weight_covar_with_coeff n (G1 ++ G2) (L1 ++ L2) = sum_weight_covar_with_coeff n G1 L1 + sum_weight_covar_with_coeff n G2 L2.
+Proof.
+  intros n; induction G1; intros G2 L1 L2 Hlen; destruct L1; try (now inversion Hlen); [destruct L2 ; destruct G2 | ]; simpl; try lra.
+  simpl in *; rewrite IHG1; auto.
+  lra.
+Qed.
+
+Lemma p_sum_weight_covar_with_coeff_app3 : forall n G L1 L2,
+    (length G <= length L1)%nat ->
+    sum_weight_covar_with_coeff n G (L1 ++ L2) = sum_weight_covar_with_coeff n G L1.
+Proof.
+  intros n; induction G; intros L1 L2 Hlen; destruct L1; try (now inversion Hlen); [now destruct L2 | ].
+  simpl; rewrite IHG; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma sum_weight_with_coeff_eq_var_covar : forall n G L,
+    sum_weight_with_coeff n G L = sum_weight_var_with_coeff n G L - sum_weight_covar_with_coeff n G L.
+Proof.
+  intros n; induction G; intros L; destruct L; simpl; try rewrite IHG; lra.
+Qed.
+
 (** Sufficient condition for derivability of an atomic hypersequent *)
 Lemma atomic_proof_all_eq P : forall H T,
     seq_is_atomic T ->

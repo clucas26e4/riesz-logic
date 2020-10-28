@@ -1,4 +1,5 @@
 (** * Implementation of Section 4.4 *)
+Require Import QArithSternBrocot.sqrt2.
 Require Import Rpos.
 Require Import term.
 Require Import hseq.
@@ -9,6 +10,7 @@ Require Import tactics.
 Require Import tech_lemmas.
 Require Import lambda_prop_tools.
 Require Import riesz_logic_List_more.
+Require Import soundness.
 
 Require Import List_Type_more.
 Require Import Bool_more.
@@ -1079,4 +1081,79 @@ Proof.
   - eapply hmrr_ex_hseq; [ apply Permutation_Type_app_comm | ].
     apply hmrr_W_gen.
     apply pi.
+Qed.
+
+
+Lemma HMR_M_not_complete : { G : _ & zero <== sem_hseq G & (HMR_M G -> False) }.
+Proof.
+  assert (0 <? sqrt 2 = true) as H by (apply R_blt_lt; apply Rlt_sqrt2_0).
+  set (sq2 := (existT (fun x => 0 <? x = true) (sqrt 2) H)).
+  split with (((One, var 0) :: nil) :: ((sq2, covar 0) :: nil):: nil).
+  - apply hmr_sound with hmr_frag_full.
+    apply hmrr_T with sq2; try reflexivity.
+    apply hmrr_S.
+    apply hmrr_ex_seq with (vec (sq2 :: nil) (covar 0) ++ vec (time_pos sq2 One :: nil) (var 0) ++ nil).
+    + unfold seq_mul.
+      replace (time_pos sq2 One) with sq2 by (unfold sq2; unfold One; apply Rpos_eq; simpl; nra).
+      simpl.
+      apply Permutation_Type_swap.
+    + apply hmrr_ID ; [ | apply hmrr_INIT].
+      simpl.
+      nra.
+  - intros pi.
+    apply int_lambda_prop in pi as [L [Hlen [[[Hex Hsum] Hone] Hstep]]].
+    + specialize (Hsum 0)%nat.
+      simpl in Hlen.
+      clear Hone Hstep.
+      destruct L; [ | destruct L ; [ | destruct L]]; inversion Hlen.
+      destruct n0; destruct n; try lia.
+      * inversion Hex; [ lia | ].
+        inversion X; [ lia | ].
+        inversion X0.
+      * simpl in *.
+        change (match n with
+                | 0%nat => 1
+                | S _ => INR n + 1
+                end)
+          with (INR (S n)) in Hsum.
+        replace (INR (S n) * (1 + 0 - 0) + 0) with (INR (S n)) in Hsum by lra.
+        change 0 with (INR 0) in Hsum; apply INR_inj in Hsum; inversion Hsum.
+      * simpl in *.
+        change (match n0 with
+                | 0%nat => 1
+                | S _ => INR n0 + 1
+                end)
+          with (INR (S n0)) in Hsum.
+        replace (INR (S n0) * (0 - (sqrt 2 + 0)) + 0) with (- INR (S n0) * sqrt 2) in Hsum by lra.
+        enough (INR ((S n0) * (S n0) * 2) = 0).
+        { change 0 with (INR 0) in H0.
+          apply INR_inj in H0.
+          lia. }
+        rewrite ? mult_INR.
+        change (INR 2) with 2.
+        replace 2 with (sqrt 2 * sqrt 2) by (apply sqrt_def; nra).
+        nra.
+      * simpl in *.
+        change (match n with
+                | 0%nat => 1
+                | S _ => INR n + 1
+                end)
+          with (INR (S n)) in Hsum.
+        change (match n0 with
+                | 0%nat => 1
+                | S _ => INR n0 + 1
+                end)
+          with (INR (S n0)) in Hsum.
+        replace (INR (S n) * (1 + 0 - 0)) with (INR (S n)) in Hsum by nra.
+        replace (0 - (sqrt 2 + 0)) with (- sqrt 2) in Hsum by nra.
+        replace (INR (S n0) * - sqrt 2 + 0) with (- INR (S n0) * sqrt 2) in Hsum by nra.
+        assert (INR ((S n) * (S n)) = INR (2 * (S n0) * (S n0))).
+        { rewrite ? mult_INR.
+          change (INR 2) with 2.
+          replace 2 with (sqrt 2 * sqrt 2) by (apply sqrt_def; nra).
+          nra. }
+        apply INR_inj in H0.
+        apply sqrt2_not_rational with (S n) (S n0); auto.
+        lia.
+    + repeat apply Forall_Type_cons; try apply Forall_Type_nil; apply I.
 Qed.

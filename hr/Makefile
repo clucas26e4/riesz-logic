@@ -54,13 +54,13 @@ interpretation.vo : interpretation.v hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic
 hr.vo : hr.v hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo 
 tech_lemmas.vo : tech_lemmas.v hr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo 
 soundness.vo : soundness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo
-completeness.vo : completeness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo tactics.vo lambda_prop_tools.vo tech_lemmas.vo $(UTILDIR)/riesz_logic_List_more.vo
-invertibility.vo : invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo
+completeness.vo : completeness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo tactics.vo lambda_prop_tools.vo tech_lemmas.vo $(UTILDIR)/riesz_logic_List_more.vo soundness.vo
+invertibility.vo : invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo hr_perm_lemmas.vo
 M_elim.vo : M_elim.v invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo
 can_elim.vo : can_elim.v invertibility.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo M_elim.vo hr_perm_lemmas.vo
 
-p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat2.vo $(UTILDIR)/FOL_R.vo
-decidability.vo : decidability.v $(UTILDIR)/FOL_R.vo lambda_prop.vo hr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo can_elim.vo M_elim.vo invertibility.vo
+p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat2.vo $(UTILDIR)/FOL_R.vo hseq.vo
+decidability.vo : decidability.v $(UTILDIR)/FOL_R.vo lambda_prop_tools.vo hr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo can_elim.vo M_elim.vo invertibility.vo p_hseq.vo
 
 Rterm.vo : Rterm.v
 Rsemantic.vo : Rsemantic.v Rterm.vo

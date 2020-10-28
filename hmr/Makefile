@@ -54,7 +54,7 @@ interpretation.vo : interpretation.v hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic
 hmr.vo : hmr.v hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hmr_perm_lemmas.vo
 tech_lemmas.vo : tech_lemmas.v hmr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hmr_perm_lemmas.vo
 soundness.vo : soundness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hmr.vo semantic.vo interpretation.vo
-completeness.vo : completeness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hmr.vo semantic.vo interpretation.vo tactics.vo lambda_prop_tools.vo tech_lemmas.vo $(UTILDIR)/riesz_logic_List_more.vo
+completeness.vo : completeness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hmr.vo semantic.vo interpretation.vo tactics.vo lambda_prop_tools.vo tech_lemmas.vo $(UTILDIR)/riesz_logic_List_more.vo soundness.vo
 invertibility.vo : invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hmr.vo hmr_perm_lemmas.vo tech_lemmas.vo
 M_elim.vo : M_elim.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hmr.vo preproof.vo tech_lemmas.vo
 can_elim.vo : can_elim.v invertibility.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hmr.vo M_elim.vo hmr_perm_lemmas.vo

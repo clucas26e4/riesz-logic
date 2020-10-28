@@ -16,6 +16,19 @@ Proof.
   apply pos_INR.
 Qed.
 
+Lemma INR_inj : forall n m,
+    INR n = INR m ->
+    n = m.
+Proof.
+  induction n ; destruct m; intros Heq; try (now inversion Heq);
+    [ exfalso; assert (H := INR_S_n_pos m); change (INR 0) with 0 in Heq; lra
+    | exfalso; assert (H := INR_S_n_pos n); change (INR 0) with 0 in Heq; lra | ].
+  apply eq_S.
+  apply IHn.
+  rewrite S_O_plus_INR in Heq; change (S m) with (1 + m)%nat in Heq; rewrite (S_O_plus_INR m) in Heq.
+  lra.
+Qed.
+
 (* Boolean version of Lt for real *)
 Definition R_lt_dec (a b : R) : bool.
   case (Rlt_dec a b).
@@ -24,6 +37,11 @@ Definition R_lt_dec (a b : R) : bool.
 Defined.
 
 Notation "a <? b" := (R_lt_dec a b) : R_scope.
+
+Inductive R_order (a : R) :=
+| R_is_gt : (0 <? a) = true -> R_order a
+| R_is_lt : (0 <? - a) = true -> R_order a
+| R_is_null : a = 0 -> R_order a.
 
 Lemma R_blt_lt : forall a b, a <? b = true <-> a < b.
 Proof.
@@ -40,6 +58,16 @@ Proof.
   exfalso; apply Hblt; apply Hlt.
 Qed.
 
+Lemma R_order_dec : forall a, R_order a.
+Proof.
+  intros a.
+  case_eq (0 <? a); [ | case_eq (0 <? - a) ]; intros.
+  - apply R_is_gt; assumption.
+  - apply R_is_lt; assumption.
+  - apply R_is_null.
+    apply R_blt_nlt in H; apply R_blt_nlt in H0; lra.
+Qed.
+    
 Lemma INR_S_n_pos_b : forall n, 0 <? INR (S n) = true.
 Proof.
   intros n; apply R_blt_lt; apply INR_S_n_pos.

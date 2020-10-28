@@ -13,6 +13,7 @@ Require Import hr.
 Require Import invertibility.
 Require Import M_elim.
 Require Import can_elim.
+Require Import decidability.
 
 Require Import List_more.
 Require Import Reals.
@@ -94,4 +95,13 @@ Qed.
 
 (** Theorem 3.15 *)
 (** Proposition 3.16 *)
+Lemma HR_without_T_CAN_not_complete :
+  { G : _ & zero <== sem_hseq G & (HR_M G -> False) }.
+Proof.
+  apply HR_M_not_complete.
+Qed.
 (** Theorem 3.17 *)
+Lemma HR_is_decidable : forall G,
+    (HR_full G) + (HR_full G -> False).
+Proof.
+  apply HR_decidable.

@@ -1,6 +1,7 @@
 (** First order logic for the signature (R, +, ., <=, =) where . is an external multiplication by a real scalar *)
 
 Require Export Reals.
+Require Import Rpos.
 Require Import Bool.
 Require Import Lra.
 Require Import Permutation_Type.
@@ -19,6 +20,14 @@ Inductive FOL_R_term : Type :=
 
 Notation "f1 *R f2" := (FOL_R_mul f1 f2) (at level 20, left associativity).
 Notation "f1 +R f2" := (FOL_R_add f1 f2) (at level 15).
+
+Fixpoint max_var_FOL_R_term t :=
+  match t with
+  | FOL_R_var n => n
+  | FOL_R_cst r => 0%nat
+  | FOL_R_mul t1 t2 => Nat.max (max_var_FOL_R_term t1) (max_var_FOL_R_term t2)
+  | FOL_R_add t1 t2 => Nat.max (max_var_FOL_R_term t1) (max_var_FOL_R_term t2)
+  end.                         
 
 Fixpoint FOL_R_term_sem (v : nat -> R) t :=
   match t with
