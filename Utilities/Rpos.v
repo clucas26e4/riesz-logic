@@ -4,6 +4,12 @@ Require Import Lra.
 
 Local Open Scope R_scope.
 
+Lemma Rminus_diag_le :
+  forall r1 r2, r1 <= r2 -> 0 <= r2 - r1.
+Proof.
+  intros; lra.
+Qed.
+
 Lemma Req_dec (a b : R) : {a = b} + {a <> b}.
 Proof.
   case (Rle_dec a b); [intros Hle | intros Hnle; right ; nra].

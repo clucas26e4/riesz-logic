@@ -100,8 +100,10 @@ Lemma HR_without_T_CAN_not_complete :
 Proof.
   apply HR_M_not_complete.
 Qed.
+
 (** Theorem 3.17 *)
 Lemma HR_is_decidable : forall G,
     (HR_full G) + (HR_full G -> False).
 Proof.
   apply HR_decidable.
+Qed.

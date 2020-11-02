@@ -59,11 +59,14 @@ invertibility.vo : invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.v
 M_elim.vo : M_elim.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hmr.vo preproof.vo tech_lemmas.vo
 can_elim.vo : can_elim.v invertibility.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hmr.vo M_elim.vo hmr_perm_lemmas.vo
 preproof.vo : preproof.v hmr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo
-lambda_prop_tools.vo : lambda_prop_tools.v hmr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo M_elim.vo can_elim.vo
+lambda_prop_tools.vo : lambda_prop_tools.v hmr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo
 
 Rterm.vo : Rterm.v
 Rsemantic.vo : Rsemantic.v Rterm.vo
 semantic_Rsemantic_eq.vo : semantic_Rsemantic_eq.v Rsemantic.vo semantic.vo Rterm.vo term.vo $(UTILDIR)/Rpos.vo
+
+p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat2.vo $(UTILDIR)/FOL_R.vo hseq.vo
+decidability.vo : decidability.v $(UTILDIR)/FOL_R.vo lambda_prop_tools.vo hmr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo can_elim.vo M_elim.vo invertibility.vo p_hseq.vo
 
 tactics.vo : tactics.v hseq.vo $(UTILDIR)/Rpos.vo term.vo hmr.vo 
 hmr_perm_lemmas.vo : hmr_perm_lemmas.v $(UTILDIR)/Rpos.vo term.vo hseq.vo

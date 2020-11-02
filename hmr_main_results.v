@@ -13,12 +13,14 @@ Require Import hmr.
 Require Import invertibility.
 Require Import M_elim.
 Require Import can_elim.
+Require Import decidability.
 
 Require Import List_more.
 Require Import Reals.
 Require Import Lra.
 Require Import Lia.
 
+(** Theorem 4.3 *)
 Lemma HMR_soundness P : forall G,
     HMR P G ->
     R_zero <R= toRterm (sem_hseq G).
@@ -31,6 +33,7 @@ Proof.
   apply pi.
 Qed.
 
+(** Theorem 4.4 *)
 Lemma HMR_completeness : forall G,
     G <> nil ->
     R_zero <R= toRterm (sem_hseq G) ->
@@ -47,6 +50,7 @@ Proof.
     apply H.
 Qed.
 
+(** Theorem 4.6 *)
 Lemma HMR_plus_inv : forall G T A B r, HMR_T_M ((vec r (A +S B) ++ T) :: G) -> HMR_T_M ((vec r A ++ vec r B ++ T) :: G).
 Proof.
   apply hmrr_plus_inv.
@@ -77,13 +81,21 @@ Proof.
   apply hmrr_min_inv_r.
 Qed.
 
+(** Theorem 4.9 *)
 Lemma HMR_M_elim : forall G, HMR_T_M G -> HMR_T G.
 Proof.
   apply hmrr_M_elim.
 Qed.
 
+(** Theorem 4.10 *)
 Lemma HMR_can_elim : forall G, HMR_full G -> HMR_T_M G.
 Proof.
   apply hmrr_can_elim.
 Qed.
-  
+
+(** Theorem 4.11 *)
+Lemma HMR_is_decidable : forall G,
+    (HMR_full G) + (HMR_full G -> False).
+Proof.
+  apply HMR_decidable.
+Qed.

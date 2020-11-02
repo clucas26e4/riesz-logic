@@ -45,6 +45,55 @@ Fixpoint sum_term k A :=
   | S n => A +S (sum_term n A)
   end.
 
+(** Complexity *)
+Fixpoint HMR_complexity_term A :=
+  match A with
+  | var n => 0
+  | covar n => 0
+  | one => 0
+  | coone => 0
+  | <S> A => 0
+  | zero => 1
+  | plus A B => 1 + HMR_complexity_term A + HMR_complexity_term B
+  | min A B => 1 + HMR_complexity_term A + HMR_complexity_term B
+  | max A B => 1 + HMR_complexity_term A + HMR_complexity_term B
+  | mul r A => 1 + HMR_complexity_term A
+  end.
+
+Fixpoint max_diamond_term A :=
+  match A with
+  | var n => 0
+  | covar n => 0
+  | one => 0
+  | coone => 0
+  | <S> A => 1 + max_diamond_term A
+  | zero => 0
+  | plus A B => Nat.max (max_diamond_term A) (max_diamond_term B)
+  | min A B => Nat.max (max_diamond_term A) (max_diamond_term B)
+  | max A B => Nat.max (max_diamond_term A) (max_diamond_term B)
+  | mul r A => max_diamond_term A
+  end.
+
+Lemma max_diamond_minus :
+  forall A, max_diamond_term A = max_diamond_term (-S A).
+Proof.
+  induction A; simpl; try rewrite IHA; try rewrite IHA1; try rewrite IHA2; reflexivity.
+Qed.
+
+Fixpoint max_var_term A :=
+  match A with
+  | var n => n
+  | covar n => n
+  | zero => 0%nat
+  | one => 0%nat
+  | coone => 0%nat
+  | <S> A => max_var_term A
+  | A +S B => Nat.max (max_var_term A) (max_var_term B)
+  | r *S A => max_var_term A
+  | A /\S B => Nat.max (max_var_term A) (max_var_term B)
+  | A \/S B => Nat.max (max_var_term A) (max_var_term B)
+  end.
+
 (** Substitution *)
 Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
   match t1 with
@@ -82,6 +131,24 @@ Fixpoint is_basic A :=
   | diamond A => True
   | _ => False
   end.
+
+Lemma is_atom_complexity_0 : forall A,
+    is_atom A -> HMR_complexity_term A = 0.
+Proof.
+  induction A; intros Hat; try now inversion Hat; reflexivity.
+Qed.
+
+Lemma is_basic_complexity_0 : forall A,
+    is_basic A -> HMR_complexity_term A = 0.
+Proof.
+  induction A; intros Hat; try now inversion Hat; reflexivity.
+Qed.
+
+Lemma is_basic_complexity_0_inv : forall A,
+    HMR_complexity_term A = 0 -> is_basic A.
+Proof.
+  induction A; intros Hc0; now inversion Hc0.
+Qed.
 
 Lemma term_eq_dec : forall (A B : term) , { A = B } + { A <> B}.
 Proof.

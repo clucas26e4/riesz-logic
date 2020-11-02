@@ -291,6 +291,94 @@ Proof.
   apply IHL; assumption.
 Qed.
 
+(* TODO MOVE to hseq *)
+Lemma only_diamond_seq_decomp :
+  forall T,
+    {' (r , s, D) : _ & prod
+                       (Permutation_Type
+                          (only_diamond_seq T)
+                          (vec s coone ++ vec r one ++ D))
+                       (sum_vec r - sum_vec s = sum_weight_seq_one T - sum_weight_seq_coone T)}.
+Proof.
+  induction T; [split with (nil, nil, nil); split; try reflexivity; lra | ].
+  destruct IHT as [[[r s] D] [Hperm Heq]]; try (destruct a; simpl in * ;lia).
+  destruct a as [a A].
+  destruct A;
+    try (esplit with (r, s, D); split; assumption);
+    try (simpl max_diamond_term in Hnd; exfalso; lia);
+    [ split with (a :: r , s, D) | split with (r , a :: s, D) | split with (r, s, (a,A) :: D)];
+    simpl; split; try perm_Type_solve; try lra.
+Qed.
+
+Lemma only_diamond_seq_decomp_no_diamond :
+  forall T,
+    max_diamond_seq T = 0%nat ->
+    {' (r , s) : _ & prod
+                       (Permutation_Type
+                          (only_diamond_seq T)
+                          (vec s coone ++ vec r one))
+                       (sum_vec r - sum_vec s = sum_weight_seq_one T - sum_weight_seq_coone T)}.
+Proof.
+  induction T; intros Hnd; [split with (nil, nil); split; try reflexivity; lra | ].
+  simpl in Hnd.
+  destruct IHT as [[r s] [Hperm Heq]]; try (destruct a; simpl in * ;lia).
+  destruct a as [a A].
+  destruct A;
+    try (esplit with (r, s); split; assumption);
+    try (simpl max_diamond_term in Hnd; exfalso; lia);
+    [ split with (a :: r , s) | split with (r , a :: s)];
+    simpl; split; try perm_Type_solve; try lra.
+Qed.
+
+Lemma concat_with_coeff_mul_only_diamond_decomp :
+  forall G L,
+    {' (r , s, T) : _ & prod
+                       (Permutation_Type
+                          (only_diamond_seq (concat_with_coeff_mul G L))
+                          (vec s coone ++ vec r one ++ T))
+                       (sum_vec r - sum_vec s = sum_weight_with_coeff_one G L) }.
+Proof.
+  induction G; intros [ | o L]; simpl; try (split with ((nil, nil), nil); split; try reflexivity; lra).
+  destruct (IHG L) as [[[r s] T] [Hperm Heq]]; try lia.
+  destruct o; simpl; [ | split with (r ,s, T); split; auto ].
+  destruct (only_diamond_seq_decomp a) as [[[ra sa] Ta] [Hperma Heqa]].
+  split with ((mul_vec r0 ra) ++ r, (mul_vec r0 sa) ++ s, seq_mul r0 Ta ++ T).
+  rewrite ?vec_app; rewrite ? sum_vec_app.
+  rewrite only_diamond_seq_app.
+  rewrite <- ? seq_mul_vec_mul_vec.
+  rewrite ? sum_mul_vec.
+  split; try nra.
+  rewrite <- only_diamond_seq_mul.
+  apply seq_mul_perm with _ _ r0 in Hperma.
+  rewrite ? seq_mul_app in Hperma.
+  perm_Type_solve.
+Qed.
+
+Lemma concat_with_coeff_mul_only_diamond_decomp_no_diamond :
+  forall G L,
+    max_diamond_hseq G = 0%nat ->
+    {' (r , s) : _ & prod
+                       (Permutation_Type
+                          (only_diamond_seq (concat_with_coeff_mul G L))
+                          (vec s coone ++ vec r one))
+                       (sum_vec r - sum_vec s = sum_weight_with_coeff_one G L) }.
+Proof.
+  induction G; intros [ | o L] Hnd; simpl; try (split with (nil, nil); split; try reflexivity; lra).
+  destruct (IHG L) as [[r s] [Hperm Heq]]; try (simpl in Hnd ; lia).
+  destruct o; simpl; [ | split with (r ,s); split; auto ].
+  destruct (only_diamond_seq_decomp_no_diamond a) as [[ra sa] [Hperma Heqa]]; try (simpl in Hnd ; lia).
+  split with ((mul_vec r0 ra) ++ r, (mul_vec r0 sa) ++ s).
+  rewrite ?vec_app; rewrite ? sum_vec_app.
+  rewrite only_diamond_seq_app.
+  rewrite <- ? seq_mul_vec_mul_vec.
+  rewrite ? sum_mul_vec.
+  split; try nra.
+  rewrite <- only_diamond_seq_mul.
+  apply seq_mul_perm with _ _ r0 in Hperma.
+  rewrite ? seq_mul_app in Hperma.
+  perm_Type_solve.
+Qed.
+  
 Lemma concat_with_coeff_copy_only_diamond : forall G L,
     concat_with_coeff_copy (only_diamond_hseq G) L = only_diamond_seq (concat_with_coeff_copy G L).
 Proof.
@@ -630,506 +718,177 @@ Proof.
       apply Hstep.
 Qed.
 
-(*
-Lemma hmrr_fuse :
-  forall G T A r1 r2,
-    HMR_T_M (((r1, A) :: (r2 , A) :: T) :: G) ->
-    HMR_T_M (((plus_pos r1 r2, A) :: T) :: G).
+(** ** sum_weight_(co)var_with_coeff and co(one) *)
+Fixpoint sum_weight_var_with_coeff n G (L : list (option Rpos)) :=
+  match G, L with
+  | _, nil => 0
+  | nil, _ => 0
+  | T :: G , None :: L => sum_weight_var_with_coeff n G L
+  | T :: G , (Some r) :: L => ((projT1 r) * sum_weight_seq_var n T) + sum_weight_var_with_coeff n G L
+  end.
+
+Lemma sum_weight_var_with_coeff_lt_max_var : forall n G L,
+    (max_var_hseq G < n)%nat ->
+    sum_weight_var_with_coeff n G L = 0.
 Proof.
-  intros G T A r1 r2 pi.
-  apply hmrr_can_elim.
-  unfold HMR_full.
-  change hmr_frag_full with (hmr_frag_add_CAN hmr_frag_full).
-  apply hmrr_can_fuse.
-  apply HMR_le_frag with hmr_frag_T_M; try assumption.
-  repeat split.
+  intros n; induction G; intros L Hlt; destruct L; auto.
+  simpl in *.
+  rewrite sum_weight_seq_var_lt_max_var; try lia.
+  rewrite IHG; try lia.
+  destruct o;lra.
 Qed.
 
-Lemma hmrr_unfuse :
-  forall G T A r1 r2,
-    HMR_T_M (((plus_pos r1 r2, A) :: T) :: G) ->
-    HMR_T_M (((r1, A) :: (r2 , A) :: T) :: G).
+Lemma sum_weight_var_with_coeff_app1 : forall n G1 G2 L,
+    (length L <= length G1)%nat ->
+    sum_weight_var_with_coeff n (G1 ++ G2) L = sum_weight_var_with_coeff n G1 L.
 Proof.
-  intros G T A r1 r2 pi.
-  apply hmrr_can_elim.
-  unfold HMR_full.
-  change hmr_frag_full with (hmr_frag_add_CAN hmr_frag_full).
-  apply hmrr_can_unfuse.
-  apply HMR_le_frag with hmr_frag_T_M; try assumption.
-  repeat split.
+  intros n; induction G1; intros G2 L Hlen; destruct L; try (now inversion Hlen); [destruct G2 | ]; auto.
+  simpl; rewrite IHG1; auto.
+  simpl in Hlen; lia.
 Qed.
 
-Lemma hmrr_unfuse_gen :
-  forall G T D r1 r2,
-    HMR_T_M ((seq_mul (plus_pos r1 r2) D ++ T) :: G) ->
-    HMR_T_M ((seq_mul r1 D ++ seq_mul r2 D ++ T) :: G).
+Lemma sum_weight_var_with_coeff_app2 : forall n G1 G2 L1 L2,
+    (length L1 = length G1) ->
+    sum_weight_var_with_coeff n (G1 ++ G2) (L1 ++ L2) = sum_weight_var_with_coeff n G1 L1 + sum_weight_var_with_coeff n G2 L2.
 Proof.
-  intros G T D r1 r2.
-  revert T; induction D; intros T pi; try assumption.
-  - destruct a as [a A]; simpl in *.
-    apply hmrr_ex_seq with ((time_pos r1 a, A) :: (time_pos r2 a, A) :: seq_mul r1 D ++ seq_mul r2 D ++ T); [ perm_Type_solve | ].
-    apply hmrr_unfuse.
-    replace (plus_pos (time_pos r1 a) (time_pos r2 a)) with (time_pos (plus_pos r1 r2) a) by (destruct r1; destruct r2; destruct a; apply Rpos_eq; simpl; nra).
-    apply hmrr_ex_seq with (seq_mul r1 D ++ seq_mul r2 D ++ (time_pos (plus_pos r1 r2) a, A) :: T) ; [ perm_Type_solve | ].
-    apply IHD.
-    eapply hmrr_ex_seq ; [ | apply pi].
-    perm_Type_solve.
+  intros n; induction G1; intros G2 L1 L2 Hlen; destruct L1; try (now inversion Hlen); [destruct L2 ; destruct G2 | ]; simpl; try lra.
+  simpl in *; rewrite IHG1; auto.
+  destruct o ; lra.
 Qed.
 
-Lemma hmrr_fuse_gen :
-  forall G T D r1 r2,
-    HMR_T_M ((seq_mul r1 D ++ seq_mul r2 D ++ T) :: G) ->
-    HMR_T_M ((seq_mul (plus_pos r1 r2) D ++ T) :: G).
+Lemma sum_weight_var_with_coeff_app3 : forall n G L1 L2,
+    (length G <= length L1)%nat ->
+    sum_weight_var_with_coeff n G (L1 ++ L2) = sum_weight_var_with_coeff n G L1.
 Proof.
-  intros G T D r1 r2.
-  revert T; induction D; intros T pi; try assumption.
-  - destruct a as [a A]; simpl in *.
-    replace (time_pos (plus_pos r1 r2) a) with (plus_pos (time_pos r1 a) (time_pos r2 a)) by (destruct r1; destruct r2; destruct a; apply Rpos_eq; simpl; nra).
-    apply hmrr_fuse.
-    apply hmrr_ex_seq with (seq_mul (plus_pos r1 r2) D ++ (time_pos r1 a, A) :: (time_pos r2 a, A) :: T) ; [ perm_Type_solve | ].
-    apply IHD.
-    eapply hmrr_ex_seq ; [ | apply pi].
-    perm_Type_solve.
+  intros n; induction G; intros L1 L2 Hlen; destruct L1; try (now inversion Hlen); [now destruct L2 | ].
+  simpl; rewrite IHG; auto.
+  simpl in Hlen; lia.
 Qed.
 
-Lemma concat_with_coeff_mul_oadd_Rpos_list_fuse : forall G T H L1 L2,
-    length L1 = length L2 ->
-    HMR_T_M ((concat_with_coeff_mul G L1 ++ concat_with_coeff_mul G L2 ++ T) :: H) ->
-    HMR_T_M ((concat_with_coeff_mul G (oadd_Rpos_list L1 L2) ++ T) :: H).
+Fixpoint sum_weight_covar_with_coeff n G (L : list (option Rpos)) :=
+  match G, L with
+  | _, nil => 0
+  | nil, _ => 0
+  | T :: G , (Some r) :: L => ((projT1 r) * sum_weight_seq_covar n T) + sum_weight_covar_with_coeff n G L
+  | T :: G , None :: L => sum_weight_covar_with_coeff n G L
+  end.
+
+Lemma sum_weight_covar_with_coeff_lt_max_var : forall n G L,
+    (max_var_hseq G < n)%nat ->
+    sum_weight_covar_with_coeff n G L = 0.
 Proof.
-  intros G T H L1; revert G T H; induction L1; intros G T H L2 Hlen pi; [ destruct L2; inversion Hlen; destruct G; apply pi | ].
-  destruct L2; inversion Hlen.
-  destruct G; [ apply pi | ].
-  destruct a; destruct o; simpl in *.
-  - rewrite<- app_assoc; apply hmrr_fuse_gen.
-    apply hmrr_ex_seq with (concat_with_coeff_mul G (oadd_Rpos_list L1 L2) ++ (seq_mul r s ++ seq_mul r0 s ++ T)) ; [ perm_Type_solve | ].
-    apply IHL1; try assumption.
-    eapply hmrr_ex_seq ; [ | apply pi].
-    perm_Type_solve.
-  - apply hmrr_ex_seq with (concat_with_coeff_mul G (oadd_Rpos_list L1 L2) ++ (seq_mul r s ++ T)) ; [ perm_Type_solve | ].
-    apply IHL1; try assumption.
-    eapply hmrr_ex_seq ; [ | apply pi].
-    perm_Type_solve.
-  - apply hmrr_ex_seq with (concat_with_coeff_mul G (oadd_Rpos_list L1 L2) ++ (seq_mul r s ++ T)) ; [ perm_Type_solve | ].
-    apply IHL1; try assumption.
-    eapply hmrr_ex_seq ; [ | apply pi].
-    perm_Type_solve.
-  - apply IHL1; try assumption.
+  intros n; induction G; intros L Hlt; destruct L; auto.
+  simpl in *.
+  rewrite sum_weight_seq_covar_lt_max_var; try lia.
+  rewrite IHG; try lia.
+  destruct o; lra.
 Qed.
 
-Lemma lambda_prop :
-  forall G,
-    hseq_is_basic G ->
-    HMR_T_M G ->
-    { L &
-      prod (length L = length G)
-           ((Exists_Type (fun x => x <> None) L) *
-            (forall n, sum_weight_with_coeff n G L = 0) *
-            (0 <= sum_weight_with_coeff_one G L) *
-            (HMR_T_M ((concat_with_coeff_mul (only_diamond_hseq G) L) :: nil)))}.
+Lemma sum_weight_covar_with_coeff_app1 : forall n G1 G2 L,
+    (length L <= length G1)%nat ->
+    sum_weight_covar_with_coeff n (G1 ++ G2) L = sum_weight_covar_with_coeff n G1 L.
 Proof.
-  intros G Ha pi.
-  induction pi.
-  - split with ((Some One) :: nil).
-    repeat split; try reflexivity.
-    + apply Exists_Type_cons_hd.
-      intros H; inversion H.
-    + intros n.
-      simpl; nra.
-    + simpl; nra.
-    + apply hmrr_INIT.
-  - inversion Ha; subst.
-    destruct (IHpi X0) as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    split with (None :: L).
-    repeat split; auto.
-    simpl; rewrite Hlen; reflexivity.
-  - inversion Ha; subst.
-    destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons ;[ | apply Forall_Type_cons]; try assumption. }
-    destruct L; [ | destruct L]; try now inversion Hlen.
-    split with ((oadd_Rpos o o0) :: L).
-    repeat split; auto.
-    + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
-        destruct o; [ | exfalso; apply H0; reflexivity].
-        destruct o0; intros H; inversion H.
-      * inversion X1; subst; auto.
-        apply Exists_Type_cons_hd.
-        destruct o; destruct o0; try (exfalso; apply H0; reflexivity); intro H; inversion H.
-    + intros n.
-      specialize (Hsum n).
-      destruct o; destruct o0; try destruct r; try destruct r0; simpl; simpl in Hsum; nra.
-    + destruct o; destruct o0; try destruct r; try destruct r0; simpl; simpl in Hone; nra.
-    + destruct o; destruct o0; simpl; simpl in Hind; try assumption.
-      apply hmrr_fuse_gen.
-      apply Hind.
-  - inversion Ha; inversion X0; subst.
-    destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons; try assumption.
-      apply seq_basic_app; assumption. }
-    destruct L; try now inversion Hlen.
-    split with (o :: o :: L).
-    repeat split; auto.
-    + simpl in *; rewrite Hlen; reflexivity.
-    + intro n.
-      specialize (Hsum n).
-      destruct o; auto.
-      simpl in *.
-      rewrite sum_weight_seq_var_app in Hsum.
-      rewrite sum_weight_seq_covar_app in Hsum.
-      nra.
-    + destruct o; auto.
-      simpl in *.
-      rewrite sum_weight_seq_one_app in Hone.
-      rewrite sum_weight_seq_coone_app in Hone.
-      nra.
-    + destruct o; try assumption.
-      simpl in *.
-      rewrite only_diamond_seq_app in Hind.
-      rewrite seq_mul_app in Hind.
-      rewrite app_assoc; apply Hind.
-  - inversion Ha; subst.
-    destruct IHpi1 as [L1 [Hlen1 [[[Hex1 Hsum1] Hone1] Hind1]]].
-    { apply Forall_Type_cons ; [ apply seq_basic_app_inv_l with T2 | ]; try assumption. }
-    destruct L1; try now inversion Hlen1.
-    destruct o.
-    2:{ split with (None :: L1).
-        repeat split; auto. }
-    destruct IHpi2 as [L2 [Hlen2 [[[Hex2 Hsum2] Hone2] Hind2]]].
-    { apply Forall_Type_cons ; [ apply seq_basic_app_inv_r with T1 | ]; try assumption. }
-    destruct L2; try now inversion Hlen2.
-    destruct o.
-    2:{ split with (None :: L2).
-        repeat split; auto. }
-    split with ((Some (time_pos r r0)) :: oadd_Rpos_list (map (mul_Rpos_oRpos r0) L1) (map (mul_Rpos_oRpos r) L2)).
-    repeat split; auto.
-    + simpl in Hlen1, Hlen2; simpl.
-      rewrite oadd_Rpos_list_length ; [ rewrite map_length; assumption | ].
-      rewrite 2 map_length.
-      lia.
-    + apply Exists_Type_cons_hd.
-      intros H; inversion H.
-    + intros n; specialize (Hsum1 n); specialize (Hsum2 n); simpl in Hsum1, Hsum2.
-      simpl.
-      rewrite sum_weight_seq_var_app; rewrite sum_weight_seq_covar_app.
-      rewrite sum_weight_with_coeff_oadd_Rpos_list ; [ | simpl in Hlen1, Hlen2; simpl; rewrite 2 map_length; lia].
-      rewrite 2 sum_weight_with_coeff_omul_Rpos_list.
-      destruct r; destruct r0; simpl in *; nra.
-    + simpl; simpl in Hone1, Hone2.
-      rewrite sum_weight_seq_one_app; rewrite sum_weight_seq_coone_app.
-      rewrite sum_weight_with_coeff_one_oadd_Rpos_list ; [ | simpl in Hlen1, Hlen2; simpl; rewrite 2 map_length; lia].
-      rewrite 2 sum_weight_with_coeff_one_omul_Rpos_list.
-      destruct r as [r Hr]; destruct r0 as [r0 Hr0]; simpl in *.
-      clear - Hr Hr0 Hone1 Hone2.
-      apply R_blt_lt in Hr; apply R_blt_lt in Hr0.
-      nra.
-    + simpl in Hind1, Hind2 |- *.
-      rewrite only_diamond_seq_app; rewrite seq_mul_app.
-      rewrite <- (seq_mul_twice (only_diamond_seq T2)).
-      replace (time_pos r r0) with (time_pos r0 r) by (destruct r0; destruct r; apply Rpos_eq; simpl; nra).
-      rewrite <- seq_mul_twice.
-      apply hmrr_ex_seq with ((concat_with_coeff_mul (only_diamond_hseq G) (oadd_Rpos_list (map (mul_Rpos_oRpos r0) L1) (map (mul_Rpos_oRpos r) L2))) ++ (seq_mul r0 (seq_mul r (only_diamond_seq T1)) ++ seq_mul r (seq_mul r0 (only_diamond_seq T2)))) ; [ perm_Type_solve | ].
-      apply concat_with_coeff_mul_oadd_Rpos_list_fuse ; [ simpl in Hlen1, Hlen2; simpl; rewrite 2 map_length; lia | ].
-      rewrite 2 concat_with_coeff_mul_omul_Rpos_list.
-      apply hmrr_ex_seq with (seq_mul r (seq_mul r0 (only_diamond_seq T2) ++ (concat_with_coeff_mul (only_diamond_hseq G) L2)) ++ seq_mul r0 (seq_mul r (only_diamond_seq T1) ++ (concat_with_coeff_mul (only_diamond_hseq G) L1))) ; [ rewrite ? seq_mul_app; perm_Type_solve | ].
-      apply hmrr_M; [ reflexivity | | ];
-        eapply hmrr_T; try reflexivity;
-          rewrite seq_mul_twice; rewrite inv_pos_l; rewrite seq_mul_One; assumption.      
-  - inversion Ha; subst.
-    destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons; try assumption.
-      apply seq_basic_mul; apply X. }
-    destruct L; try now inversion Hlen.
-    destruct o.
-    2:{ split with (None :: L).
-        repeat split; auto. }
-    split with (Some (time_pos r0 r) :: L).
-    repeat split; auto.
-    + apply Exists_Type_cons_hd; intros H; inversion H.
-    + destruct r; destruct r0; simpl in *; intros n; specialize (Hsum n);rewrite sum_weight_seq_var_mul in Hsum; rewrite sum_weight_seq_covar_mul in Hsum; simpl in *.
-      nra.
-    + destruct r; destruct r0; simpl in *; rewrite sum_weight_seq_one_mul in Hone; rewrite sum_weight_seq_coone_mul in Hone.
-      simpl in *; nra.
-    + simpl in *.
-      rewrite<- seq_mul_twice; rewrite only_diamond_seq_mul.
-      apply Hind.
-  - inversion Ha; subst.
-    destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons; try assumption.
-      eapply seq_basic_app_inv_r; eapply seq_basic_app_inv_r; apply X. }
-    split with L.
-    repeat split; auto.
-    + intros n0; specialize (Hsum n0).
-      destruct L; try now inversion Hlen.
-      simpl; rewrite ? sum_weight_seq_app.
-      case_eq (n0 =? n); intros H.
-      * apply Nat.eqb_eq in H; subst.
-        rewrite ? sum_weight_seq_var_app;rewrite ? sum_weight_seq_covar_app.
-        rewrite sum_weight_seq_covar_vec_covar_eq;rewrite sum_weight_seq_var_vec_var_eq.
-        rewrite sum_weight_seq_var_vec_neq; [ | now auto ]; rewrite sum_weight_seq_covar_vec_neq; [ | now auto].
-        simpl in Hsum.
-        destruct o; nra.
-      * apply Nat.eqb_neq in H.
-        rewrite ? sum_weight_seq_var_app;rewrite ? sum_weight_seq_covar_app.
-        rewrite ? sum_weight_seq_covar_vec_neq ; [ | now auto | intro H'; inversion H'; now auto]; rewrite ? sum_weight_seq_var_vec_neq; [ | intro H'; inversion H'; now auto | now auto ].
-        destruct o; simpl in Hsum; auto.
-        nra.
-    + destruct L; try now inversion Hlen.
-      simpl in *; rewrite ? sum_weight_seq_app.
-      simpl in *; rewrite ? sum_weight_seq_one_app; rewrite ? sum_weight_seq_coone_app.
-      destruct o; auto.
-      rewrite ? sum_weight_seq_coone_vec_neq; try now (intros H; inversion H).
-      rewrite ? sum_weight_seq_one_vec_neq; try now (intros H; inversion H).
-      nra.
-    + unfold only_diamond_hseq; fold only_diamond_hseq.
-      rewrite 2 only_diamond_seq_app.
-      rewrite only_diamond_seq_vec_var; rewrite only_diamond_seq_vec_covar.
-      apply Hind.
-  - destruct r; [ | inversion Ha; inversion X; inversion X1].
-    destruct (IHpi Ha) as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    split with L.
-    repeat split; try assumption.
-  - destruct r; [ | inversion Ha; inversion X; inversion X1].
-    destruct (IHpi Ha) as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    split with L.
-    repeat split; try assumption.
-  - destruct r; [ | inversion Ha; inversion X; inversion X1].
-    destruct (IHpi Ha) as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    split with L.
-    repeat split; try assumption.
-  - destruct r; [ | inversion Ha; inversion X; inversion X1].
-    destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { inversion Ha; subst.
-      apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption. }
-    destruct L ; [ | destruct L]; try now inversion Hlen.
-    split with (oadd_Rpos o o0 :: L).
-    repeat split; auto.
-    + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
-        destruct o; destruct o0; try (exfalso; apply H0; reflexivity); intros H; inversion H.
-      * inversion X; subst; auto.
-        apply Exists_Type_cons_hd; 
-          destruct o; destruct o0; try (exfalso; apply H0; reflexivity); intros H; inversion H.
-    + intros n.
-      simpl.
-      specialize (Hsum n).
-      destruct o; destruct o0; try destruct r; try destruct r0; simpl in *; nra.
-    + destruct o; destruct o0; try destruct r; try destruct r0; simpl in *; nra.
-    + destruct o; destruct o0; try apply Hind.
-      simpl in *.
-      apply hmrr_fuse_gen; apply Hind.
-  - destruct r; [ | inversion Ha; inversion X; inversion X1].
-    destruct (IHpi1 Ha) as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    split with L.
-    repeat split; try assumption.
-  - destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { inversion Ha; subst.
-      apply Forall_Type_cons; try assumption.
-      eapply seq_basic_app_inv_r; eapply seq_basic_app_inv_r; apply X. }
-    split with L.
-    repeat split; auto.
-    + intros n; specialize (Hsum n).
-      destruct L; try now inversion Hlen.
-      destruct o; simpl in *; auto.
-      rewrite ? sum_weight_seq_var_app; rewrite ? sum_weight_seq_covar_app.
-      rewrite ? sum_weight_seq_var_vec_neq; try (intros H; now inversion H).
-      rewrite ? sum_weight_seq_covar_vec_neq; try (intros H; now inversion H).
-      nra.
-    + destruct L; try now inversion Hlen.
-      destruct o; simpl in *; auto.
-      rewrite ? sum_weight_seq_one_app; rewrite ? sum_weight_seq_coone_app.
-      rewrite ? sum_weight_seq_one_vec_one_eq; rewrite ? sum_weight_seq_coone_vec_coone_eq.
-      rewrite ? sum_weight_seq_one_vec_neq; try (intros H; now inversion H).
-      rewrite ? sum_weight_seq_coone_vec_neq; try (intros H; now inversion H).
-      apply (Rmult_le_compat_l (projT1 r1)) in r0.
-      2:{ destruct r1 as [r1 Hr1]; simpl.
-          clear - Hr1; apply R_blt_lt in Hr1.
-          nra. }
-      nra.
-    + destruct L; try now inversion Hlen.
-      destruct o; simpl in *; auto.
-      rewrite 2 only_diamond_seq_app; rewrite 2 seq_mul_app.
-      rewrite only_diamond_seq_vec_one; rewrite only_diamond_seq_vec_coone.
-      rewrite 2 seq_mul_vec_mul_vec.
-      rewrite<- ? app_assoc.
-      apply hmrr_one; try assumption.
-      rewrite 2 mul_vec_sum_vec.
-      clear - r0.
-      destruct r1 as [r1 Hr1]; simpl; apply R_blt_lt in Hr1; nra.
-  - split with (Some One :: nil).
-    repeat split; auto.
-    + apply Exists_Type_cons_hd; intros H; inversion H.
-    + intros n.
-      simpl.
-      rewrite ? sum_weight_seq_var_app; rewrite ? sum_weight_seq_covar_app.
-      rewrite ? sum_weight_seq_var_vec_neq; try (intros H; now inversion H).
-      rewrite ? sum_weight_seq_covar_vec_neq; try (intros H; now inversion H).
-      rewrite sum_weight_seq_var_seq_diamond; rewrite sum_weight_seq_covar_seq_diamond; nra.
-    + simpl.
-      rewrite ? sum_weight_seq_one_app; rewrite ? sum_weight_seq_coone_app.
-      rewrite sum_weight_seq_one_vec_one_eq; rewrite sum_weight_seq_coone_vec_coone_eq.
-      rewrite ? sum_weight_seq_one_vec_neq; try (intros H; now inversion H).
-      rewrite ? sum_weight_seq_coone_vec_neq; try (intros H; now inversion H).
-      rewrite sum_weight_seq_one_seq_diamond; rewrite sum_weight_seq_coone_seq_diamond; nra.
-    + simpl.
-      rewrite seq_mul_One.
-      rewrite ? only_diamond_seq_app.
-      rewrite only_diamond_seq_vec_coone; rewrite only_diamond_seq_vec_one; rewrite only_diamond_seq_only_diamond.
-      rewrite app_nil_r; apply pi.
-  - destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { inversion Ha; subst.
-      apply Forall_Type_cons; try assumption.
-      apply seq_basic_perm with T2; [ perm_Type_solve | apply X]. }
-    split with L.
-    destruct L; try now inversion Hlen.
-    repeat split; auto.
-    + intro n; specialize (Hsum n).
-      destruct o; simpl in *; auto.
-      rewrite <- (sum_weight_seq_var_perm _ _ _ p); rewrite <- (sum_weight_seq_covar_perm _ _ _ p); apply Hsum.
-    + destruct o; simpl in *; auto.
-      rewrite <- (sum_weight_seq_one_perm _ _ p); rewrite <- (sum_weight_seq_coone_perm _ _ p); apply Hone.
-    + destruct o; simpl in *; auto.
-      eapply hmrr_ex_seq; [ | apply Hind].
-      apply Permutation_Type_app; try reflexivity.
-      apply seq_mul_perm.
-      apply only_diamond_seq_perm.
-      apply p.
-  - destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply hseq_basic_perm with H; try assumption.
-      symmetry; apply p. }
-    destruct (sum_weight_with_coeff_perm_r G H L p Hlen) as [L' [Hperm' [[Hsum' Hone'] Hperm'']]].
-    split with L'.
-    repeat split.
-    + apply Permutation_Type_length in p.
-      apply Permutation_Type_length in Hperm'.
-      etransitivity ; [ | apply p].
-      etransitivity ; [ | apply Hlen].
-      symmetry; apply Hperm'.
-    + apply Exists_Type_Permutation_Type with L; assumption.
-    + intros n.
-      rewrite <- (Hsum' n); apply Hsum.
-    + rewrite <- Hone'; apply Hone.
-    + eapply hmrr_ex_seq ; [ | apply Hind].
-      apply Hperm''.
-  - inversion f.
+  intros n; induction G1; intros G2 L Hlen; destruct L; try (now inversion Hlen); [destruct G2 | ]; auto.
+  simpl; rewrite IHG1; auto.
+  simpl in Hlen; lia.
 Qed.
 
-Lemma lambda_prop_inv :
-  forall G,
-    hseq_is_basic G ->
-    { L &
-      prod (length L = length G)
-           ((Exists_Type (fun x => x <> None) L) *
-            (forall n, sum_weight_with_coeff n G L = 0) *
-            (0 <= sum_weight_with_coeff_one G L) *
-            (HMR_T_M ((concat_with_coeff_mul (only_diamond_hseq G) L) :: nil)))} ->
-    HMR_T_M G.
+Lemma sum_weight_covar_with_coeff_app2 : forall n G1 G2 L1 L2,
+    (length L1 = length G1) ->
+    sum_weight_covar_with_coeff n (G1 ++ G2) (L1 ++ L2) = sum_weight_covar_with_coeff n G1 L1 + sum_weight_covar_with_coeff n G2 L2.
 Proof.
-  enough (forall G H,
-             hseq_is_basic G ->
-             hseq_is_basic H ->
-             { L &
-               prod (length L = length G)
-                    ((Exists_Type (fun x => x <> None) L) *
-                     (forall n, (sum_weight_var n H - sum_weight_covar n H) + sum_weight_with_coeff n G L = 0) *
-                     (0 <= (sum_weight_one H - sum_weight_coone H) + sum_weight_with_coeff_one G L) *
-                     (HMR_T_M ((flat_map only_diamond_seq H ++ concat_with_coeff_mul (only_diamond_hseq G) L) :: nil)))} + HMR_T_M H ->
-             HMR_T_M (H ++  G)).
-  { intros G Hat [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    change G with (nil ++ G).
-    refine (X G nil Hat _ _).
-    - apply Forall_Type_nil.
-    - left.
-      split with L.
-      repeat split; auto.
-      + intros n; simpl; specialize (Hsum n); nra.
-      + simpl; nra. }
-  intros G.
-  remember (length G) as n.
-  revert G Heqn.
-  induction n; intros G Heqn H HatG HatH [[L [Hlen [[[Hex Hsum] Hone] Hind]]] | pi].
-  - destruct L; inversion Hlen; inversion Hex.
-  - destruct G; inversion Heqn; rewrite app_nil_r; apply pi.
-  - destruct (Exists_Type_split _ _ _ Hex) as [[[r La] Lb] [Hp HeqL]].
-    assert (Permutation_Type L (r :: La ++ Lb)) as Hperm by (rewrite HeqL ; perm_Type_solve).
-    destruct (sum_weight_with_coeff_perm_l G _ _ Hperm) as [G' [HpermG [[Hsum' Hone'] Hpc]]].
-    { lia. }
-    destruct G' as [ | T G'].
-    { symmetry in HpermG; apply Permutation_Type_nil in HpermG.
-      subst; inversion Heqn. }
-    apply hmrr_ex_hseq with (T :: H ++ G') ; [ perm_Type_solve | ].
-    destruct r ; [ | exfalso; apply Hp; reflexivity].
-    apply hmrr_T with r; try reflexivity.
-    change (seq_mul r T :: H ++ G')
-      with
-        ((seq_mul r T :: H) ++ G').
-    assert (hseq_is_basic (T :: G')) as HatG'.
-    { apply Forall_Type_Permutation_Type with G; try assumption. }
-    apply IHn.
-    + apply Permutation_Type_length in HpermG.
-      rewrite HpermG in Heqn; simpl in Heqn; inversion Heqn; auto.
-    + inversion HatG'; auto.
-    + apply Forall_Type_cons; auto.
-      apply seq_basic_mul; now inversion HatG'.
-    + destruct (Forall_Exists_Type_dec (fun x : option Rpos => x = None)) with (La ++ Lb).
-      { intros x.
-        destruct x ; [ right; intros H'; inversion H' | left; reflexivity]. }
-      * right.
-        apply basic_proof_all_eq.
-        -- apply seq_basic_mul.
-           apply hseq_basic_perm with _ (T :: G') in HatG; try assumption.
-           inversion HatG; assumption.
-        -- apply HatH.
-        -- intros n0.
-           specialize (Hsum' n0); specialize (Hsum n0).
-           simpl in *.
-           rewrite (sum_weight_with_coeff_all_0 _ (La ++ Lb)) in Hsum'; try assumption.
-           rewrite sum_weight_seq_var_mul; rewrite sum_weight_seq_covar_mul; simpl.
-           nra.
-        -- simpl in *.
-           rewrite (sum_weight_with_coeff_one_all_0 _ (La ++ Lb)) in Hone'; try assumption.
-           rewrite sum_weight_seq_one_mul; rewrite sum_weight_seq_coone_mul; simpl.
-           nra.
-        -- eapply hmrr_ex_seq ; [ | apply Hind].
-           rewrite HeqL.
-           simpl.
-           etransitivity ; [ apply Permutation_Type_app_swap | ].
-           apply Permutation_Type_app; [ | reflexivity].
-           rewrite concat_with_coeff_mul_only_diamond.
-           apply only_diamond_seq_perm.
-           rewrite HeqL in Hpc; etransitivity ; [ apply Hpc | ].
-           simpl.
-           rewrite concat_with_coeff_mul_all_0; try assumption.
-           rewrite app_nil_r; reflexivity.
-      * left; split with (La ++ Lb).
-        repeat split.
-        -- rewrite HeqL in Hlen.
-           rewrite ? app_length.
-           rewrite ? app_length in Hlen; simpl in Hlen.
-           lia.
-        -- apply e.
-        -- intros n0.
-           specialize (Hsum' n0); specialize (Hsum n0).
-           simpl in *.
-           rewrite sum_weight_seq_var_mul; rewrite sum_weight_seq_covar_mul; simpl.
-           nra.
-        -- simpl in *.
-           rewrite sum_weight_seq_one_mul; rewrite sum_weight_seq_coone_mul; simpl.
-           nra.
-        -- eapply hmrr_ex_seq ; [ | apply Hind].
-           rewrite HeqL.
-           simpl.
-           etransitivity ; [ | apply Permutation_Type_app_swap ].
-           etransitivity ; [ apply Permutation_Type_app_swap | ].
-           rewrite app_assoc.
-           apply Permutation_Type_app; [ | reflexivity].
-           rewrite 2 concat_with_coeff_mul_only_diamond.
-           rewrite <- only_diamond_seq_app.
-           apply only_diamond_seq_perm.
-           rewrite HeqL in Hpc; etransitivity ; [ apply Hpc | ].
-           simpl.
-           apply Permutation_Type_app_swap.
-  - eapply hmrr_ex_hseq; [ apply Permutation_Type_app_comm | ].
-    apply hmrr_W_gen.
-    apply pi.
-Qed. *)
+  intros n; induction G1; intros G2 L1 L2 Hlen; destruct L1; try (now inversion Hlen); [destruct L2 ; destruct G2 | ]; simpl; try lra.
+  simpl in *; rewrite IHG1; auto.
+  destruct o; lra.
+Qed.
+
+Lemma sum_weight_covar_with_coeff_app3 : forall n G L1 L2,
+    (length G <= length L1)%nat ->
+    sum_weight_covar_with_coeff n G (L1 ++ L2) = sum_weight_covar_with_coeff n G L1.
+Proof.
+  intros n; induction G; intros L1 L2 Hlen; destruct L1; try (now inversion Hlen); [now destruct L2 | ].
+  simpl; rewrite IHG; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma sum_weight_with_coeff_eq_var_covar : forall n G L,
+    sum_weight_with_coeff n G L = sum_weight_var_with_coeff n G L - sum_weight_covar_with_coeff n G L.
+Proof.
+  intros n; induction G; intros L; destruct L; simpl; try rewrite IHG; try destruct o; lra.
+Qed.
+
+Fixpoint sum_weight_one_with_coeff G (L : list (option Rpos)) :=
+  match G, L with
+  | _, nil => 0
+  | nil, _ => 0
+  | T :: G , None :: L => sum_weight_one_with_coeff G L
+  | T :: G , (Some r) :: L => ((projT1 r) * sum_weight_seq_one T) + sum_weight_one_with_coeff G L
+  end.
+
+Lemma sum_weight_one_with_coeff_app1 : forall G1 G2 L,
+    (length L <= length G1)%nat ->
+    sum_weight_one_with_coeff (G1 ++ G2) L = sum_weight_one_with_coeff G1 L.
+Proof.
+  induction G1; intros G2 L Hlen; destruct L; try (now inversion Hlen); [destruct G2 | ]; auto.
+  simpl; rewrite IHG1; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma sum_weight_one_with_coeff_app2 : forall G1 G2 L1 L2,
+    (length L1 = length G1) ->
+    sum_weight_one_with_coeff (G1 ++ G2) (L1 ++ L2) = sum_weight_one_with_coeff G1 L1 + sum_weight_one_with_coeff G2 L2.
+Proof.
+  induction G1; intros G2 L1 L2 Hlen; destruct L1; try (now inversion Hlen); [destruct L2 ; destruct G2 | ]; simpl; try lra.
+  simpl in *; rewrite IHG1; auto.
+  destruct o ; lra.
+Qed.
+
+Lemma sum_weight_one_with_coeff_app3 : forall G L1 L2,
+    (length G <= length L1)%nat ->
+    sum_weight_one_with_coeff G (L1 ++ L2) = sum_weight_one_with_coeff G L1.
+Proof.
+  induction G; intros L1 L2 Hlen; destruct L1; try (now inversion Hlen); [now destruct L2 | ].
+  simpl; rewrite IHG; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Fixpoint sum_weight_coone_with_coeff G (L : list (option Rpos)) :=
+  match G, L with
+  | _, nil => 0
+  | nil, _ => 0
+  | T :: G , (Some r) :: L => ((projT1 r) * sum_weight_seq_coone T) + sum_weight_coone_with_coeff G L
+  | T :: G , None :: L => sum_weight_coone_with_coeff G L
+  end.
+
+Lemma sum_weight_coone_with_coeff_app1 : forall G1 G2 L,
+    (length L <= length G1)%nat ->
+    sum_weight_coone_with_coeff (G1 ++ G2) L = sum_weight_coone_with_coeff G1 L.
+Proof.
+  induction G1; intros G2 L Hlen; destruct L; try (now inversion Hlen); [destruct G2 | ]; auto.
+  simpl; rewrite IHG1; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma sum_weight_coone_with_coeff_app2 : forall G1 G2 L1 L2,
+    (length L1 = length G1) ->
+    sum_weight_coone_with_coeff (G1 ++ G2) (L1 ++ L2) = sum_weight_coone_with_coeff G1 L1 + sum_weight_coone_with_coeff G2 L2.
+Proof.
+  induction G1; intros G2 L1 L2 Hlen; destruct L1; try (now inversion Hlen); [destruct L2 ; destruct G2 | ]; simpl; try lra.
+  simpl in *; rewrite IHG1; auto.
+  destruct o; lra.
+Qed.
+
+Lemma sum_weight_coone_with_coeff_app3 : forall G L1 L2,
+    (length G <= length L1)%nat ->
+    sum_weight_coone_with_coeff G (L1 ++ L2) = sum_weight_coone_with_coeff G L1.
+Proof.
+  induction G; intros L1 L2 Hlen; destruct L1; try (now inversion Hlen); [now destruct L2 | ].
+  simpl; rewrite IHG; auto.
+  simpl in Hlen; lia.
+Qed.
+
+Lemma sum_weight_with_coeff_eq_one_coone : forall G L,
+    sum_weight_with_coeff_one G L = sum_weight_one_with_coeff G L - sum_weight_coone_with_coeff G L.
+Proof.
+  induction G; intros L; destruct L; simpl; try rewrite IHG; try destruct o; lra.
+Qed.

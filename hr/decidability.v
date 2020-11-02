@@ -1436,16 +1436,16 @@ Proof.
         intros val Hwd.
         assert (Hwd' := p_hseq_well_defined_perm _ _ _ Hperm Hwd).
         inversion Hwd'; subst.
-        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' H2).
+        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
-        destruct (H' val) as [H0 H1].
-        { apply p_hseq_cons_well_defined; assumption. }
+        destruct (H' val) as [H0 H0'].
+        { apply Forall_Type_cons; assumption. }
         split.
         -- intros pi.
            apply H0.
            apply hrr_M_elim.
            simpl.
-           apply hrr_Z_inv with ((existT _ (FOL_R_term_sem val r) H4) :: nil).
+           apply hrr_Z_inv with ((existT _ (FOL_R_term_sem val r) H1) :: nil).
            simpl.
            rewrite eval_p_sequent_cons.
            eapply hrr_ex_seq ; [ apply Permutation_Type_eval_p_sequent; apply Hperm' | eapply hrr_ex_hseq ; [ rewrite <- map_cons; apply Permutation_Type_map; apply Hperm | ]].
@@ -1453,13 +1453,13 @@ Proof.
            repeat split; auto.
         -- intros  Hf.
            eapply hrr_ex_hseq ; [ symmetry; apply Permutation_Type_map; apply Hperm | simpl; eapply hrr_ex_seq ; [ symmetry; apply Permutation_Type_eval_p_sequent; apply Hperm' | ]].
-           simpl.
+           simpl in *.
            sem_is_pos_decomp val r; intros e He ;
-             [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-               | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+             [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+               | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
            change ((existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e, zero) :: eval_p_sequent val D) with (hseq.vec (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e :: nil) zero ++ eval_p_sequent val D).
            apply hrr_Z.
-           apply H1.
+           apply H0'.
            apply Hf.
     + destruct Hind with (HR_complexity_p_hseq ((vec (r :: nil) A1 ++ vec (r :: nil) A2 ++ D) :: H)) ((vec (r :: nil) A1 ++ vec (r :: nil) A2 ++ D) :: H) as [f H'].
       * rewrite Heqn.
@@ -1478,18 +1478,18 @@ Proof.
         intros val Hwd.
         assert (Hwd' := p_hseq_well_defined_perm _ _ _ Hperm Hwd).
         inversion Hwd'; subst.
-        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' H2).
+        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
-        destruct (H' val) as [H0 H1].
-        { simpl; apply p_hseq_cons_well_defined; [ apply p_seq_cons_well_defined; [ | apply p_seq_cons_well_defined] | ]; assumption. }
+        destruct (H' val) as [H0 H0'].
+        { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons; [ | apply Forall_Type_cons] | ]; assumption. }
         split.
         -- intros pi.
            apply H0.
            apply hrr_M_elim.
-           simpl.
+           simpl in *.
            sem_is_pos_decomp val r; intros e He ;
-             [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-               | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+             [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+               | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
            set (R := (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e)).
            change ((R, A1) :: (R , A2) :: eval_p_sequent val D) with (hseq.vec (R :: nil) A1 ++ hseq.vec (R :: nil) A2 ++ eval_p_sequent val D).
            apply hrr_plus_inv.
@@ -1501,14 +1501,14 @@ Proof.
            repeat split; auto.
         -- intros  Hf.
            eapply hrr_ex_hseq ; [ symmetry; apply Permutation_Type_map; apply Hperm | simpl; eapply hrr_ex_seq ; [ symmetry; apply Permutation_Type_eval_p_sequent; apply Hperm' | ]].
-           simpl.
+           simpl in *.
            sem_is_pos_decomp val r; intros e He ;
-             [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-               | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+             [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+               | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
            change ((existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e, A1 +S A2) :: eval_p_sequent val D) with (hseq.vec (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e :: nil) (A1 +S A2) ++ eval_p_sequent val D).
            apply hrr_plus.
            simpl; rewrite 2 eval_p_sequent_cons.
-           apply H1.
+           apply H0'.
            apply Hf.
     + destruct Hind with (HR_complexity_p_hseq ((vec (mul_vec (FOL_R_cst (projT1 r0)) (r :: nil)) A ++ D) :: H)) ((vec (mul_vec (FOL_R_cst (projT1 r0)) (r :: nil)) A ++ D) :: H) as [f H'].
       * rewrite Heqn.
@@ -1527,26 +1527,26 @@ Proof.
         intros val Hwd.
         assert (Hwd' := p_hseq_well_defined_perm _ _ _ Hperm Hwd).
         inversion Hwd'; subst.
-        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' H2).
+        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
-        destruct (H' val) as [H0 H1].
-        { simpl; apply p_hseq_cons_well_defined; [ apply p_seq_cons_well_defined | ]; try assumption.
-          simpl.
-          apply R_blt_lt; apply R_blt_lt in H4.
-          destruct r0 as [r0 Hr0]; clear - H4 Hr0; simpl; apply R_blt_lt in Hr0.
+        destruct (H' val) as [H0 H0'].
+        { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | ]; try assumption.
+          simpl in *.
+          apply R_blt_lt; apply R_blt_lt in H1.
+          destruct r0 as [r0 Hr0]; clear - H1 Hr0; simpl; apply R_blt_lt in Hr0.
           nra. }
         split.
         -- intros pi.
            apply H0.
            apply hrr_M_elim.
-           simpl.
+           simpl in *.
            assert {H & R_order_dec (projT1 r0 * FOL_R_term_sem val r) = H} as [e He] by (split with (R_order_dec (projT1 r0 * FOL_R_term_sem val r)); reflexivity); destruct e as [e | e | e];
              rewrite ? He;
-             [ | exfalso; destruct r0 as [r0 Hr0]; clear - e H4 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H4; apply R_blt_lt in e; nra
-               | exfalso; destruct r0 as [r0 Hr0]; clear - e H4 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H4; nra].
-           replace ((existT (fun x : R => (0 <? x) = true) (projT1 r0 * FOL_R_term_sem val r) e, A) :: eval_p_sequent val D) with (hseq.vec (hseq.mul_vec r0 (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) H4 :: nil)) A ++ eval_p_sequent val D).
+             [ | exfalso; destruct r0 as [r0 Hr0]; clear - e H1 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H1; apply R_blt_lt in e; nra
+               | exfalso; destruct r0 as [r0 Hr0]; clear - e H1 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H1; nra].
+           replace ((existT (fun x : R => (0 <? x) = true) (projT1 r0 * FOL_R_term_sem val r) e, A) :: eval_p_sequent val D) with (hseq.vec (hseq.mul_vec r0 (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) H1 :: nil)) A ++ eval_p_sequent val D).
            2:{ simpl.
-               replace (time_pos r0 (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) H4)) with (existT (fun x : R => (0 <? x) = true) (projT1 r0 * FOL_R_term_sem val r) e) by (destruct r0; apply Rpos_eq; simpl; nra).
+               replace (time_pos r0 (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) H1)) with (existT (fun x : R => (0 <? x) = true) (projT1 r0 * FOL_R_term_sem val r) e) by (destruct r0; apply Rpos_eq; simpl; nra).
                reflexivity. }
            apply hrr_mul_inv.
            simpl; rewrite eval_p_sequent_cons.
@@ -1555,21 +1555,21 @@ Proof.
            repeat split; auto.
         -- intros  Hf.
            eapply hrr_ex_hseq ; [ symmetry; apply Permutation_Type_map; apply Hperm | simpl; eapply hrr_ex_seq ; [ symmetry; apply Permutation_Type_eval_p_sequent; apply Hperm' | ]].
-           simpl.
+           simpl in *.
            sem_is_pos_decomp val r; intros e He ;
-             [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-               | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+             [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+               | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
            change ((existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e, r0 *S A) :: eval_p_sequent val D) with (hseq.vec (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e :: nil) (r0 *S A) ++ eval_p_sequent val D).
            apply hrr_mul.
            replace (hseq.vec
                       (hseq.mul_vec r0 (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e :: nil)) A ++ eval_p_sequent val D)
              with (eval_p_sequent val (vec (mul_vec (FOL_R_cst (projT1 r0)) (r :: nil)) A ++ D));
-             [ apply H1; apply Hf | ].
-           simpl.
+             [ apply H0'; apply Hf | ].
+           simpl in *.
            assert {H & R_order_dec (projT1 r0 * FOL_R_term_sem val r) = H} as [e' He'] by (split with (R_order_dec (projT1 r0 * FOL_R_term_sem val r)); reflexivity); destruct e' as [e' | e' | e'];
              rewrite ? He';
-             [ | exfalso; destruct r0 as [r0 Hr0]; clear - e' H4 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H4; apply R_blt_lt in e'; nra
-               | exfalso; destruct r0 as [r0 Hr0]; clear - e' H4 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H4; nra].
+             [ | exfalso; destruct r0 as [r0 Hr0]; clear - e' H1 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H1; apply R_blt_lt in e'; nra
+               | exfalso; destruct r0 as [r0 Hr0]; clear - e' H1 Hr0; simpl in *; apply R_blt_lt in Hr0; apply R_blt_lt in H1; nra].
            replace (existT (fun x : R => (0 <? x) = true) (projT1 r0 * FOL_R_term_sem val r) e') with (time_pos r0 (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e)) by (destruct r0; apply Rpos_eq; simpl; nra).
            reflexivity.           
     + destruct Hind with (HR_complexity_p_hseq ((vec (r :: nil) A2 ++ D) :: (vec (r :: nil) A1 ++ D) :: H)) ((vec (r :: nil) A2 ++ D) :: (vec (r :: nil) A1 ++ D) :: H) as [f H'].
@@ -1589,18 +1589,18 @@ Proof.
         intros val Hwd.
         assert (Hwd' := p_hseq_well_defined_perm _ _ _ Hperm Hwd).
         inversion Hwd'; subst.
-        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' H2).
+        assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
-        destruct (H' val) as [H0 H1].
-        { simpl; apply p_hseq_cons_well_defined; [ apply p_seq_cons_well_defined | apply p_hseq_cons_well_defined ; [ apply p_seq_cons_well_defined | ] ]; assumption. }
+        destruct (H' val) as [H0 H0'].
+        { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | apply Forall_Type_cons ; [ apply Forall_Type_cons | ] ]; assumption. }
         split.
         -- intros pi.
            apply H0.
            apply hrr_M_elim.
-           simpl.
+           simpl in *.
            sem_is_pos_decomp val r; intros e He ;
-             [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-               | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+             [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+               | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
            set (R := (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e)).
            change ((R, A1) :: eval_p_sequent val D) with (hseq.vec (R :: nil) A1 ++ eval_p_sequent val D).
            change ((R, A2) :: eval_p_sequent val D) with (hseq.vec (R :: nil) A2 ++ eval_p_sequent val D).
@@ -1613,14 +1613,14 @@ Proof.
            repeat split; auto.
         -- intros  Hf.
            eapply hrr_ex_hseq ; [ symmetry; apply Permutation_Type_map; apply Hperm | simpl; eapply hrr_ex_seq ; [ symmetry; apply Permutation_Type_eval_p_sequent; apply Hperm' | ]].
-           simpl.
+           simpl in *.
            sem_is_pos_decomp val r; intros e He ;
-             [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-               | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+             [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+               | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
            change ((existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e, A1 \/S A2) :: eval_p_sequent val D) with (hseq.vec (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e :: nil) (A1 \/S A2) ++ eval_p_sequent val D).
            apply hrr_max.
            simpl; rewrite 2 eval_p_sequent_cons.
-           apply H1.
+           apply H0'.
            apply Hf.
     + destruct Hind with (HR_complexity_p_hseq ((vec (r :: nil) A1 ++ D) :: H)) ((vec (r :: nil) A1 ++ D) :: H) as [f H1'].
       * rewrite Heqn.
@@ -1652,21 +1652,21 @@ Proof.
            intros val Hwd.
            assert (Hwd' := p_hseq_well_defined_perm _ _ _ Hperm Hwd).
            inversion Hwd'; subst.
-           assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' H2).
+           assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
            inversion Hwd''; subst.
            destruct (H1' val) as [H10 H11].
-           { simpl; apply p_hseq_cons_well_defined; [ apply p_seq_cons_well_defined | ]; assumption. }
+           { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | ]; assumption. }
            destruct (H2' val) as [H20 H21].
-           { simpl; apply p_hseq_cons_well_defined; [ apply p_seq_cons_well_defined | ]; assumption. }
+           { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | ]; assumption. }
            split.
            ++ intros pi.
               split.
               ** apply H10.
                  apply hrr_M_elim.
-                 simpl.
+                 simpl in *.
                  sem_is_pos_decomp val r; intros e He ;
-                   [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-                     | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+                   [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+                     | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
                  set (R := (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e)).
                  change ((R, A1) :: eval_p_sequent val D) with (hseq.vec (R :: nil) A1 ++ eval_p_sequent val D).
                  apply hrr_min_inv_l with A2.
@@ -1678,10 +1678,10 @@ Proof.
                  repeat split; auto.
               ** apply H20.
                  apply hrr_M_elim.
-                 simpl.
+                 simpl in *.
                  sem_is_pos_decomp val r; intros e He ;
-                   [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-                     | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+                   [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+                     | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
                  set (R := (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e)).
                  change ((R, A2) :: eval_p_sequent val D) with (hseq.vec (R :: nil) A2 ++ eval_p_sequent val D).
                  apply hrr_min_inv_r with A1.
@@ -1693,10 +1693,10 @@ Proof.
                  repeat split; auto.
            ++ intros  Hf.
               eapply hrr_ex_hseq ; [ symmetry; apply Permutation_Type_map; apply Hperm | simpl; eapply hrr_ex_seq ; [ symmetry; apply Permutation_Type_eval_p_sequent; apply Hperm' | ]].
-              simpl.
+              simpl in *.
               sem_is_pos_decomp val r; intros e He ;
-                [ | exfalso; clear - e H4; apply R_blt_lt in H4; apply R_blt_lt in e; lra
-                  | exfalso; clear - e H4; apply R_blt_lt in H4; lra].
+                [ | exfalso; clear - e H1; apply R_blt_lt in H1; apply R_blt_lt in e; lra
+                  | exfalso; clear - e H1; apply R_blt_lt in H1; lra].
               change ((existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e, A1 /\S A2) :: eval_p_sequent val D) with (hseq.vec (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val r) e :: nil) (A1 /\S A2) ++ eval_p_sequent val D).
               apply hrr_min;
                 simpl; rewrite eval_p_sequent_cons;

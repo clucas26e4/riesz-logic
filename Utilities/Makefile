@@ -45,7 +45,7 @@ cutelim: ollibs $(VFILES:.v=.vo)
 include $(OLLIBSDIR)/ollibs.mk
 
 Rpos.vo : Rpos.v
-FOL_R.vo : FOL_R.v Rpos.vo
+FOL_R.vo : FOL_R.v Rpos.vo riesz_logic_List_more.vo
 tactics.vo : tactics.v hseq.vo Rpos.vo term.vo hr.vo
 riesz_logic_List_more.vo : riesz_logic_List_more.v
 lt_nat2.vo : lt_nat2.v
