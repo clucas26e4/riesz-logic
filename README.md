@@ -12,7 +12,7 @@ To compile all the coq files and generate the documentation, type the following 
 
 	$ make doc
 
-This command generates a .html file for each Coq file, that only have definitions, statements and comments useful for the reader. It also generates a file "toc.html" where all the sections for each file are gathered together as well as a quick explanation of what the reader will find in the file.
+This command generates a .html file for each Coq file, that only have definitions, statements and comments useful for the reader. It also generates a file "toc.html" where all the sections in the files are gathered together as well as a quick explanation of what the reader will find in the files.
 
 
 ### The structure of the depository
