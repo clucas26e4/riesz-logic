@@ -18,9 +18,9 @@ This command generates a .html file for each Coq file, that only have definition
 ### The structure of the depository
 There are three folders in the depository:
 
-* Utilities
-* hr
-* hmr
+* Utilities - contains files not connected to Riesz Logic (e.g. a file defining positive real numbers and lemmas about them).
+* hr - contains all the files related to the system HR.
+* hmr - contains all the files related to the system HMR.
 
 Following is a quick summary of the purpose of each file in the different folders.
 
