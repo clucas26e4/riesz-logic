@@ -1,10 +1,9 @@
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
 Require Import FOL_R.
-Require Import hseq.
-
-Require Import lt_nat2.
+Require Import lt_nat_tuples.
+Require Import RL.hr.term.
+Require Import RL.hr.semantic.
+Require Import RL.hr.hseq.
 
 Require Import CMorphisms.
 Require Import List_more.

@@ -1,11 +1,11 @@
 (** * Implementation of Section 4.6 *)
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
-Require Import hseq.
-Require Import hmr.
-Require Import tech_lemmas.
-Require Import preproof.
+Require Import RL.hmr.term.
+Require Import RL.hmr.semantic.
+Require Import RL.hmr.hseq.
+Require Import RL.hmr.hmr.
+Require Import RL.hmr.tech_lemmas.
+Require Import RL.hmr.preproof.
 
 Require Import CMorphisms.
 Require Import List_Type_more.

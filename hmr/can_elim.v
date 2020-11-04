@@ -1,12 +1,12 @@
 (** * Implementation of Section 4.7 *)
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
-Require Import hseq.
-Require Import hmr.
-Require Import invertibility.
-Require Import M_elim.
-Require Import hmr_perm_lemmas.
+Require Import RL.hmr.term.
+Require Import RL.hmr.semantic.
+Require Import RL.hmr.hseq.
+Require Import RL.hmr.hmr.
+Require Import RL.hmr.invertibility.
+Require Import RL.hmr.M_elim.
+Require Import RL.hmr.hmr_perm_lemmas.
 
 Require Import CMorphisms.
 Require Import List_Type_more.

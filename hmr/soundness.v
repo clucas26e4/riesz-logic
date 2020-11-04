@@ -1,10 +1,10 @@
 (** * Implementation of Section 4.3 *)
 Require Import Rpos.
-Require Import term.
-Require Import hseq.
-Require Import hmr.
-Require Import semantic.
-Require Import interpretation.
+Require Import RL.hmr.term.
+Require Import RL.hmr.hseq.
+Require Import RL.hmr.hmr.
+Require Import RL.hmr.semantic.
+Require Import RL.hmr.interpretation.
 
 Require Import List.
 Require Import Lra.
@@ -154,54 +154,9 @@ Proof with try assumption.
     rewrite commu_max.
     apply compa_mul_ax.
   - unfold sem_hseq in *; fold (sem_hseq (T2 :: G)) in *.
-    apply cond_min_neg_eq_zero in Hleq.
-    apply cond_zero_leq_max_2.
-    apply leq_antisym.
-    + rewrite sem_seq_mul in Hleq. rewrite <-Rpos_mul_neg in Hleq.
-      case (Rlt_dec 1 r); intros Hlt; [ | case (Rlt_dec r 1); intros Hnlt].
-      * rewrite <-Hleq at 3.
-        apply leq_min.
-        -- apply leq_trans with (neg (sem_seq T)); [ apply min_leq | ].
-           rewrite <-(neutral_plus (neg (sem_seq T))) at 1 3.
-           rewrite commu_plus.
-           apply leq_plus_left.
-           rewrite <-(mul_1 (neg (sem_seq T))) at 2.
-           rewrite <-mul_minus.
-           change (1%R) with (projT1 One) in Hlt.
-           replace r with (projT1 t) in Hlt by now rewrite Heqt.
-           rewrite (minus_ax _ _ _ Hlt).
-           apply leq_cong_r with (minus_pos Hlt *S (pos (neg (sem_seq T)))).
-           { rewrite (commu_max (neg (sem_seq T))).
-             rewrite (@min_max _ (neg (sem_seq T))); auto with MGA_solver. }
-           apply compa_mul_ax.
-        -- rewrite (commu_min (neg (sem_seq T)) (neg (sem_hseq (T2 :: G)))).
-           apply min_leq.
-      * apply (@mul_leq_inv t).
-        rewrite mul_distri_min_pos.
-        rewrite mul_0.
-        rewrite <-Hleq at 3.
-        apply leq_min; [apply min_leq | ].
-        rewrite (commu_min (t *S neg (sem_seq T)) (t *S neg (sem_hseq (T2 :: G)))).
-        apply leq_trans with (t *S neg (sem_hseq (T2 :: G))) ; [ apply min_leq | ].
-        rewrite <-(neutral_plus (t *S neg (sem_hseq (T2 :: G)))).
-        rewrite commu_plus.
-        apply leq_plus_left.
-        rewrite <-(mul_1 (neg (sem_hseq (T2 :: G)))) at 1.
-        rewrite <-mul_minus.
-        change (1%R) with (projT1 One) in Hnlt.
-        replace r with (projT1 t) in Hnlt by now rewrite Heqt.
-        rewrite (minus_ax _ _ _ Hnlt).
-        eapply leq_cong_r with (minus_pos Hnlt *S (pos (neg (sem_hseq (T2 :: G))))).
-        { rewrite (commu_max (neg (sem_hseq (T2 :: G)))).
-          rewrite (@min_max _ (neg (sem_hseq (T2 :: G)))); auto with MGA_solver. }
-        apply compa_mul_ax.
-      * assert (t = One) as Heq.
-        { apply Rpos_eq; rewrite Heqt;simpl; nra. }
-        rewrite <-Hleq at 3.
-        rewrite Heq.
-        rewrite mul_1.
-        apply leq_refl.       
-    + apply leq_min; rewrite commu_max; apply leq_max.
+    rewrite sem_seq_mul in Hleq.
+    apply leq_pos_max_mul_l in Hleq.
+    apply Hleq.
 Qed.
 
 (** The following lemma prove both the soundness of the ID rule and the CAN rule *)

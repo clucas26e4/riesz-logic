@@ -1,11 +1,10 @@
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
 Require Import FOL_R.
-Require Import hseq.
-
-Require Import lt_nat2.
+Require Import lt_nat_tuples.
 Require Import riesz_logic_List_more.
+Require Import RL.hmr.term.
+Require Import RL.hmr.semantic.
+Require Import RL.hmr.hseq.
 
 Require Import CMorphisms.
 Require Import List_more.

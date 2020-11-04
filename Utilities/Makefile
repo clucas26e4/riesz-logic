@@ -1,6 +1,6 @@
 
-COQ = coqc -R $(OLLIBSDIR) ''
-COQDOC = coqdoc -g
+COQ = coqc -R $(OLLIBSDIR) '' -R .. "RL"
+COQDOC = coqdoc -g -R .. "RL"
 
 VFILES = $(wildcard *.v)
 
@@ -48,4 +48,4 @@ Rpos.vo : Rpos.v
 FOL_R.vo : FOL_R.v Rpos.vo riesz_logic_List_more.vo
 tactics.vo : tactics.v hseq.vo Rpos.vo term.vo hr.vo
 riesz_logic_List_more.vo : riesz_logic_List_more.v
-lt_nat2.vo : lt_nat2.v
+lt_nat_tuples.vo : lt_nat_tuples.v

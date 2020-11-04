@@ -1,10 +1,10 @@
 (** * Implementation of Section 3.7 *)
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
-Require Import hseq.
-Require Import hr.
-Require Import tech_lemmas.
+Require Import RL.hr.term.
+Require Import RL.hr.semantic.
+Require Import RL.hr.hseq.
+Require Import RL.hr.hr.
+Require Import RL.hr.tech_lemmas.
 
 Require Import CMorphisms.
 Require Import List_Type_more.

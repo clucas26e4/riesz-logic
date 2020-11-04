@@ -1,16 +1,16 @@
 (** * Implementation of Section 3.5 *)
 Require Import QArithSternBrocot.sqrt2.
 Require Import Rpos.
-Require Import term.
-Require Import hseq.
-Require Import hr.
-Require Import semantic.
-Require Import interpretation.
-Require Import lambda_prop_tools.
-Require Import tech_lemmas.
-Require Import tactics.
 Require Import riesz_logic_List_more.
-Require Import soundness.
+Require Import RL.hr.term.
+Require Import RL.hr.hseq.
+Require Import RL.hr.hr.
+Require Import RL.hr.semantic.
+Require Import RL.hr.interpretation.
+Require Import RL.hr.lambda_prop_tools.
+Require Import RL.hr.tech_lemmas.
+Require Import RL.hr.tactics.
+Require Import RL.hr.soundness.
 
 Require Import List_Type_more.
 Require Import Bool_more.

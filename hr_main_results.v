@@ -1,19 +1,19 @@
 (** * Summary of the main results as in Section 3.1 *)
-Require Import Rterm.
 Require Import Rpos.
-Require Import term.
-Require Import Rsemantic.
-Require Import semantic.
-Require Import semantic_Rsemantic_eq.
-Require Import hseq.
-Require Import completeness.
-Require Import soundness.
-Require Import interpretation.
-Require Import hr.
-Require Import invertibility.
-Require Import M_elim.
-Require Import can_elim.
-Require Import decidability.
+Require Import RL.hr.Rterm.
+Require Import RL.hr.term.
+Require Import RL.hr.Rsemantic.
+Require Import RL.hr.semantic.
+Require Import RL.hr.semantic_Rsemantic_eq.
+Require Import RL.hr.hseq.
+Require Import RL.hr.completeness.
+Require Import RL.hr.soundness.
+Require Import RL.hr.interpretation.
+Require Import RL.hr.hr.
+Require Import RL.hr.invertibility.
+Require Import RL.hr.M_elim.
+Require Import RL.hr.can_elim.
+Require Import RL.hr.decidability.
 
 Require Import List_more.
 Require Import Reals.

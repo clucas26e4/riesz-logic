@@ -1,8 +1,8 @@
 (** Interpretation of a hypersequent as a term in NNF *)
 Require Import Rpos.
-Require Import term.
-Require Import hseq.
-Require Import semantic.
+Require Import RL.hmr.term.
+Require Import RL.hmr.hseq.
+Require Import RL.hmr.semantic.
 
 Require Import List.
 Require Import Lra.

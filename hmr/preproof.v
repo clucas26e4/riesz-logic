@@ -1,7 +1,7 @@
 Require Import Rpos.
-Require Import term.
-Require Import hseq.
-Require Import hmr.
+Require Import RL.hmr.term.
+Require Import RL.hmr.hseq.
+Require Import RL.hmr.hmr.
 
 Require Import CMorphisms.
 Require Import List_more.

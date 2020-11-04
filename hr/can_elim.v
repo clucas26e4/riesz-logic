@@ -1,12 +1,12 @@
 (** * Implementation of Section 3.8 *)
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
-Require Import hseq.
-Require Import hr.
-Require Import invertibility.
-Require Import M_elim.
-Require Import hr_perm_lemmas.
+Require Import RL.hr.term.
+Require Import RL.hr.semantic.
+Require Import RL.hr.hseq.
+Require Import RL.hr.hr.
+Require Import RL.hr.invertibility.
+Require Import RL.hr.M_elim.
+Require Import RL.hr.hr_perm_lemmas.
 
 Require Import CMorphisms.
 Require Import List_Type_more.

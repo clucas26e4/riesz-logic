@@ -1,18 +1,17 @@
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
-Require Import hseq.
-Require Import p_hseq.
-Require Import hmr.
-Require Import riesz_logic_List_more.
-Require Import lambda_prop_tools.
-Require Import invertibility.
-Require Import can_elim.
-Require Import M_elim.
 Require Import FOL_R.
-Require Import tech_lemmas.
-
-Require Import lt_nat2.
+Require Import lt_nat_tuples.
+Require Import riesz_logic_List_more.
+Require Import RL.hmr.hmr.
+Require Import RL.hmr.term.
+Require Import RL.hmr.semantic.
+Require Import RL.hmr.hseq.
+Require Import RL.hmr.p_hseq.
+Require Import RL.hmr.lambda_prop_tools.
+Require Import RL.hmr.invertibility.
+Require Import RL.hmr.can_elim.
+Require Import RL.hmr.M_elim.
+Require Import RL.hmr.tech_lemmas.
 
 Require Import CMorphisms.
 Require Import List_more.

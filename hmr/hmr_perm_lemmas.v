@@ -1,7 +1,7 @@
 (** * Some useful tools to manipulate lists of lists instead of multisets of multisets (and so to deal with the exchange rules) *)
 Require Import Rpos.
-Require Import term.
-Require Import hseq.
+Require Import RL.hmr.term.
+Require Import RL.hmr.hseq.
 
 Require Import CMorphisms.
 Require Import List_Type_more.

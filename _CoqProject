@@ -1,4 +1,5 @@
--R ../ollibs "" -R Utilities "" -R hr ""
+-R ../ollibs ""
+-R . "RL"
 
 ../ollibs/AFC.v
 ../ollibs/Bool_more.v

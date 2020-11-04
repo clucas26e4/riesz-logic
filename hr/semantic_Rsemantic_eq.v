@@ -1,9 +1,9 @@
 (** * Equivalence between equational reasoning of Riesz Spaces and Riesz Spaces restricted to negative normal form *)
-Require Import Rterm.
 Require Import Rpos.
-Require Import term.
-Require Import Rsemantic.
-Require Import semantic.
+Require Import RL.hr.Rterm.
+Require Import RL.hr.term.
+Require Import RL.hr.Rsemantic.
+Require Import RL.hr.semantic.
 
 Require Import Reals.
 Require Import Lra.

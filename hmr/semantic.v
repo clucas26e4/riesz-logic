@@ -7,7 +7,7 @@ Require Import PeanoNat.
 Require Import Lra.
 
 Require Import Rpos.
-Require Import term.
+Require Import RL.hmr.term.
 
 Local Open Scope R_scope.
 
@@ -1104,5 +1104,74 @@ Proof.
   2:{ apply diamond_pos. }
   apply diamond_cong.
   symmetry; rewrite commu_max; apply min_max.
+  apply Hleq.
+Qed.
+
+Lemma leq_pos_max_mul_l : forall A B r,
+    zero <== (r *S A) \/S B ->
+    zero <== A \/S B.
+Proof.
+  intros A B [r Hpos]; 
+    remember (existT (fun r : R => (0 <? r)%R = true) r Hpos) as t; intros Hleq.
+  apply cond_min_neg_eq_zero in Hleq.
+  apply cond_zero_leq_max_2.
+  apply leq_antisym.
+  - case (Rlt_dec 1 r); intros Hlt; [ | case (Rlt_dec r 1); intros Hnlt].
+    + rewrite <-Hleq at 3.
+      apply leq_min.
+      * apply leq_trans with (neg A); [ apply min_leq | ].
+        rewrite <-(neutral_plus (neg A)) at 1 2.
+        rewrite commu_plus.
+        apply leq_plus_left.
+        rewrite <-(mul_1 (neg A)).
+        rewrite <-(mul_minus One).
+        rewrite <- Rpos_mul_neg.
+        change (1%R) with (projT1 One) in Hlt.
+        replace r with (projT1 t) in Hlt by now rewrite Heqt.
+        rewrite (minus_ax _ _ _ Hlt).
+        apply leq_cong_r with (minus_pos Hlt *S (pos (neg A))).
+        { rewrite (commu_max (neg A)).
+          rewrite (@min_max _ (neg A)); auto with MGA_solver. }
+        apply compa_mul_ax.
+      * rewrite (commu_min (neg A) (neg B)).
+        apply min_leq.
+    + apply (@mul_leq_inv t).
+      rewrite mul_distri_min_pos.
+      rewrite mul_0.
+      rewrite <-Hleq at 3.
+      rewrite <- Rpos_mul_neg.
+      apply leq_min; [apply min_leq | ].
+      rewrite (commu_min (t *S neg A) (t *S neg B)).
+      apply leq_trans with (t *S neg B) ; [ apply min_leq | ].
+      rewrite <-(neutral_plus (t *S neg B)).
+      rewrite commu_plus.
+      apply leq_plus_left.
+      rewrite <-(mul_1 (neg B)) at 1.
+      rewrite <-mul_minus.
+      change (1%R) with (projT1 One) in Hnlt.
+      replace r with (projT1 t) in Hnlt by now rewrite Heqt.
+      rewrite (minus_ax _ _ _ Hnlt).
+      eapply leq_cong_r with (minus_pos Hnlt *S (pos (neg B))).
+      { rewrite (commu_max (neg B)).
+        rewrite (@min_max _ (neg B)); auto with MGA_solver. }
+      apply compa_mul_ax.
+    + assert (t = One) as Heq.
+      { apply Rpos_eq; rewrite Heqt;simpl; nra. }
+      rewrite <-Hleq at 3.
+      rewrite Heq.
+      rewrite mul_1.
+      apply leq_refl.       
+  - apply leq_min; rewrite commu_max; apply leq_max.
+Qed.
+
+Lemma leq_pos_max_mul_l_inv : forall A B r,
+    zero <== A \/S B ->
+    zero <== (r *S A) \/S B.
+Proof.
+  intros A B r Hleq.
+  apply leq_pos_max_mul_l with (inv_pos r).
+  rewrite mul_assoc.
+  rewrite inv_pos_l.
+  rewrite mul_1.
   apply Hleq.
 Qed.

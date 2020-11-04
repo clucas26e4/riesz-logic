@@ -1,6 +1,6 @@
 
-COQ = coqc -R $(OLLIBSDIR) '' -R $(UTILDIR) ''
-COQDOC = coqdoc -g
+COQ = coqc -R $(OLLIBSDIR) "" -R .. "RL"
+COQDOC = coqdoc -g -R .. "RL"
 
 VFILES = $(wildcard *.v)
 
@@ -65,7 +65,7 @@ Rterm.vo : Rterm.v
 Rsemantic.vo : Rsemantic.v Rterm.vo
 semantic_Rsemantic_eq.vo : semantic_Rsemantic_eq.v Rsemantic.vo semantic.vo Rterm.vo term.vo $(UTILDIR)/Rpos.vo
 
-p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat2.vo $(UTILDIR)/FOL_R.vo hseq.vo
+p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat_tuples.vo $(UTILDIR)/FOL_R.vo hseq.vo
 decidability.vo : decidability.v $(UTILDIR)/FOL_R.vo lambda_prop_tools.vo hmr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo can_elim.vo M_elim.vo invertibility.vo p_hseq.vo
 
 tactics.vo : tactics.v hseq.vo $(UTILDIR)/Rpos.vo term.vo hmr.vo 

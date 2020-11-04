@@ -1,6 +1,6 @@
 
-COQ = coqc -R $(OLLIBSDIR) '' -R $(UTILDIR) ''
-COQDOC = coqdoc -g
+COQ = coqc -R $(OLLIBSDIR) '' -R .. "RL"
+COQDOC = coqdoc -g -R .. "RL"
 
 VFILES = $(wildcard *.v)
 
@@ -48,7 +48,7 @@ include $(OLLIBSDIR)/ollibs.mk
 
 term.vo : term.v $(UTILDIR)/Rpos.vo
 semantic.vo : semantic.v $(UTILDIR)/Rpos.vo term.vo
-hseq.vo : hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat2.vo
+hseq.vo : hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat_tuples.vo
 interpretation.vo : interpretation.v hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo
 
 hr.vo : hr.v hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo 
@@ -59,7 +59,7 @@ invertibility.vo : invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.v
 M_elim.vo : M_elim.v invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo
 can_elim.vo : can_elim.v invertibility.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo M_elim.vo hr_perm_lemmas.vo
 
-p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat2.vo $(UTILDIR)/FOL_R.vo hseq.vo
+p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat_tuples.vo $(UTILDIR)/FOL_R.vo hseq.vo
 decidability.vo : decidability.v $(UTILDIR)/FOL_R.vo lambda_prop_tools.vo hr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/riesz_logic_List_more.vo can_elim.vo M_elim.vo invertibility.vo p_hseq.vo
 
 Rterm.vo : Rterm.v

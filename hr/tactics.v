@@ -1,8 +1,8 @@
 (** * Tactics used to apply all possible logical rules *)
 Require Import Rpos.
-Require Import term.
-Require Import hseq.
-Require Import hr.
+Require Import RL.hr.term.
+Require Import RL.hr.hseq.
+Require Import RL.hr.hr.
 
 Require Import List.
 Require Import Permutation_Type_more.

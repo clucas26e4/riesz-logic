@@ -1,6 +1,6 @@
 (** * Equational reasoning for Riesz Spaces *)
 Require Import CMorphisms.
-Require Import Rterm.
+Require Import RL.hmr.Rterm.
 
 Require Import Reals.
 Require Import Lra.

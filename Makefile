@@ -1,10 +1,9 @@
 
-COQ_HR = coqc -R $(OLLIBSDIR) '' -R $(HRDIR) '' -R $(UTILDIR) ''
-COQ_HMR = coqc -R $(OLLIBSDIR) '' -R $(HMRDIR) ''  -R $(UTILDIR) ''
-COQDOC = coqdoc -g
+COQ = coqc -R $(OLLIBSDIR) ''  -R . "RL"
+COQDOC = coqdoc -g -R . "RL"
 
-VFILES_HR = hr_main_results.v
-VFILES_HMR = hmr_main_results.v
+VFILES_HR = hr_main_results.v hr_example.v
+VFILES_HMR = hmr_main_results.v hmr_example.v
 VFILES_DOC = $(wildcard */*.v)
 
 %.glob: %.vo
@@ -15,9 +14,9 @@ VFILES_DOC = $(wildcard */*.v)
 
 
 doc: $(VFILES:.v=.glob)
-	$(COQDOC) -toc $(VFILES_HR) $(VFILES_HMR)
 	cd $(HRDIR) && $(MAKE) doc
 	cd $(HMRDIR) && $(MAKE) doc
+	$(COQDOC) -toc *.v */*.v
 
 clean:
 	rm -f *.vo* */*.vo*
@@ -52,6 +51,11 @@ hr: pre_hr $(VFILES_HR:.v=.vo)
 hmr: pre_hmr $(VFILES_HMR:.v=.vo)
 
 hr_main_results.vo : hr_main_results.v
-	$(COQ_HR) hr_main_results.v
+	$(COQ) hr_main_results.v
 hmr_main_results.vo : hmr_main_results.v
-	$(COQ_HMR) hmr_main_results.v
+	$(COQ) hmr_main_results.v
+
+hr_example.vo : hr_example.v
+	$(COQ) hr_example.v
+hmr_example.vo : hmr_example.v
+	$(COQ) hmr_example.v

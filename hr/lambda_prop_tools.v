@@ -1,10 +1,10 @@
 (** * Tools and lemma used to prove Lemma ?? and ?? more easily *)
 Require Import Rpos.
-Require Import term.
-Require Import semantic.
-Require Import hseq.
-Require Import hr.
 Require Import riesz_logic_List_more.
+Require Import RL.hr.term.
+Require Import RL.hr.semantic.
+Require Import RL.hr.hseq.
+Require Import RL.hr.hr.
 
 Require Import CMorphisms.
 Require Import List_more.
