@@ -368,3 +368,36 @@ Lemma In_Type_seq_le_start :
 Proof.
   intros i j k; revert j; induction k; intros j Hin; inversion Hin; subst; try (specialize (IHk (S j) X)); lia.
 Qed.
+
+Lemma rev_reverse_order : forall L,
+    (forall i j : nat,
+        (j < length L)%nat ->
+        (i < j)%nat -> (nth j L 0 < nth i L 0)%nat) ->
+    forall i j : nat,
+      (j < length (rev L))%nat ->
+      (i < j)%nat -> (nth i (rev L) 0 < nth j (rev L) 0)%nat.
+Proof.
+  intros L H i j Hlen Hgt.
+  rewrite rev_length in Hlen.
+  rewrite ? rev_nth; try lia.
+  apply H; lia.
+Qed.
+
+Lemma all_neq_not_In_Type {A} : forall l (a : A),
+    Forall_Type (fun x => x <> a) l ->
+    In_Type a l -> False.
+Proof.
+  induction l; intros a0 Hall Hin; inversion Hin; inversion Hall; subst; try contradiction.
+  apply IHl with a0; assumption.
+Qed.
+
+Lemma all_neq_0_map_S : forall l,
+    Forall_Type (fun x => x <> 0%nat) l ->
+    { l' & l = map S l' }.
+Proof.
+  induction l; intros Hall; inversion Hall; subst.
+  - split with nil; auto.
+  - destruct a ; [ contradiction | ].
+    destruct IHl as [l' Heq]; auto.
+    split with (a :: l'); subst; auto.
+Qed.

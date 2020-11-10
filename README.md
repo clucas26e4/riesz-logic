@@ -47,13 +47,13 @@ The files in hr and hmr are quite similar (because the structure of Section 3 an
 * `preproof.v` (for HMR only):
 * `M_elim.v` : Proof of the M elimination (Section 3.7/4.6)
 * `can_elim.v` : Proof of the CAN elimination (Section 3.8/4.7)
-* `p_hseq.v` :
-* `decidability.v` :
+* `p_hseq.v` : Definitions of parametrized sequents and parametrized hypersequents and some properties (like atomicity and complexity), as well as technical lemmas required to manipulate them in Coq.
+* `decidability.v` : Proof of decidability (Section 3.10/4.8)
 
 ##### Aux
 * `tactics.v` : Some tactics used in the other files, for instance a tactic that apply every possible logical rules to get an atomic hypersequent.
 * `h(m)r_perm_lemmas.v` : Technical construction and lemmas used to help manipulate lists of lists (instead of multisets of multisets like in the article). For instance, they help deal with the exchange rule cases in the proofs by induction.
-* `lambda_prop_tools.v` : some tools to make the proofs of Lemma ???????? easier to implement.
+  * `lambda_prop_tools.v` : some tools to make the proofs of Lemmas 3.32, 3.43, 4.26 and 4.43 easier to implement.
 
 #### Utilities
 * `Rpos.v` : definition of positive real numbers and some lemmas used to manipulate them.

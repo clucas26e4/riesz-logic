@@ -14,7 +14,7 @@ Require Import List_more.
 Require Import Lia.
 
 Local Open Scope R_scope.
-
+(* begin hide *)
 Definition upd_val (v : nat -> R) n r :=
   fun n' => if beq_nat n n' then r else v n'.
 
@@ -138,6 +138,8 @@ Proof.
     lia.
 Qed.
 
+(* end hide *)
+
 Inductive FOL_R_term : Type :=
 | FOL_R_var : nat -> FOL_R_term
 | FOL_R_cst : R -> FOL_R_term
@@ -163,6 +165,7 @@ Fixpoint FOL_R_term_sem (v : nat -> R) t :=
   | FOL_R_add t1 t2 => (FOL_R_term_sem v t1) + (FOL_R_term_sem v t2)
   end.
 
+(* begin hide *)
 Lemma FOL_R_term_sem_upd_val_vec_not_in : forall val vx vr i,
     (In_Type i vx -> False) ->
     FOL_R_term_sem (upd_val_vec val vx vr) (FOL_R_var i) = val i.
@@ -214,6 +217,8 @@ Proof.
   replace (x =? n) with false by (symmetry; apply Nat.eqb_neq; lia).
   reflexivity.
 Qed.
+
+(* end hide *)
 
 Inductive FOL_R_pred : Type :=
 | FOL_R_eq : FOL_R_term -> FOL_R_term -> FOL_R_pred

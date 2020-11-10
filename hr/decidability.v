@@ -1,3 +1,4 @@
+(** * Implementation of Section 3.10 *)
 Require Import Rpos.
 Require Import riesz_logic_List_more.
 Require Import FOL_R.
@@ -26,275 +27,8 @@ Require Import FunctionalExtensionality.
 
 Local Open Scope R_scope.
 
-(* TODO : move *)
-Lemma Exists_Type_nth A (P : A -> Type) : forall (l : list A) a,
-    {i & prod (i < length l)%nat
-              (P (nth i l a)) } ->
-    Exists_Type P l.
-Proof.
-  induction l; intros a' [i [Hlen HP]]; [ exfalso; inversion Hlen | ].
-  destruct i.
-  - apply Exists_Type_cons_hd.
-    apply HP.
-  - apply Exists_Type_cons_tl.
-    apply IHl with a'.
-    split with i.
-    repeat split; simpl in *; try lia.
-    apply HP.
-Qed.
-
-Lemma In_Type_seq : forall i k n,
-    (i < n)%nat ->
-    In_Type (i + k)%nat (seq k n).
-Proof.
-  intros i k n; revert i k; induction n; intros i k Hlt; try (exfalso; now inversion Hlt).
-  destruct i; simpl; [ left; auto | ].
-  right.
-  replace (S (i + k)) with (i + S k)%nat by lia.
-  apply IHn ; lia.
-Qed.
-
-Lemma In_Type_rev A : forall (l : list A) a,
-    In_Type a l ->
-    In_Type a (rev l).
-Proof.
-  induction l; intros a' Hin; inversion Hin; subst.
-  - simpl.
-    apply in_Type_or_app.
-    right; left; auto.
-  - simpl.
-    apply in_Type_or_app; left; apply IHl; auto.
-Qed.
-
-Lemma In_Type_rev_inv A : forall (l : list A) a,
-    In_Type a (rev l) ->
-    In_Type a l.
-Proof.
-  intros l a Hin.
-  rewrite <- rev_involutive.
-  apply In_Type_rev.
-  apply Hin.
-Qed.
-
-Lemma In_Type_map_S : forall i l,
-    In_Type i l ->
-    In_Type (S i) (map S l).
-Proof.
-  intros i; induction l; intros Hin; inversion Hin; subst; simpl; auto.
-Qed.
-
-Lemma not_0_In_Type_map_S : forall l,
-    In_Type 0%nat (map S l) ->
-    False.
-Proof.
-  induction l; intros Hin; inversion Hin; subst; simpl; auto.
-  inversion H.
-Qed.
-
-Lemma In_Type_map_S_inv : forall i l,
-    In_Type (S i) (map S l) ->
-    In_Type i l.
-Proof.
-  intros i; induction l; intros Hin; inversion Hin; subst; simpl; auto.
-Qed.
-
-Lemma Forall_Type_lt_map_S : forall L n,
-    Forall_Type (fun x => x < n)%nat L ->
-    Forall_Type (fun x => x < S n)%nat (map S L).
-Proof.
-  induction L; intros n Hall; [apply Forall_Type_nil | ].
-  inversion Hall; subst.
-  apply Forall_Type_cons; [ lia | apply IHL; apply X].
-Qed.
-
-Lemma not_In_Type_seq : forall k n i,
-    (i < k)%nat ->
-    In_Type i (seq k n) ->
-    False.
-Proof.
-  intros k n; revert k; induction n; intros k i Hlt Hin; inversion Hin; subst.
-  - lia.
-  - apply IHn with (S k) i; try assumption.
-    lia.
-Qed.
-
-Lemma In_Type_seq_lt : forall k n i,
-    In_Type i (seq k n) ->
-    (i < k + n)%nat.
-Proof.
-  intros k n; revert k; induction n;  intros k i Hin; inversion Hin.
-  - subst; lia.
-  - replace (k + S n)%nat with (S k + n)%nat by lia.
-    apply IHn.
-    apply X.
-Qed.
-
-Lemma In_Type_remove_not A : forall eq_dec (l : list A) a,
-    In_Type a (remove eq_dec a l) ->
-    False.
-Proof.
-  intros eq_dec; induction l; intros a' Hin; [ inversion Hin | ].
-  case_eq (eq_dec a' a); intros H1 H2.
-  - subst; rewrite remove_cons in Hin.
-    apply IHl with a.
-    apply Hin.
-  - simpl in Hin.
-    rewrite H2 in Hin.
-    inversion Hin ; [ apply H1; auto | ].
-    apply IHl with a'.
-    apply X.
-Qed.
-
-Lemma In_Type_remove_In_Type A : forall eq_dec (l : list A) a1 a2,
-    In_Type a1 (remove eq_dec a2 l) ->
-    (a1 <> a2) * (In_Type a1 l).
-Proof.
-  intros eq_dec; induction l; intros a1 a2 Hin; [ inversion Hin | ].
-  case_eq (eq_dec a2 a); intros H1 H2; simpl in Hin; rewrite H2 in Hin.
-  - destruct (IHl a1 a2 Hin) as [Hneq Hin'].
-    split; auto.
-    right; apply Hin'.
-  - inversion Hin; subst.
-    + split; auto.
-      left; auto.
-    + destruct (IHl a1 a2 X) as [Hneq Hin'].
-      split; auto.
-      right; auto.
-Qed.
-
-Lemma In_Type_remove_In_Type_inv A : forall eq_dec (l : list A) a1 a2,
-    (a1 <> a2) * (In_Type a1 l) ->
-    In_Type a1 (remove eq_dec a2 l).
-Proof.
-  intros eq_dec; induction l; intros a1 a2 [Hneq Hin]; [ inversion Hin | ].
-  inversion Hin.
-  - subst.
-    simpl.
-    case (eq_dec a2 a1); intros H; try (subst; now exfalso).
-    clear H.
-    left; auto.
-  - simpl.
-    case (eq_dec a2 a); intros H ; [ | right ]; apply IHl; split; auto.    
-Qed.
-
-Lemma rev_reverse_order_gt : forall L,
-    (forall i j : nat,
-        (j < length L)%nat ->
-        (i < j)%nat -> (nth i L 0 > nth j L 0)%nat) ->
-    forall i j : nat,
-      (i < length (rev L))%nat ->
-      (i > j)%nat -> (nth i (rev L) 0 > nth j (rev L) 0)%nat.
-Proof.
-  intros L H i j Hlen Hgt.
-  rewrite rev_length in Hlen.
-  rewrite ? rev_nth; try lia.
-  apply H; lia.
-Qed.
-
-Lemma rev_reverse_order_lt : forall L,
-    (forall i j : nat,
-        (j < length L)%nat ->
-        (i < j)%nat -> (nth i L 0 < nth j L 0)%nat) ->
-    forall i j : nat,
-      (i < length (rev L))%nat ->
-      (i > j)%nat -> (nth i (rev L) 0 < nth j (rev L) 0)%nat.
-Proof.
-  intros L H i j Hlen Hlt.
-  rewrite rev_length in Hlen.
-  rewrite ? rev_nth; try lia.
-  apply H; lia.
-Qed.
-
-Lemma in_Type_map_cons A : forall (a : A) l L,
-    In_Type l L ->
-    In_Type (a :: l) (map (cons a) L).
-Proof.
-  intros a l; induction L; intros Hin ; [ inversion Hin | ].
-  inversion Hin; subst.
-  - simpl; left; reflexivity.
-  - simpl; right; apply IHL.
-    apply X.
-Qed.
-
-Lemma in_Type_map_cons_inv A : forall (a : A) l L,
-    In_Type l (map (cons a) L) ->
-    { l' & prod (l = a :: l') (In_Type l' L) }.
-Proof.
-  intros a l L; induction L; intros Hin; inversion Hin; subst.
-  - split with a0.
-    split; try reflexivity.
-    left; reflexivity.
-  - destruct (IHL X) as [l' [Heq Hin']].
-    split with l'.
-    repeat split; try assumption.
-    right; apply Hin'.
-Qed.
-
-Lemma rev_not_nil A : forall (L : list A),
-    L <> nil ->
-    rev L <> nil.
-Proof.
-  destruct L; auto.
-  simpl.
-  intros _.
-  intros H.
-  assert (Permutation_Type (a :: rev L) nil); [ rewrite <- H; perm_Type_solve | ].
-  symmetry in X; apply Permutation_Type_nil in X.
-  inversion X.
-Qed.
-
-Lemma rev_nth_all_lt : forall l n,
-    (forall i, nth i l 0 < n)%nat ->
-    forall i, (nth i (rev l) 0 < n)%nat.
-Proof.
-  induction l; intros n H i.
-  - destruct n; destruct i; auto.
-  - simpl.
-    case_eq (i <? length (rev l))%nat.
-    + intros Hlt.
-      rewrite app_nth1 ; [ | apply Nat.ltb_lt in Hlt; apply Hlt].
-      apply IHl.
-      intros i'.
-      apply (H (S i')).
-    + intros H'.
-      rewrite app_nth2 ; [ | apply Nat.ltb_nlt in H'; lia].
-      specialize (H 0%nat); simpl in H.
-      remember (length (rev l)).
-      clear - H H'.
-      revert n0 H'.
-      induction i; intros n0 H'.
-      * simpl; apply H.
-      *  destruct n0; [ destruct i; simpl; lia | ].
-         change (S i - S n0)%nat with (i - n0)%nat.
-         apply IHi.
-         apply H'.
-Qed.
-
-Lemma Forall_Type_nth A : forall (P : A -> Type) (l : list A),
-    Forall_Type P l ->
-    forall (i : nat) (a : A), (i < length l)%nat -> P (nth i l a).
-Proof.
-  intros P; induction l; intros Hall i a' Hlen; [ exfalso; inversion Hlen | ].
-  inversion Hall; subst.
-  destruct i; [simpl; apply X | ].
-  apply IHl; try assumption.
-  simpl in Hlen; lia.
-Qed.
-
-Lemma nth_Forall_Type A : forall (P : A -> Type) (l : list A),
-    (forall (i : nat) (a : A), (i < length l)%nat -> P (nth i l a)) ->
-    Forall_Type P l.
-Proof.
-  intros P; induction l; intros H; [ apply Forall_Type_nil | ].
-  apply Forall_Type_cons.
-  - apply (H 0 a)%nat.
-    simpl; lia.
-  - apply IHl.
-    intros i a' Hlen.
-    apply (H (S i) a').
-    simpl; lia.
-Qed.
-
+(* begin hide *)
+(* Preliminary work necessary for the decidability result *)
 Fixpoint pos_indexes (L : list R) :=
   match L with
   | nil => nil
@@ -476,183 +210,6 @@ Proof.
   simpl; rewrite IHG; auto.
   simpl in Hlen; lia.
 Qed.
-
-Fixpoint exists_vec (v : list nat) (f : FOL_R_formula) :=
-  match v with
-  | nil => f
-  | n :: v => FOL_R_exists n (exists_vec v f)
-  end.
-
-Fixpoint upd_val_vec (val : nat -> R) (vx : list nat) (vr : list R) :=
-  match vx, vr with
-  | nil , _ => val
-  | _ , nil => val
-  | x :: vx, r :: vr => upd_val_vec (upd_val val x r) vx vr
-  end.
-
-Lemma cond_FOL_R_exists_vec_formula_sem : forall v f val,
-    {vr & prod (length v = length vr) (FOL_R_formula_sem (upd_val_vec val v vr) f)} ->
-    FOL_R_formula_sem val (exists_vec v f).
-Proof.
-  induction v; intros f val [vr [Hlen Hf]].
-  - apply Hf.
-  - destruct vr; [inversion Hlen | ].
-    simpl in *.
-    split with r.
-    apply IHv.
-    split with vr.
-    repeat split; auto.
-Qed.
-
-Lemma cond_FOL_R_exists_vec_formula_sem_inv : forall v f val,
-    FOL_R_formula_sem val (exists_vec v f) ->
-    {vr & prod (length v = length vr) (FOL_R_formula_sem (upd_val_vec val v vr) f)}.
-Proof.
-  induction v; intros f val Hf.
-  - split with nil; split; auto.
-  - destruct Hf as [r Hf].
-    destruct (IHv _ _ Hf) as [vr [Hlen Hf']].
-    split with (r :: vr).
-    repeat split; simpl in *; try lia.
-    apply Hf'.
-Qed.
-
-Lemma upd_val_vec_not_in : forall val L v x,
-    (In_Type x v -> False) ->
-    upd_val_vec val v L x = val x.
-Proof.
-  intros val L v; revert val L; induction v; intros val L x Hin.
-  - reflexivity.
-  - destruct L; [reflexivity | ].
-    simpl.
-    rewrite IHv.
-    2:{ intros H; apply Hin; right; apply H. }
-    case_eq (a =? x); intros H; unfold upd_val; rewrite H; [ apply Nat.eqb_eq in H | apply Nat.eqb_neq in H].
-    + exfalso.
-      apply Hin; left; lia.
-    + reflexivity.
-Qed.
-      
-Lemma upd_val_vec_seq_add : forall L v n k1 k2 i,
-    upd_val_vec v (seq (k1 + k2) n) L (k1 + k2 + i) = upd_val_vec (fun x => v (k1 + x)%nat) (seq k2 n) L (k2 + i).
-Proof.
-  intros L v n.
-  revert L v; induction n; intros L v k1 k2 i.
-  - simpl.
-    replace (k1 + k2 + i)%nat with (k1 + (k2 + i))%nat by lia.
-    reflexivity.
-  - destruct L; simpl; [ replace (k1 + k2 + i)%nat with (k1 + (k2 + i))%nat by lia; reflexivity| ].
-    destruct i.
-    + rewrite ? upd_val_vec_not_in.
-      * unfold upd_val.
-        replace (k1 + k2 =? k1 + k2 + 0) with true by (symmetry; apply Nat.eqb_eq; lia).
-        replace (k2 =? k2 + 0) with true by (symmetry; apply Nat.eqb_eq; lia).
-        reflexivity.
-      * apply not_In_Type_seq.
-        lia.
-      * apply not_In_Type_seq.
-        lia.        
-    + replace (S (k1 + k2)) with (k1 + S k2)%nat by lia.
-      replace (k1 + k2 + S i)%nat with (k1 + (S k2) + i)%nat by lia.
-      rewrite IHn.
-      replace (k2 + S i)%nat with (S k2 + i)%nat by lia.
-      replace (fun x : nat => upd_val v (k1 + k2) r (k1 + x)) with (upd_val (fun x : nat => v (k1 + x)%nat) k2 r) ; [ reflexivity | ].
-      apply functional_extensionality.
-      intros x.
-      unfold upd_val.
-      case_eq (k2 =? x) ; intros H.
-      * replace (k1 + k2 =? k1 + x) with true; [ reflexivity | ].
-        symmetry; apply Nat.eqb_eq; apply Nat.eqb_eq in H.
-        lia.
-      * replace (k1 + k2 =? k1 + x) with false; [ reflexivity | ].
-        symmetry; apply Nat.eqb_neq; apply Nat.eqb_neq in H; lia.
-Qed.
-
-Lemma upd_val_vec_eq : forall L v n i,
-    upd_val_vec v (seq i (length L)) L (i + n) = nth n L (v (i + n))%nat.
-Proof.
-  intros L v n i; revert L v n; induction i.
-  - induction L; intros v n.
-    + destruct n; simpl; try reflexivity.
-    + destruct n.
-      * simpl.
-        rewrite upd_val_vec_not_in; try reflexivity.
-        apply not_In_Type_seq; lia.
-      * simpl.
-        change (v (S n)) with ((fun x => v (S x)) n).
-        rewrite <- IHL.
-        replace (1%nat) with (1 + 0)%nat by lia.
-        replace (S n) with (1 + 0 + n)%nat by lia.
-        rewrite upd_val_vec_seq_add.
-        simpl.
-        replace (fun x : nat => upd_val v 0 a (S x)) with (fun x : nat => v (S x)) ; [reflexivity | ].
-        apply functional_extensionality.
-        intros x.
-        unfold upd_val.
-        replace (0 =? S x) with false by (symmetry; apply Nat.eqb_neq; lia).
-        reflexivity.
-  - intros L v n.
-    replace (S i) with (1 + 0 + i)%nat by lia.
-    rewrite upd_val_vec_seq_add.
-    rewrite IHi.
-    replace (1 + 0 + (i + n))%nat with (1 + 0 + i + n)%nat by lia.
-    reflexivity.
-Qed.
-
-Lemma map_upd_val_vec_eq : forall v L i,
-    map (upd_val_vec v (seq i (length L)) L) (seq i (length L)) = L.
-Proof.
-  intros v L i.
-  apply list_ext.
-  { rewrite map_length; rewrite seq_length.
-    reflexivity. }
-  intros n a0.
-  case_eq (n <? length L)%nat.
-  - intros Hlt; apply Nat.ltb_lt in Hlt.
-    rewrite nth_indep with _ _ _ _ (upd_val_vec v (seq i (length L)) L 0).
-    2:{ rewrite map_length; rewrite seq_length.
-        lia. }
-    rewrite map_nth.
-    rewrite seq_nth; [ | assumption].
-    rewrite upd_val_vec_eq.
-    rewrite nth_indep with _ _ _ _ a0 ; auto.
-  - intros H; apply Nat.ltb_nlt in H.
-    rewrite ? nth_overflow; try lia; auto.
-    rewrite map_length; rewrite seq_length.
-    lia.
-Qed.
-
-Lemma map_val_seq_var : forall val L i,
-    map (FOL_R_term_sem (upd_val_vec val (seq i (length L)) L)) (map FOL_R_var (seq i (length L))) = L.
-Proof.
-  intros val L i.
-  apply list_ext ; [ rewrite 2 map_length; now rewrite seq_length | ].
-  intros n a0.
-  case_eq (n <? length L)%nat; intros H.
-  - rewrite nth_indep with _ _ _ _ (FOL_R_term_sem (upd_val_vec val (seq i (length L)) L) (FOL_R_var 0%nat)).
-    2:{ rewrite 2 map_length; rewrite seq_length; apply Nat.ltb_lt in H; apply H. }
-    rewrite map_nth.
-    rewrite map_nth.
-    rewrite seq_nth.
-    2:{ apply Nat.ltb_lt in H; apply H. }
-    simpl.
-    rewrite upd_val_vec_eq.
-    apply nth_indep.
-    apply Nat.ltb_lt; apply H.
-  - rewrite 2 nth_overflow.
-    + reflexivity.
-    + apply Nat.ltb_nlt in H; lia.
-    + rewrite 2 map_length.
-      rewrite seq_length.
-      apply Nat.ltb_nlt in H; lia.
-Qed.
-  
-(*
-Lemma sum_weight_with_coeff_eq_var_covar : forall val n G L,
-    sum_weight_with_coeff n (map (eval_p_sequent val) G) L = p_sum_weight_var_with_coeff n G L - p_sum_weight_covar_with_coeff n G L.
-Proof.
-  intros n; induction G; intros L; destruct L; simpl; try rewrite IHG; lra.
-Qed. *)
 
 Lemma FOL_R_term_sem_eval_p_sequent : forall val n T,
     FOL_R_term_sem val (sum_weight_p_seq_var n T) - FOL_R_term_sem val (sum_weight_p_seq_covar n T) = sum_weight_seq_var n (eval_p_sequent val T) - sum_weight_seq_covar n (eval_p_sequent val T) .
@@ -938,7 +495,9 @@ Proof.
     apply IHL; auto.
 Qed.
 
-(* return the conjunction /\(beta_{k + i} = 0) for all i \in v *)
+(* end hide *)
+
+(** return the conjunction /\(beta_{k + i} = 0) for all i \in v *)
 Fixpoint FOL_R_all_zero k (v : list nat) :=
   match v with
   | nil => FOL_R_true
@@ -969,7 +528,7 @@ Proof.
     apply IHv; assumption.
 Qed.
 
-(* return the conjunction /\(0\leq\beta_{k + i} /\ \beta_{k + i} = 0) for all in \in v *)
+(** return the conjunction /\(0\leq\beta_{k + i} /\ \beta_{k + i} = 0) for all in \in v *)
 Fixpoint FOL_R_all_gtz k (v : list nat ) :=
   match v with
   | nil => FOL_R_true
@@ -1001,116 +560,7 @@ Proof.
     apply IHv; assumption.
 Qed.
 
-(* return \sum_i^m \beta_i \sum\vec R_{i,j} *)
-(*
-Fixpoint FOL_R_sum_var G j m :=
-  match m  with
-  | 0%nat  => FOL_R_mul (sum_weight_p_seq_var j (nth 0%nat G nil)) (FOL_R_var 0%nat)
-  | S m => FOL_R_add (FOL_R_mul (sum_weight_p_seq_var j (nth (S m) G nil)) (FOL_R_var (S m))) (FOL_R_sum_var G j m)
-  end.
-
-Lemma FOL_R_sum_var_term_sem : forall G j m val,
-    FOL_R_term_sem val (FOL_R_sum_var G j m) = p_sum_weight_var_with_coeff j G (map FOL_R_var (seq 0%nat (S m))).
-Proof.
-  intros G j; induction m; intros val.
-  - simpl.
-    destruct G; [ | destruct G]; simpl; lra.
-  - simpl.
-    rewrite IHm.
-    clear IHm.
-    change (val 0%nat :: val 1%nat :: map val (seq 2 m)) with (map val (seq 0 (S (S m)))).
-    remember (length G).
-    revert G j m val Heqn.
-    induction n; intros G j m val Heqn.
-    + destruct G; [ | inversion Heqn].
-      simpl.
-      lra.
-    + assert (G <> nil) as Hnnil.
-      { destruct G; now inversion Heqn. }
-      destruct (exists_last Hnnil) as [H [T Heq]].
-      rewrite Heq.
-      case_eq ((S m <? length H)%nat); intros Hlen; [ apply Nat.ltb_lt in Hlen | apply Nat.ltb_nlt in Hlen ].
-      * rewrite app_nth1; try assumption.
-        rewrite Heq in Heqn.
-        rewrite app_length in Heqn; simpl in Heqn.
-        rewrite ? sum_weight_var_with_coeff_app1; try (rewrite map_length; rewrite seq_length).
-        -- apply IHn.
-           lia.
-        -- apply Hlen.
-        -- apply Nat.lt_le_incl; apply Hlen.
-      * rewrite app_nth2; try lia.
-        clear Heq.
-        case_eq (S m =? length H); intros Heq; [apply Nat.eqb_eq in Heq | apply Nat.eqb_neq in Heq].
-        -- replace ((S m - length H)%nat) with 0%nat by lia.
-           rewrite (seq_S _ (S m)).
-           rewrite sum_weight_var_with_coeff_app1 ; [ | rewrite map_length; rewrite seq_length;rewrite Heq; apply Nat.le_refl ].
-           rewrite map_app; rewrite sum_weight_var_with_coeff_app2 ; [ | rewrite map_length; rewrite seq_length;apply Heq].
-           simpl.
-           lra.
-        -- rewrite (seq_S _ (S m)).
-           rewrite Nat.sub_succ_l ; [ | lia].
-           rewrite map_app.
-           rewrite (sum_weight_var_with_coeff_app3 j (H ++ T :: nil)) ; [ | rewrite map_length; rewrite seq_length; rewrite app_length; simpl; lia].
-           remember ((m - length H)%nat).
-           destruct n0; simpl; lra.
-Qed. *)
-           
-(* return \sum_i^m \beta_i \sum\vec S_{i,j} *)
-(*
-Fixpoint FOL_R_sum_covar G j m :=
-  match m  with
-  | 0%nat  => FOL_R_mul (sum_weight_p_seq_covar j (nth 0%nat G nil)) (FOL_R_var 0%nat)
-  | S m => FOL_R_add (FOL_R_mul (sum_weight_p_seq_covar j (nth (S m) G nil)) (FOL_R_var (S m))) (FOL_R_sum_covar G j m)
-  end.
-
-Lemma FOL_R_sum_covar_term_sem : forall G j m val,
-    FOL_R_term_sem val (FOL_R_sum_covar G j m) = sum_weight_covar_with_coeff j G (map val (seq 0%nat (S m))).
-Proof.
-  intros G j; induction m; intros val.
-  - simpl.
-    destruct G; [ | destruct G]; simpl; lra.
-  - simpl.
-    rewrite IHm.
-    clear IHm.
-    change (val 0%nat :: val 1%nat :: map val (seq 2 m)) with (map val (seq 0 (S (S m)))).
-    remember (length G).
-    revert G j m val Heqn.
-    induction n; intros G j m val Heqn.
-    + destruct G; [ | inversion Heqn].
-      simpl.
-      lra.
-    + assert (G <> nil) as Hnnil.
-      { destruct G; now inversion Heqn. }
-      destruct (exists_last Hnnil) as [H [T Heq]].
-      rewrite Heq.
-      case_eq ((S m <? length H)%nat); intros Hlen; [ apply Nat.ltb_lt in Hlen | apply Nat.ltb_nlt in Hlen ].
-      * rewrite app_nth1; try assumption.
-        rewrite Heq in Heqn.
-        rewrite app_length in Heqn; simpl in Heqn.
-        rewrite ? sum_weight_covar_with_coeff_app1; try (rewrite map_length; rewrite seq_length).
-        -- apply IHn.
-           lia.
-        -- apply Hlen.
-        -- apply Nat.lt_le_incl; apply Hlen.
-      * rewrite app_nth2; try lia.
-        clear Heq.
-        case_eq (S m =? length H); intros Heq; [apply Nat.eqb_eq in Heq | apply Nat.eqb_neq in Heq].
-        -- replace ((S m - length H)%nat) with 0%nat by lia.
-           rewrite (seq_S _ (S m)).
-           rewrite sum_weight_covar_with_coeff_app1 ; [ | rewrite map_length; rewrite seq_length;rewrite Heq; apply Nat.le_refl ].
-           rewrite map_app; rewrite sum_weight_covar_with_coeff_app2 ; [ | rewrite map_length; rewrite seq_length;apply Heq].
-           simpl.
-           lra.
-        -- rewrite (seq_S _ (S m)).
-           rewrite Nat.sub_succ_l ; [ | lia].
-           rewrite map_app.
-           rewrite (sum_weight_covar_with_coeff_app3 j (H ++ T :: nil)) ; [ | rewrite map_length; rewrite seq_length; rewrite app_length; simpl; lia].
-           remember ((m - length H)%nat).
-           destruct n0; simpl; lra.
-Qed.
- *)
-
-(* return the conjunction /\(\sum_i^m \beta_{(max_var_weight G) + i} \sum\vec R_{i,j} = \sum_i^m \beta_{(max_var_weight G) + i} \sum\vec S_{i,j} *)
+(** return the conjunction /\(\sum_i^m \beta_{(max_var_weight G) + i} \sum\vec R_{i,j} = \sum_i^m \beta_{(max_var_weight G) + i} \sum\vec S_{i,j} *)
 Fixpoint FOL_R_all_atoms_eq G k:=
   match k with
   | 0%nat => FOL_R_atoms (FOL_R_eq (p_sum_weight_var_with_coeff 0%nat G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) (p_sum_weight_covar_with_coeff 0%nat G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))))
@@ -1154,12 +604,10 @@ Proof.
       lia.
 Qed.
 
-(* return the formula corresponding to \phi_{G,v} *)
+(** return the formula corresponding to \phi_{G,v} *)
 Definition FOL_R_phi G v := FOL_R_and (FOL_R_all_zero (S (max_var_weight_p_hseq G)) (complementary v (length G))) (FOL_R_and (FOL_R_all_gtz (S (max_var_weight_p_hseq G)) v) (FOL_R_all_atoms_eq G (max_var_p_hseq G))).
 
-(* Since FOL_R_phi is just an AND (so is implemented as a product), the condition lemmas are not necessary *)
-
-(* return the formula corresponding to \exists \beta_1,....,\beta_n \phi_{G,v} *)
+(** return the formula corresponding to \exists \beta_1,....,\beta_n \phi_{G,v} *)
 Definition FOL_R_exists_phi G v :=
   exists_vec (seq (S (max_var_weight_p_hseq G)) (length G)) (FOL_R_phi G v).
 
@@ -1186,7 +634,7 @@ Proof.
   rewrite seq_length in Hlen; rewrite Hlen; reflexivity.
 Qed.
 
-(* return the whole formula for the atomic case *)
+(** return the whole formula for the atomic case *)
 Fixpoint FOL_R_atomic_case_aux G V :=
   match V with
   | nil => FOL_R_false
@@ -1220,6 +668,7 @@ Qed.
 Definition FOL_R_atomic_case G  :=
   FOL_R_atomic_case_aux G (make_subsets (length G)).
 
+(** there exists a formula \phi_G such that \phi_G(\vec r) has a proof if and only if G[\vec r /\vec x] has a proof *) 
 Lemma HR_FOL_R_equiv : forall G,
     { f & forall val, p_hseq_well_defined val G ->
                       prod
@@ -1715,7 +1164,8 @@ Proof.
   - right.
     intros pi; apply f0; apply H1; apply pi.
 Qed.
-  
+
+(** Theorem 3.17 *)
 Lemma HR_decidable : forall G,
     (HR_full G) + (HR_full G -> False).
 Proof.

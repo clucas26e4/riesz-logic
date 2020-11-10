@@ -1,4 +1,4 @@
-(** * Tools and lemma used to prove Lemma ?? and ?? more easily *)
+(** * Tools and lemma used to prove Lemma 3.32 and 3.43 more easily *)
 Require Import Rpos.
 Require Import riesz_logic_List_more.
 Require Import RL.hr.term.

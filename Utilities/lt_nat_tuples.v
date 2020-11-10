@@ -126,3 +126,13 @@ Lemma lt_nat3_to_lt_nat4 : forall n m a b,
 Proof.
   intros n m a b Hlt3; inversion Hlt3; try now constructor.
 Qed.
+
+Lemma lt_nat4_last :
+  forall a n m,
+    (n < m)%nat ->
+    (a , n) <4 (a, m).
+Proof.
+  intros a n m Hlt.
+  destruct a as [[a b] c]; apply fth_lt4.
+  apply Hlt.
+Qed.
