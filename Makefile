@@ -1,5 +1,5 @@
 
-COQ = coqc -R $(OLLIBSDIR) ''  -R . "RL"
+COQ = coqc -R . "RL"
 COQDOC = coqdoc -g -R . "RL"
 
 VFILES_HR = hr_main_results.v hr_example.v
@@ -13,7 +13,8 @@ VFILES_DOC = $(wildcard */*.v)
 	$(COQDOC) $<
 
 
-doc: $(VFILES:.v=.glob)
+doc: $(VFILES_HR:.v=.glob) $(VFILES_HMR:.v=.glob)
+	cd $(UTILDIR) && $(MAKE)
 	cd $(HRDIR) && $(MAKE) doc
 	cd $(HMRDIR) && $(MAKE) doc
 	$(COQDOC) -toc *.v */*.v
@@ -35,7 +36,6 @@ clean:
 HRDIR = hr
 HMRDIR = hmr
 UTILDIR = Utilities
-OLLIBSDIR = ../ollibs
 
 .DEFAULT_GOAL := all
 

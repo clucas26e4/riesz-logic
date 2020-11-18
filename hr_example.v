@@ -9,9 +9,10 @@ Require Import RL.hr.soundness.
 Require Import RL.hr.can_elim.
 
 Require Import List.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
+
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 (** F is a Riesz space term. *)
 Definition F := (((plus_pos One One) *S var 0) +S ((plus_pos One One) *S covar 1)) \/S (var 1 +S covar 0).
@@ -56,7 +57,7 @@ Proof.
   rewrite ? seq_mul_vec_mul_vec.
   apply hrr_ex_seq with (vec (time_pos (plus_pos One One) One :: nil) (covar 0) ++ vec (time_pos (plus_pos One One) One :: nil) (var 0) ++ vec (time_pos (plus_pos One One) One :: nil) (covar 1) ++ vec (time_pos (plus_pos One One) One :: nil) (var 1) ++ nil).
   { simpl.
-    perm_Type_solve. }
+    Permutation_Type_solve. }
   apply hrr_ID ; [ reflexivity | ].
   apply hrr_ID ; [ reflexivity | ].
   apply hrr_INIT.

@@ -4,11 +4,12 @@ Require Import RL.hmr.hseq.
 Require Import RL.hmr.hmr.
 
 Require Import CMorphisms.
-Require Import List_more.
-Require Import List_Type_more.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
 Require Import Lra.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 (** * Definition of hmr *)
@@ -54,7 +55,7 @@ Fixpoint leaves {G} (pi : preHMR G) :=
   end.
 
 Lemma finish_preproof : forall G (pi : preHMR G),
-    Forall_Type HMR_T (leaves pi) ->
+    Forall_inf HMR_T (leaves pi) ->
     HMR_T G.
 Proof.
   intros G pi; induction pi; intros Hall.
@@ -70,8 +71,7 @@ Proof.
   - apply hmrr_mul; apply IHpi; apply Hall.
   - apply hmrr_max; apply IHpi; apply Hall.
   - simpl in Hall.
-    apply Forall_Type_app_inv in Hall as [Hall1 Hall2].
-    apply hmrr_min; [apply IHpi1 | apply IHpi2]; try assumption.
+    apply hmrr_min; [apply IHpi1; eapply Forall_inf_app_l | apply IHpi2; eapply Forall_inf_app_r]; try eassumption.
   - apply hmrr_one; try assumption; apply IHpi; apply Hall.
   - apply hmrr_diamond; try assumption; apply IHpi; apply Hall.
   - eapply hmrr_ex_seq; [ | apply IHpi; apply Hall]; try assumption.

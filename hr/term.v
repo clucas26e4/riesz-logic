@@ -2,7 +2,7 @@
 Require Import Rpos.
 
 (** ** Term *)
-Require Import List_more.
+Require Import OLlibs.List_more.
 
 Inductive term : Type :=
 | var : nat -> term
@@ -80,7 +80,7 @@ Notation "'neg' A" := ((-S A) \/S zero) (at level 5).
 Notation "'abs' A" := (A \/S (-S A)) (at level 5).
 
 (** Definition of the proposition stating if a formula is an atom *)
-Fixpoint is_atom A :=
+Definition is_atom A :=
   match A with
   | var _ => True
   | covar _ => True

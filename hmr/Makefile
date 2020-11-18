@@ -1,5 +1,5 @@
 
-COQ = coqc -R $(OLLIBSDIR) "" -R .. "RL"
+COQ = coqc -R .. "RL"
 COQDOC = coqdoc -g -R .. "RL"
 
 VFILES = $(wildcard *.v)
@@ -30,21 +30,14 @@ clean:
 .PHONY: clean
 .PRECIOUS: %.vo %.glob
 
-
-OLLIBSDIR = ../../ollibs
 UTILDIR = ../Utilities
 
 .DEFAULT_GOAL := all
 
-all: ollibs utilities $(VFILES:.v=.vo)
-
-ollibs:
-	cd $(OLLIBSDIR) && $(MAKE)
+all: utilities $(VFILES:.v=.vo)
 
 utilities:
 	cd $(UTILDIR) && $(MAKE)
-
-include $(OLLIBSDIR)/ollibs.mk
 
 term.vo : term.v $(UTILDIR)/Rpos.vo
 semantic.vo : semantic.v $(UTILDIR)/Rpos.vo term.vo

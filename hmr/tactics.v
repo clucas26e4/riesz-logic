@@ -4,9 +4,10 @@ Require Import RL.hmr.hseq.
 Require Import RL.hmr.hmr.
 
 Require Import List.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
 Require Import Lra.
+
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Ltac HMR_to_app_step :=
   match goal with
@@ -26,100 +27,100 @@ Ltac HMR_to_vec := repeat HMR_to_vec_step.
 
 Ltac apply_HMR_plus :=
   match goal with
-  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A +S B)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A +S B)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_plus
-  | |- HMR _ (?G1 ++ ((vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (A +S B)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (A +S B)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_plus
-  | |- HMR _ ((?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ ((?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                             apply hmrr_plus
   | |- HMR _ (((vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) => apply hmrr_plus
-  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A +S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A +S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_plus
-  | |- HMR _ (?G1 ++ (((vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (A +S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (((vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (A +S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_plus
-  | |- HMR _ (((?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (((?T1 ++ (vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (A +S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_plus
   | |- HMR _ ((((vec ?a (?A +S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_plus
   end.
 
 Ltac apply_HMR_max :=
   match goal with
-  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A \/S B)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A \/S B)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_max
-  | |- HMR _ (?G1 ++ ((vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (A \/S B)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (A \/S B)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_max
-  | |- HMR _ ((?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ ((?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                             apply hmrr_max
   | |- HMR _ (((vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) => apply hmrr_max
-  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A \/S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A \/S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_max
-  | |- HMR _ (?G1 ++ (((vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (A \/S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (((vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (A \/S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_max
-  | |- HMR _ (((?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (((?T1 ++ (vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (A \/S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_max
   | |- HMR _ ((((vec ?a (?A \/S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_max
   end.
 
 Ltac apply_HMR_Z :=
   match goal with
-  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (zero)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (zero)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_Z
-  | |- HMR _ (?G1 ++ ((vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (zero)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (zero)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_Z
-  | |- HMR _ ((?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ ((?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                             apply hmrr_Z
   | |- HMR _ (((vec ?a (zero)) ++ ?T2) :: ?G2) => apply hmrr_Z
-  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (zero)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (zero)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_Z
-  | |- HMR _ (?G1 ++ (((vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (zero)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (((vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (zero)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_Z
-  | |- HMR _ (((?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (((?T1 ++ (vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (zero)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_Z
   | |- HMR _ ((((vec ?a (zero)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_Z
   end.
 
 Ltac apply_HMR_mul :=
   match goal with
-  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (r *S A)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (r *S A)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_mul
-  | |- HMR _ (?G1 ++ ((vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (r *S A)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (r *S A)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_mul
-  | |- HMR _ ((?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ ((?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                             apply hmrr_mul
   | |- HMR _ (((vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) => apply hmrr_mul
-  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (r *S A)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (r *S A)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_mul
-  | |- HMR _ (?G1 ++ (((vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (r *S A)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (((vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (r *S A)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_mul
-  | |- HMR _ (((?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (((?T1 ++ (vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (r *S A)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_mul
   | |- HMR _ ((((vec ?a (?r *S ?A)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_mul
   end.
 
 Ltac apply_HMR_min :=
   match goal with
-  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A /\S B)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A /\S B)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_min
-  | |- HMR _ (?G1 ++ ((vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (A /\S B)) ++ T2) :: G1 ++ G2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_hseq with (((vec a  (A /\S B)) ++ T2) :: G1 ++ G2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_min
-  | |- HMR _ ((?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ ((?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                             apply hmrr_min
   | |- HMR _ (((vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) => apply hmrr_min
-  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A /\S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
-                                                              apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ ((?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with ((T1 ++ (vec a  (A /\S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
+                                                              apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_min
-  | |- HMR _ (?G1 ++ (((vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (A /\S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ perm_Type_solve | ];
+  | |- HMR _ (?G1 ++ (((vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_hseq with (((vec a  (A /\S B)) ++ T2) :: G1 ++ G2 ++ G3) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_min
-  | |- HMR _ (((?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ perm_Type_solve | ];
+  | |- HMR _ (((?T1 ++ (vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_ex_seq with ((vec a (A /\S B)) ++ T1 ++ T2) ; [ Permutation_Type_solve | ];
                                                               apply hmrr_min
   | |- HMR _ ((((vec ?a (?A /\S ?B)) ++ ?T2) :: ?G2) ++ ?G3) => apply hmrr_min
   end.

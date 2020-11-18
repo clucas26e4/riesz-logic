@@ -6,11 +6,11 @@ Require Import RL.hr.hseq.
 
 Require Import CMorphisms.
 Require Import List.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
+
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 
@@ -21,9 +21,9 @@ Record hr_frag := mk_hr_frag {
                       hr_CAN : bool }.
 
 Definition le_hr_frag P Q :=
-  prod (Bool.leb (hr_T P) (hr_T Q))
-       (prod (Bool.leb (hr_M P) (hr_M Q))
-             (Bool.leb (hr_CAN P) (hr_CAN Q))).
+  prod (Bool.le (hr_T P) (hr_T Q))
+       (prod (Bool.le (hr_M P) (hr_M Q))
+             (Bool.le (hr_CAN P) (hr_CAN Q))).
 
 Lemma le_hr_frag_trans : forall P Q R,
   le_hr_frag P Q -> le_hr_frag Q R -> le_hr_frag P R.
@@ -31,14 +31,13 @@ Proof.
 intros P Q R H1 H2.
 destruct H1 as (Ht1 & Hm1 & Hcan1).
 destruct H2 as (Ht2 & Hm2 & Hcan2).
-repeat (split; [eapply leb_trans; try eassumption | ]).
-eapply leb_trans; eassumption.
+repeat split; destruct P; destruct Q; destruct R; Bool.destr_bool.
 Qed.
 
 Instance le_hr_frag_po : PreOrder le_hr_frag.
 Proof.
 split.
-- repeat split; apply leb_refl.
+- repeat split; destruct x; Bool.destr_bool.
 - intros P Q R.
   apply le_hr_frag_trans.
 Qed.
@@ -53,32 +52,32 @@ Definition hr_frag_rm_CAN P := mk_hr_frag (hr_T P) (hr_M P) false.
 Lemma add_T_le_frag : forall P, le_hr_frag P (hr_frag_add_T P).
 Proof.
   intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma add_M_le_frag : forall P, le_hr_frag P (hr_frag_add_M P).
 Proof.
   intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma add_CAN_le_frag : forall P, le_hr_frag P (hr_frag_add_CAN P).
 Proof.
   intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma rm_T_le_frag : forall P, le_hr_frag (hr_frag_rm_T P) P.
 Proof.
   intros P.
-  repeat (split; try apply leb_refl).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma rm_M_le_frag : forall P, le_hr_frag (hr_frag_rm_M P) P.
 Proof.
   intros P.
-  repeat (split; try apply leb_refl).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma rm_CAN_le_frag : forall P, le_hr_frag (hr_frag_rm_CAN P) P.
 Proof.
   intros P.
-  repeat (split; try apply leb_refl).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 
 (** only the following fragments are interesting for what we want to do *)
@@ -157,10 +156,10 @@ Proof.
   intros G H; revert P G; induction H as [ | T H]; intros P G pi.
   - apply pi.
   - simpl; apply hrr_C; try reflexivity.
-    apply hrr_ex_hseq with (H ++ T :: T :: G); [ perm_Type_solve | ].
+    apply hrr_ex_hseq with (H ++ T :: T :: G); [ Permutation_Type_solve | ].
     apply IHH.
     eapply hrr_ex_hseq ; [ | apply pi].
-    perm_Type_solve.
+    Permutation_Type_solve.
 Qed.
 
 Lemma hrr_C_copy P : forall G T n, HR P ((copy_seq (S n) T) :: G) -> HR P (T :: G).

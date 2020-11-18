@@ -8,7 +8,9 @@ Require Import RL.hr.interpretation.
 
 Require Import List.
 Require Import Lra.
-Require Import Permutation_more.
+
+Require Import OLlibs.Permutation_more.
+
 Local Open Scope R_scope.
 
 (** ** all rules are sound *)

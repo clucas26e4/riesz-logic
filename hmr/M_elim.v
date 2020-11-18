@@ -8,13 +8,13 @@ Require Import RL.hmr.tech_lemmas.
 Require Import RL.hmr.preproof.
 
 Require Import CMorphisms.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
-Require Import Wf_nat_more.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 (** Proof of Lemma 4.35 *)
 Lemma hmrr_mul_vec : forall L (pi : HMR_T (map (fun x => snd x) L)),
@@ -44,14 +44,14 @@ Proof.
     + simpl.
       esplit with (hmrr_ex_hseq _ ((seq_mul_vec r2 T2' :: map (fun x : list Rpos * sequent => seq_mul_vec (fst x) (snd x)) L) ++ (nil :: nil)) _ _ (hmrr_W_gen _ _ _ (hmrr_INIT _))).
       Unshelve.
-      2: perm_Type_solve.
+      2: Permutation_Type_solve.
       simpl.
       rewrite modal_depth_proof_W_gen.
       apply Peano.le_0_n.
     + simpl.
       esplit with (hmrr_ex_hseq _ ((seq_mul_vec (r :: r1) T1' :: map (fun x : list Rpos * sequent => seq_mul_vec (fst x) (snd x)) L) ++ (nil :: nil)) _ _ (hmrr_W_gen _ _ _ (hmrr_INIT _))).
       Unshelve.
-      2: perm_Type_solve.
+      2: Permutation_Type_solve.
       simpl.
       rewrite modal_depth_proof_W_gen.
       apply Peano.le_0_n.
@@ -63,7 +63,7 @@ Proof.
         etransitivity ; [ apply seq_mul_vec_perm_r; apply (seq_mul_vec_app_r _ _ (r0 :: r2)) | ].
         etransitivity ; [ apply seq_mul_vec_app_r | ].
         etransitivity ; [ apply Permutation_Type_app ; [ apply seq_mul_vec_twice_comm | reflexivity ] | ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       esplit.
       Unshelve.
       2:{ unfold HMR_T; change hmr_frag_T with (hmr_frag_add_T hmr_frag_T).
@@ -239,7 +239,7 @@ Proof.
         apply pi'. }
     apply Hpi'.
   - subst.
-    destruct (Permutation_Type_map_inv _ _ _ p) as [L' Heq Hperm].
+    destruct (Permutation_Type_map_inv _ _ p) as [L' Heq Hperm].
     destruct (IHpi L' Heq) as [pi' Hpi'].
     esplit.
     Unshelve.
@@ -272,7 +272,7 @@ Qed.
 (** Proof of Lemma 4.34 *)
 Lemma hmrr_M_step_1 : forall L H D (pi : HMR_T (map (fun x => snd x) L)),
     HMR_T (D :: H) ->
-    {' pi' : preHMR (map (fun x => snd x ++ seq_mul_vec (fst x) D) L ++ H) & Forall_Type (good_leaf_step_1 H D (modal_depth_proof pi)) (leaves pi')}.
+    {' pi' : preHMR (map (fun x => snd x ++ seq_mul_vec (fst x) D) L ++ H) & Forall_inf (good_leaf_step_1 H D (modal_depth_proof pi)) (leaves pi')}.
 Proof.
   intros L H D pi pi2.
   remember (map (fun x => snd x) L) as G.
@@ -301,7 +301,7 @@ Proof.
         simpl; rewrite <- Heq1.
         apply pi2. }
     rewrite HMR_to_preHMR_no_leaf.
-    apply Forall_Type_nil.
+    apply Forall_inf_nil.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     destruct (IHpi L eq_refl) as [pi' Hpi'].
     esplit.
@@ -321,7 +321,7 @@ Proof.
     2:{ apply prehmrr_S.
         apply prehmrr_ex_seq with ((T1' ++ T2') ++ seq_mul_vec (r1 ++ r2) D).
         { rewrite seq_mul_vec_app_l.
-          perm_Type_solve. }
+          Permutation_Type_solve. }
         apply pi'. }
     simpl.
     apply Hpi'.
@@ -352,7 +352,7 @@ Proof.
     Unshelve.
     2:{ apply prehmrr_ex_seq with (vec r (A +S B) ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_plus].
         eapply prehmrr_ex_seq ; [ | apply pi'].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
     apply Hpi'.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     destruct (IHpi ((r1, vec (mul_vec r0 r) A ++ T) :: L) eq_refl) as [pi' Hpi'].
@@ -360,7 +360,7 @@ Proof.
     Unshelve.
     2:{ apply prehmrr_ex_seq with (vec r (r0 *S A) ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_mul].
         eapply prehmrr_ex_seq ; [ | apply pi'].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
     apply Hpi'.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     destruct (IHpi ((r1, vec r B ++ T) :: (r1, vec r A ++ T) :: L) eq_refl) as [pi' Hpi'].
@@ -369,25 +369,25 @@ Proof.
     2:{ apply prehmrr_ex_seq with (vec r (A \/S B) ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | ].
         apply prehmrr_max.
         eapply prehmrr_ex_hseq; [ apply Permutation_Type_swap | ].
-        apply prehmrr_ex_seq with ((vec r A ++ T) ++ seq_mul_vec r1 D) ; [ perm_Type_solve | ].
+        apply prehmrr_ex_seq with ((vec r A ++ T) ++ seq_mul_vec r1 D) ; [ Permutation_Type_solve | ].
         eapply prehmrr_ex_hseq; [ apply Permutation_Type_swap | ].
         eapply prehmrr_ex_seq; [ | apply pi'].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
     apply Hpi'.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     destruct (IHpi1 ((r1, vec r A ++ T) :: L) eq_refl) as [pi1' Hpi1'].
     destruct (IHpi2 ((r1, vec r B ++ T) :: L) eq_refl) as [pi2' Hpi2'].
     esplit.
     Unshelve.
-    2:{ apply prehmrr_ex_seq with (vec r (A /\S B) ++ T ++ seq_mul_vec r1 D) ; [ perm_Type_solve |].
-        apply prehmrr_min; eapply prehmrr_ex_hseq ; [ | apply pi1' | | apply pi2']; perm_Type_solve. }
+    2:{ apply prehmrr_ex_seq with (vec r (A /\S B) ++ T ++ seq_mul_vec r1 D) ; [ Permutation_Type_solve |].
+        apply prehmrr_min; eapply prehmrr_ex_hseq ; [ | apply pi1' | | apply pi2']; Permutation_Type_solve. }
     simpl.
-    apply Forall_Type_app.
-    + apply Forall_Type_arrow with (good_leaf_step_1 H D (modal_depth_proof pi1)); try assumption.
+    apply Forall_inf_app.
+    + apply Forall_inf_arrow with (good_leaf_step_1 H D (modal_depth_proof pi1)); try assumption.
       intros a GL.
       apply good_leaf_le with (modal_depth_proof pi1); try assumption.
       apply Nat.le_max_l.
-    + apply Forall_Type_arrow with (good_leaf_step_1 H D (modal_depth_proof pi3)); try assumption.
+    + apply Forall_inf_arrow with (good_leaf_step_1 H D (modal_depth_proof pi3)); try assumption.
       intros a GL.
       apply good_leaf_le with (modal_depth_proof pi3); try assumption.
       apply Nat.le_max_r.
@@ -399,9 +399,9 @@ Proof.
     apply Hpi'.
   - destruct L ; [ | destruct L]; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     assert ({pi' : preHMR ((vec s coone ++ vec r one ++ seq_mul_vec r1 D ++ seq_diamond T) :: H) &
-                   Forall_Type (good_leaf_step_1 H D (S (modal_depth_proof pi))) (leaves pi')}) as [pi' Hpi'].
+                   Forall_inf (good_leaf_step_1 H D (S (modal_depth_proof pi))) (leaves pi')}) as [pi' Hpi'].
     { split with (prehmrr_leaf _).
-      apply Forall_Type_cons ; [ | apply Forall_Type_nil].
+      apply Forall_inf_cons ; [ | apply Forall_inf_nil].
       split with (T, r1, r, s).
       repeat split; try assumption; try reflexivity.
       split with pi.
@@ -409,7 +409,7 @@ Proof.
     esplit.
     Unshelve.
     2:{ eapply prehmrr_ex_seq ; [ | apply pi'].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
     apply Hpi'.
   - destruct L; try destruct p0 as [r1 T1']; inversion HeqG; subst; simpl.
     destruct (IHpi ((r1, T1) :: L) eq_refl) as [pi' Hpi'].
@@ -419,7 +419,7 @@ Proof.
         apply pi'. }
     apply Hpi'.
   - subst.
-    destruct (Permutation_Type_map_inv _ _ _ p) as [L' Heq Hperm].
+    destruct (Permutation_Type_map_inv  _ _ p) as [L' Heq Hperm].
     destruct (IHpi L' Heq) as [pi' Hpi'].
     esplit.
     Unshelve.
@@ -453,13 +453,12 @@ Proof.
   clear n.
   destruct (hmrr_M_step_1 _ _ _ pi1 pi2) as [pi1' Hpi1'].
   apply finish_preproof with pi1'.
-  apply forall_Forall_Type.
+  apply forall_Forall_inf.
   intros G Hin.
-  destruct (In_Forall_Type_in _ _ _ Hpi1' Hin) as [p _].
-  destruct p as [[[[T1 r] s] t] [HeqG [Hle [piG Hind]]]].
+  destruct (Forall_inf_forall Hpi1' _ Hin) as [[[[T1 r] s] t] [HeqG [Hle [piG Hind]]]].
   subst.
   apply hmrr_ex_seq with (seq_mul_vec r D ++ seq_mul_vec (One :: nil) (vec t coone ++ vec s one ++ seq_diamond T1)).
-  { simpl; rewrite seq_mul_One; perm_Type_solve. }
+  { simpl; rewrite seq_mul_One; Permutation_Type_solve. }
   assert (HMR_T (seq_mul_vec r D :: H)) as pi2'.
   { assert {L & prod
                   (H = map (fun x => snd x) L)
@@ -491,10 +490,9 @@ Proof.
   destruct (hmrr_M_step_1 ((One::nil, seq_mul_vec r D) :: L') nil (vec t coone ++ vec s one ++ seq_diamond T1) pi2' (hmrr_diamond _ _ _ _ Hle piG)) as [pi' Hleaves].
   rewrite <- app_nil_r.
   apply finish_preproof with pi'.
-  apply forall_Forall_Type.
+  apply forall_Forall_inf.
   intros G' Hin'.
-  destruct (In_Forall_Type_in _ _ _ Hleaves Hin') as [p _].
-  destruct p as [[[[D1 r'] s'] t'] [HeqG' [Hle' [piG' Hind']]]].
+  destruct (Forall_inf_forall Hleaves _ Hin') as [[[[D1 r'] s'] t'] [HeqG' [Hle' [piG' Hind']]]].
   subst.
   apply hmrr_ex_seq with (vec (t' ++ vec_mul_vec r' t) coone ++ vec (s' ++ vec_mul_vec r' s) one ++ seq_diamond (seq_mul_vec r' T1 ++ D1)).
   { rewrite ? vec_app.
@@ -507,7 +505,7 @@ Proof.
         etransitivity ; [ | symmetry; apply seq_mul_vec_app_r ].
         apply Permutation_Type_app ; [ reflexivity | symmetry; apply seq_mul_vec_app_r]. }
     rewrite seq_diamond_seq_mul_vec.
-    perm_Type_solve. }    
+    Permutation_Type_solve. }    
   apply hmrr_diamond.
   { rewrite ? sum_vec_app.
     rewrite ? sum_vec_vec_mul_vec.
@@ -522,7 +520,7 @@ Proof.
       apply Permutation_Type_app; [ reflexivity | apply seq_mul_vec_app_r]. }
     rewrite ? vec_app.
     rewrite <- ? seq_mul_vec_vec_mul_vec.
-    perm_Type_solve. }
+    Permutation_Type_solve. }
   change  ((seq_mul_vec r' (vec t coone ++ vec s one ++ T1) ++ seq_mul_vec (One :: nil) (vec t' coone ++ vec s' one ++ D1)) :: nil)
     with
       (map (fun x => snd x ++ seq_mul_vec (fst x) (vec t' coone ++ vec s' one ++ D1)) ((One :: nil, seq_mul_vec r' (vec t coone ++ vec s one ++ T1)) :: nil)).
@@ -553,9 +551,9 @@ Proof.
         split with ((nil, a) :: L).
         simpl; split ; [ rewrite H1; reflexivity |  rewrite H2].
         rewrite app_nil_r; reflexivity. }
-    apply hmrr_ex_hseq with (G ++ ((T1 ++ T2) :: nil)); [ perm_Type_solve | ].
+    apply hmrr_ex_hseq with (G ++ ((T1 ++ T2) :: nil)); [ Permutation_Type_solve | ].
     apply hmrr_C_gen.
-    apply hmrr_ex_hseq with (((T1 ++ T2) :: G) ++ G); [ perm_Type_solve | ].
+    apply hmrr_ex_hseq with (((T1 ++ T2) :: G) ++ G); [ Permutation_Type_solve | ].
     pattern G at 1; rewrite Heq2.
     replace ((T1 ++ T2)
                :: map (fun x : list Rpos * list (Rpos * term) => snd x ++ seq_mul_vec (fst x) T2) L)

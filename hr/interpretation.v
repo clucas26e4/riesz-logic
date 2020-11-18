@@ -6,7 +6,8 @@ Require Import RL.hr.semantic.
 
 Require Import List.
 Require Import Lra.
-Require Import Permutation_Type_more.
+
+Require Import OLlibs.Permutation_Type_more.
 
 Local Open Scope R_scope.
 

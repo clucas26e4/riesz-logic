@@ -6,12 +6,12 @@ Require Export Reals.
 Require Import Rpos.
 Require Import Bool.
 Require Import Lra.
-Require Import Permutation_Type.
-Require Import List_Type.
-Require Import List_Type_more.
 Require Import FunctionalExtensionality.
-Require Import List_more.
 Require Import Lia.
+
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.List_more.
 
 Local Open Scope R_scope.
 (* begin hide *)
@@ -26,7 +26,7 @@ Fixpoint upd_val_vec (val : nat -> R) (vx : list nat) (vr : list R) :=
   end.
 
 Lemma upd_val_vec_not_in : forall val L v x,
-    (In_Type x v -> False) ->
+    (In_inf x v -> False) ->
     upd_val_vec val v L x = val x.
 Proof.
   intros val L v; revert val L; induction v; intros val L x Hin.
@@ -56,9 +56,9 @@ Proof.
         replace (k1 + k2 =? k1 + k2 + 0) with true by (symmetry; apply Nat.eqb_eq; lia).
         replace (k2 =? k2 + 0) with true by (symmetry; apply Nat.eqb_eq; lia).
         reflexivity.
-      * apply not_In_Type_seq.
+      * apply not_In_inf_seq.
         lia.
-      * apply not_In_Type_seq.
+      * apply not_In_inf_seq.
         lia.        
     + replace (S (k1 + k2)) with (k1 + S k2)%nat by lia.
       replace (k1 + k2 + S i)%nat with (k1 + (S k2) + i)%nat by lia.
@@ -85,7 +85,7 @@ Proof.
     + destruct n.
       * simpl.
         rewrite upd_val_vec_not_in; try reflexivity.
-        apply not_In_Type_seq; lia.
+        apply not_In_inf_seq; lia.
       * simpl.
         change (v (S n)) with ((fun x => v (S x)) n).
         rewrite <- IHL.
@@ -119,23 +119,19 @@ Lemma map_upd_val_vec_eq : forall v L i,
     map (upd_val_vec v (seq i (length L)) L) (seq i (length L)) = L.
 Proof.
   intros v L i.
-  apply list_ext.
+  apply nth_ext with 0 0.
   { rewrite map_length; rewrite seq_length.
     reflexivity. }
-  intros n a0.
-  case_eq (n <? length L)%nat.
-  - intros Hlt; apply Nat.ltb_lt in Hlt.
-    rewrite nth_indep with _ _ _ _ (upd_val_vec v (seq i (length L)) L 0).
-    2:{ rewrite map_length; rewrite seq_length.
-        lia. }
-    rewrite map_nth.
-    rewrite seq_nth; [ | assumption].
-    rewrite upd_val_vec_eq.
-    rewrite nth_indep with _ _ _ _ a0 ; auto.
-  - intros H; apply Nat.ltb_nlt in H.
-    rewrite ? nth_overflow; try lia; auto.
-    rewrite map_length; rewrite seq_length.
-    lia.
+  intros n.
+  intros Hlt.
+  rewrite map_length in Hlt; rewrite seq_length in Hlt.
+  rewrite nth_indep with _ _ _ _ (upd_val_vec v (seq i (length L)) L 0).
+  2:{ rewrite map_length; rewrite seq_length.
+      lia. }
+  rewrite map_nth.
+  rewrite seq_nth; [ | assumption].
+  rewrite upd_val_vec_eq.
+  rewrite nth_indep with _ _ _ _ 0 ; auto.
 Qed.
 
 (* end hide *)
@@ -167,7 +163,7 @@ Fixpoint FOL_R_term_sem (v : nat -> R) t :=
 
 (* begin hide *)
 Lemma FOL_R_term_sem_upd_val_vec_not_in : forall val vx vr i,
-    (In_Type i vx -> False) ->
+    (In_inf i vx -> False) ->
     FOL_R_term_sem (upd_val_vec val vx vr) (FOL_R_var i) = val i.
 Proof.
   intros val vx; revert val; induction vx; intros val vr i Hin; auto.
@@ -186,25 +182,18 @@ Lemma map_val_seq_var : forall val L i,
     map (FOL_R_term_sem (upd_val_vec val (seq i (length L)) L)) (map FOL_R_var (seq i (length L))) = L.
 Proof.
   intros val L i.
-  apply list_ext ; [ rewrite 2 map_length; now rewrite seq_length | ].
-  intros n a0.
-  case_eq (n <? length L)%nat; intros H.
-  - rewrite nth_indep with _ _ _ _ (FOL_R_term_sem (upd_val_vec val (seq i (length L)) L) (FOL_R_var 0%nat)).
-    2:{ rewrite 2 map_length; rewrite seq_length; apply Nat.ltb_lt in H; apply H. }
-    rewrite map_nth.
-    rewrite map_nth.
-    rewrite seq_nth.
-    2:{ apply Nat.ltb_lt in H; apply H. }
-    simpl.
-    rewrite upd_val_vec_eq.
-    apply nth_indep.
-    apply Nat.ltb_lt; apply H.
-  - rewrite 2 nth_overflow.
-    + reflexivity.
-    + apply Nat.ltb_nlt in H; lia.
-    + rewrite 2 map_length.
-      rewrite seq_length.
-      apply Nat.ltb_nlt in H; lia.
+  apply nth_ext with 0 0 ; [ rewrite 2 map_length; now rewrite seq_length | ].
+  intros n.
+  intros H.
+  rewrite ? map_length in H; rewrite seq_length in H.
+  rewrite nth_indep with _ _ _ _ (FOL_R_term_sem (upd_val_vec val (seq i (length L)) L) (FOL_R_var 0%nat)).
+  2:{ rewrite 2 map_length; rewrite seq_length; apply H. }
+  rewrite map_nth.
+  rewrite map_nth.
+  rewrite seq_nth; auto.
+  simpl.
+  rewrite upd_val_vec_eq.
+  apply nth_indep; assumption.
 Qed.
 
 Lemma upd_val_term_lt :
@@ -227,7 +216,7 @@ Inductive FOL_R_pred : Type :=
 Notation "f1 =R f2" := (FOL_R_eq f1 f2) (at level 50).
 Notation "f1 <=R f2" := (FOL_R_le f1 f2) (at level 50).                                            
 
-Fixpoint FOL_R_pred_sem (v : nat -> R) p :=
+Definition FOL_R_pred_sem (v : nat -> R) p :=
   match p with
   | FOL_R_eq t1 t2 => (FOL_R_term_sem v t1) = (FOL_R_term_sem v t2)
   | FOL_R_le t1 t2 => (FOL_R_term_sem v t1) <= (FOL_R_term_sem v t2)

@@ -1,12 +1,12 @@
 Require Import PeanoNat.
-Require Import List_Type_more.
-Require Import List_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_solve.
 Require Import Lia.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.List_more.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_solve.
 
-Lemma Exists_Type_split A : forall P (l : list A),
-    Exists_Type P l ->
+Lemma Exists_inf_split A : forall P (l : list A),
+    Exists_inf P l ->
     {' (a, la, lb) : _ &
                      prod (P a)
                           (l = la ++ a :: lb)}.
@@ -17,39 +17,39 @@ Proof.
     split with (a , x :: la, lb); repeat split; try assumption; rewrite Heq; reflexivity.
 Qed.
 
-Lemma Forall_Type_Permutation_Type A : forall P (l l' : list A),
+Lemma Forall_inf_Permutation_Type A : forall P (l l' : list A),
     Permutation_Type l l' ->
-    Forall_Type P l ->
-    Forall_Type P l'.
+    Forall_inf P l ->
+    Forall_inf P l'.
 Proof.
   intros P l l' Hperm.
   induction Hperm; intros Hall.
-  - apply Forall_Type_nil.
+  - apply Forall_inf_nil.
   - inversion Hall; subst.
-    apply Forall_Type_cons ; [ apply X | ].
+    apply Forall_inf_cons ; [ apply X | ].
     apply IHHperm; apply X0.
   - inversion Hall; inversion X0; subst.
-    apply Forall_Type_cons;  [ | apply Forall_Type_cons]; assumption.
+    apply Forall_inf_cons;  [ | apply Forall_inf_cons]; assumption.
   - apply IHHperm2.
     apply IHHperm1.
     apply Hall.
 Qed.
 
-Lemma Exists_Type_Permutation_Type A : forall P (l l' : list A),
+Lemma Exists_inf_Permutation_Type A : forall P (l l' : list A),
     Permutation_Type l l' ->
-    Exists_Type P l ->
-    Exists_Type P l'.
+    Exists_inf P l ->
+    Exists_inf P l'.
 Proof.
   intros P l l' Hperm.
   induction Hperm; intros Hex.
   - inversion Hex.
   - inversion Hex; subst.
-    + apply Exists_Type_cons_hd; assumption.
-    + apply Exists_Type_cons_tl; apply IHHperm; apply X.
+    + apply Exists_inf_cons_hd; assumption.
+    + apply Exists_inf_cons_tl; apply IHHperm; apply X.
   - inversion Hex;  [ | inversion X]; subst.
-    + apply Exists_Type_cons_tl; apply Exists_Type_cons_hd; apply X.
-    + apply Exists_Type_cons_hd; apply X0.
-    + apply Exists_Type_cons_tl; apply Exists_Type_cons_tl; apply X0.
+    + apply Exists_inf_cons_tl; apply Exists_inf_cons_hd; apply X.
+    + apply Exists_inf_cons_hd; apply X0.
+    + apply Exists_inf_cons_tl; apply Exists_inf_cons_tl; apply X0.
   - apply IHHperm2; apply IHHperm1; apply Hex.
 Qed.
 
@@ -59,43 +59,27 @@ Lemma decomp_Permutation_Type_2 A : forall l l' (x y : A),
                         {l' = l1 ++ y :: l2 ++ x :: l3}}.
 Proof.
   intros l l' x y Hperm.
-  destruct (in_Type_split x l') as [[la lb] Heq].
-  { apply Permutation_Type_in_Type with (x :: y :: l); [ apply Hperm | ].
+  destruct (in_inf_split x l') as [[la lb] Heq].
+  { apply Permutation_Type_in_inf with (x :: y :: l); [ apply Hperm | ].
     left; reflexivity. }
-  case (in_Type_app_or la lb y).
-  { apply Permutation_Type_in_Type with (y :: l) ; [ | left; reflexivity].
+  case (in_inf_app_or la lb y).
+  { apply Permutation_Type_in_inf with (y :: l) ; [ | left; reflexivity].
     apply Permutation_Type_cons_inv with x.
-    rewrite Heq in Hperm; perm_Type_solve. }
+    rewrite Heq in Hperm; Permutation_Type_solve. }
   - intros Hin.
-    apply in_Type_split in Hin as [[l1 l2] Heq' ].
+    apply in_inf_split in Hin as [[l1 l2] Heq' ].
     split with (l1 , l2 , lb).
     right; subst.
     rewrite <- ? app_assoc; reflexivity.
   - intros Hin.
-    apply in_Type_split in Hin as [[l1 l2] Heq' ].
+    apply in_inf_split in Hin as [[l1 l2] Heq' ].
     split with (la , l1 , l2).
     left; subst; reflexivity.
 Qed.
 
-Lemma Exists_Type_nth A (P : A -> Type) : forall (l : list A) a,
-    {i & prod (i < length l)%nat
-              (P (nth i l a)) } ->
-    Exists_Type P l.
-Proof.
-  induction l; intros a' [i [Hlen HP]]; [ exfalso; inversion Hlen | ].
-  destruct i.
-  - apply Exists_Type_cons_hd.
-    apply HP.
-  - apply Exists_Type_cons_tl.
-    apply IHl with a'.
-    split with i.
-    repeat split; simpl in *; try lia.
-    apply HP.
-Qed.
-
-Lemma In_Type_seq : forall i k n,
+Lemma In_inf_seq : forall i k n,
     (i < n)%nat ->
-    In_Type (i + k)%nat (seq k n).
+    In_inf (i + k)%nat (seq k n).
 Proof.
   intros i k n; revert i k; induction n; intros i k Hlt; try (exfalso; now inversion Hlt).
   destruct i; simpl; [ left; auto | ].
@@ -104,62 +88,62 @@ Proof.
   apply IHn ; lia.
 Qed.
 
-Lemma In_Type_rev A : forall (l : list A) a,
-    In_Type a l ->
-    In_Type a (rev l).
+Lemma In_inf_rev A : forall (l : list A) a,
+    In_inf a l ->
+    In_inf a (rev l).
 Proof.
   induction l; intros a' Hin; inversion Hin; subst.
   - simpl.
-    apply in_Type_or_app.
+    apply in_inf_or_app.
     right; left; auto.
   - simpl.
-    apply in_Type_or_app; left; apply IHl; auto.
+    apply in_inf_or_app; left; apply IHl; auto.
 Qed.
 
-Lemma In_Type_rev_inv A : forall (l : list A) a,
-    In_Type a (rev l) ->
-    In_Type a l.
+Lemma In_inf_rev_inv A : forall (l : list A) a,
+    In_inf a (rev l) ->
+    In_inf a l.
 Proof.
   intros l a Hin.
   rewrite <- rev_involutive.
-  apply In_Type_rev.
+  apply In_inf_rev.
   apply Hin.
 Qed.
 
-Lemma In_Type_map_S : forall i l,
-    In_Type i l ->
-    In_Type (S i) (map S l).
+Lemma In_inf_map_S : forall i l,
+    In_inf i l ->
+    In_inf (S i) (map S l).
 Proof.
   intros i; induction l; intros Hin; inversion Hin; subst; simpl; auto.
 Qed.
 
-Lemma not_0_In_Type_map_S : forall l,
-    In_Type 0%nat (map S l) ->
+Lemma not_0_In_inf_map_S : forall l,
+    In_inf 0%nat (map S l) ->
     False.
 Proof.
   induction l; intros Hin; inversion Hin; subst; simpl; auto.
   inversion H.
 Qed.
 
-Lemma In_Type_map_S_inv : forall i l,
-    In_Type (S i) (map S l) ->
-    In_Type i l.
+Lemma In_inf_map_S_inv : forall i l,
+    In_inf (S i) (map S l) ->
+    In_inf i l.
 Proof.
   intros i; induction l; intros Hin; inversion Hin; subst; simpl; auto.
 Qed.
 
-Lemma Forall_Type_lt_map_S : forall L n,
-    Forall_Type (fun x => x < n)%nat L ->
-    Forall_Type (fun x => x < S n)%nat (map S L).
+Lemma Forall_inf_lt_map_S : forall L n,
+    Forall_inf (fun x => x < n)%nat L ->
+    Forall_inf (fun x => x < S n)%nat (map S L).
 Proof.
-  induction L; intros n Hall; [apply Forall_Type_nil | ].
+  induction L; intros n Hall; [apply Forall_inf_nil | ].
   inversion Hall; subst.
-  apply Forall_Type_cons; [ lia | apply IHL; apply X].
+  apply Forall_inf_cons; [ lia | apply IHL; apply X].
 Qed.
 
-Lemma not_In_Type_seq : forall k n i,
+Lemma not_In_inf_seq : forall k n i,
     (i < k)%nat ->
-    In_Type i (seq k n) ->
+    In_inf i (seq k n) ->
     False.
 Proof.
   intros k n; revert k; induction n; intros k i Hlt Hin; inversion Hin; subst.
@@ -168,8 +152,8 @@ Proof.
     lia.
 Qed.
 
-Lemma In_Type_seq_lt : forall k n i,
-    In_Type i (seq k n) ->
+Lemma In_inf_seq_lt : forall k n i,
+    In_inf i (seq k n) ->
     (i < k + n)%nat.
 Proof.
   intros k n; revert k; induction n;  intros k i Hin; inversion Hin.
@@ -179,8 +163,8 @@ Proof.
     apply X.
 Qed.
 
-Lemma In_Type_remove_not A : forall eq_dec (l : list A) a,
-    In_Type a (remove eq_dec a l) ->
+Lemma In_inf_remove_not A : forall eq_dec (l : list A) a,
+    In_inf a (remove eq_dec a l) ->
     False.
 Proof.
   intros eq_dec; induction l; intros a' Hin; [ inversion Hin | ].
@@ -195,9 +179,9 @@ Proof.
     apply X.
 Qed.
 
-Lemma In_Type_remove_In_Type A : forall eq_dec (l : list A) a1 a2,
-    In_Type a1 (remove eq_dec a2 l) ->
-    (a1 <> a2) * (In_Type a1 l).
+Lemma In_inf_remove_In_inf A : forall eq_dec (l : list A) a1 a2,
+    In_inf a1 (remove eq_dec a2 l) ->
+    (a1 <> a2) * (In_inf a1 l).
 Proof.
   intros eq_dec; induction l; intros a1 a2 Hin; [ inversion Hin | ].
   case_eq (eq_dec a2 a); intros H1 H2; simpl in Hin; rewrite H2 in Hin.
@@ -212,9 +196,9 @@ Proof.
       right; auto.
 Qed.
 
-Lemma In_Type_remove_In_Type_inv A : forall eq_dec (l : list A) a1 a2,
-    (a1 <> a2) * (In_Type a1 l) ->
-    In_Type a1 (remove eq_dec a2 l).
+Lemma In_inf_remove_In_inf_inv A : forall eq_dec (l : list A) a1 a2,
+    (a1 <> a2) * (In_inf a1 l) ->
+    In_inf a1 (remove eq_dec a2 l).
 Proof.
   intros eq_dec; induction l; intros a1 a2 [Hneq Hin]; [ inversion Hin | ].
   inversion Hin.
@@ -255,9 +239,9 @@ Proof.
   apply H; lia.
 Qed.
 
-Lemma in_Type_map_cons A : forall (a : A) l L,
-    In_Type l L ->
-    In_Type (a :: l) (map (cons a) L).
+Lemma in_inf_map_cons A : forall (a : A) l L,
+    In_inf l L ->
+    In_inf (a :: l) (map (cons a) L).
 Proof.
   intros a l; induction L; intros Hin ; [ inversion Hin | ].
   inversion Hin; subst.
@@ -266,9 +250,9 @@ Proof.
     apply X.
 Qed.
 
-Lemma in_Type_map_cons_inv A : forall (a : A) l L,
-    In_Type l (map (cons a) L) ->
-    { l' & prod (l = a :: l') (In_Type l' L) }.
+Lemma in_inf_map_cons_inv A : forall (a : A) l L,
+    In_inf l (map (cons a) L) ->
+    { l' & prod (l = a :: l') (In_inf l' L) }.
 Proof.
   intros a l L; induction L; intros Hin; inversion Hin; subst.
   - split with a0.
@@ -288,7 +272,7 @@ Proof.
   simpl.
   intros _.
   intros H.
-  assert (Permutation_Type (a :: rev L) nil); [ rewrite <- H; perm_Type_solve | ].
+  assert (Permutation_Type (a :: rev L) nil); [ rewrite <- H; Permutation_Type_solve | ].
   symmetry in X; apply Permutation_Type_nil in X.
   inversion X.
 Qed.
@@ -320,8 +304,8 @@ Proof.
          apply H'.
 Qed.
 
-Lemma Forall_Type_nth A : forall (P : A -> Type) (l : list A),
-    Forall_Type P l ->
+Lemma Forall_inf_nth A : forall (P : A -> Type) (l : list A),
+    Forall_inf P l ->
     forall (i : nat) (a : A), (i < length l)%nat -> P (nth i l a).
 Proof.
   intros P; induction l; intros Hall i a' Hlen; [ exfalso; inversion Hlen | ].
@@ -331,12 +315,12 @@ Proof.
   simpl in Hlen; lia.
 Qed.
 
-Lemma nth_Forall_Type A : forall (P : A -> Type) (l : list A),
+Lemma nth_Forall_inf A : forall (P : A -> Type) (l : list A),
     (forall (i : nat) (a : A), (i < length l)%nat -> P (nth i l a)) ->
-    Forall_Type P l.
+    Forall_inf P l.
 Proof.
-  intros P; induction l; intros H; [ apply Forall_Type_nil | ].
-  apply Forall_Type_cons.
+  intros P; induction l; intros H; [ apply Forall_inf_nil | ].
+  apply Forall_inf_cons.
   - apply (H 0 a)%nat.
     simpl; lia.
   - apply IHl.
@@ -345,14 +329,14 @@ Proof.
     simpl; lia.
 Qed.
 
-Lemma In_Type_concat {A} :
+Lemma In_inf_concat {A} :
   forall L (x : A),
-    In_Type x (concat L) ->
-    {l & prod (In_Type l L) (In_Type x l)}.
+    In_inf x (concat L) ->
+    {l & prod (In_inf l L) (In_inf x l)}.
 Proof.
   induction L; intros x Hin; [ inversion Hin | ].
   simpl in Hin.
-  apply in_Type_app_or in Hin.
+  apply in_inf_app_or in Hin.
   destruct Hin.
   - split with a; split; auto.
     left; reflexivity.
@@ -361,9 +345,9 @@ Proof.
     right; apply H1.
 Qed.
 
-Lemma In_Type_seq_le_start :
+Lemma In_inf_seq_le_start :
   forall i j k,
-    In_Type i (seq j k) ->
+    In_inf i (seq j k) ->
     (j <= i)%nat.
 Proof.
   intros i j k; revert j; induction k; intros j Hin; inversion Hin; subst; try (specialize (IHk (S j) X)); lia.
@@ -383,16 +367,16 @@ Proof.
   apply H; lia.
 Qed.
 
-Lemma all_neq_not_In_Type {A} : forall l (a : A),
-    Forall_Type (fun x => x <> a) l ->
-    In_Type a l -> False.
+Lemma all_neq_not_In_inf {A} : forall l (a : A),
+    Forall_inf (fun x => x <> a) l ->
+    In_inf a l -> False.
 Proof.
   induction l; intros a0 Hall Hin; inversion Hin; inversion Hall; subst; try contradiction.
   apply IHl with a0; assumption.
 Qed.
 
 Lemma all_neq_0_map_S : forall l,
-    Forall_Type (fun x => x <> 0%nat) l ->
+    Forall_inf (fun x => x <> 0%nat) l ->
     { l' & l = map S l' }.
 Proof.
   induction l; intros Hall; inversion Hall; subst.

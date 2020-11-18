@@ -7,15 +7,14 @@ Require Import RL.hmr.hseq.
 Require Import RL.hmr.hmr.
 
 Require Import CMorphisms.
-Require Import List_more.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
 Require Import Lia.
-Require Import Wf_nat_more.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 
@@ -58,7 +57,7 @@ Fixpoint sum_weight_with_coeff_one G (L : list (option Rpos)) :=
   end.
 
 Lemma sum_weight_with_coeff_all_0 : forall G L n,
-    Forall_Type (fun x => x = None) L ->
+    Forall_inf (fun x => x = None) L ->
     sum_weight_with_coeff n G L = 0.
 Proof.
   intros G L; revert G; induction L; intros G n Hall; destruct G; try reflexivity.
@@ -68,7 +67,7 @@ Proof.
 Qed.
 
 Lemma sum_weight_with_coeff_one_all_0 : forall G L,
-    Forall_Type (fun x => x = None) L ->
+    Forall_inf (fun x => x = None) L ->
     sum_weight_with_coeff_one G L = 0.
 Proof.
   intros G L; revert G; induction L; intros G Hall; destruct G; try reflexivity.
@@ -113,14 +112,14 @@ Proof.
     repeat split; auto.
     + intros n; simpl;rewrite (Hsum n); reflexivity.
     + simpl; rewrite Hone; reflexivity.
-    + destruct o; simpl; perm_Type_solve.
+    + destruct o; simpl; Permutation_Type_solve.
   - destruct L ;  [ | destruct L] ; inversion Hlen.
     split with (o0 :: o :: L).
     repeat split.
     + apply Permutation_Type_swap.
     + intros n; destruct o; destruct o0; simpl; nra.
     + destruct o; destruct o0; simpl; nra.
-    + destruct o; destruct o0; simpl; perm_Type_solve.
+    + destruct o; destruct o0; simpl; Permutation_Type_solve.
   - destruct (IHHperm1 L Hlen) as [L' [Hperm' [[Hsum Hone] Hperm'']]].
     destruct (IHHperm2 L') as [L2' [Hperm2' [[Hsum2 Hone2] Hperm2'']]].
     { apply Permutation_Type_length in Hperm1.
@@ -130,11 +129,11 @@ Proof.
       etransitivity ; [ | apply Hperm1].
       apply Hlen. }
     split with L2'.
-    repeat split; [ perm_Type_solve | | | ].
+    repeat split; [ Permutation_Type_solve | | | ].
     + intros n.
       etransitivity ; [ apply (Hsum n) | apply (Hsum2 n)].
     + etransitivity ; [ apply Hone | apply Hone2].
-    + perm_Type_solve.
+    + Permutation_Type_solve.
 Qed.
 
 Lemma sum_weight_with_coeff_perm_l : forall G L L',
@@ -158,14 +157,14 @@ Proof.
     + intros n; simpl;rewrite (Hsum n); reflexivity.
     + simpl; rewrite Hone; reflexivity.
     + simpl.
-      destruct x; perm_Type_solve.
+      destruct x; Permutation_Type_solve.
   - destruct G ;  [ | destruct G] ; inversion Hlen.
     split with (s0 :: s :: G).
     repeat split.
     + apply Permutation_Type_swap.
     + intros n; destruct y; destruct x; simpl; nra.
     + destruct y; destruct x; simpl; nra.
-    + destruct x; destruct y; simpl; perm_Type_solve.
+    + destruct x; destruct y; simpl; Permutation_Type_solve.
   - destruct (IHHperm1 G Hlen) as [H [Hperm'[[Hsum Hone] Hpc]]].
     destruct (IHHperm2 H) as [H2 [Hperm2'[[Hsum2 Hone2] Hpc2]]].
     { apply Permutation_Type_length in Hperm1.
@@ -176,7 +175,7 @@ Proof.
       apply Hlen. }
     split with H2.
     repeat split.
-    + perm_Type_solve.
+    + Permutation_Type_solve.
     + intros n.
       etransitivity ; [ apply (Hsum n) | apply (Hsum2 n)].
     + etransitivity ; [ apply Hone | apply Hone2].
@@ -203,14 +202,14 @@ Proof.
     repeat split; auto.
     + intros n'; simpl;rewrite (Hsum n'); reflexivity.
     + simpl; rewrite Hone; reflexivity.
-    + perm_Type_solve.
+    + Permutation_Type_solve.
   - destruct L ;  [ | destruct L] ; inversion Hlen.
     split with (n0 :: n :: L).
     repeat split.
     + apply Permutation_Type_swap.
     + intros n'; destruct n; destruct n0; simpl in *; nra.
     + destruct n; destruct n0; simpl; nra.
-    + destruct n; destruct n0; simpl; perm_Type_solve.
+    + destruct n; destruct n0; simpl; Permutation_Type_solve.
   - destruct (IHHperm1 L Hlen) as [L' [Hperm' [[Hsum Hone] Hperm'']]].
     destruct (IHHperm2 L') as [L2' [Hperm2' [[Hsum2 Hone2] Hperm2'']]].
     { apply Permutation_Type_length in Hperm1.
@@ -220,11 +219,11 @@ Proof.
       etransitivity ; [ | apply Hperm1].
       apply Hlen. }
     split with L2'.
-    repeat split; [ perm_Type_solve | | | ].
+    repeat split; [ Permutation_Type_solve | | | ].
     + intros n.
       etransitivity ; [ apply (Hsum n) | apply (Hsum2 n)].
     + etransitivity ; [ apply Hone | apply Hone2].
-    + perm_Type_solve.
+    + Permutation_Type_solve.
 Qed.
 
 Lemma sum_weight_with_coeff_perm_l_int : forall G L L',
@@ -248,14 +247,14 @@ Proof.
     + intros n; simpl;rewrite (Hsum n); reflexivity.
     + simpl; rewrite Hone; reflexivity.
     + simpl.
-      destruct x; perm_Type_solve.
+      destruct x; Permutation_Type_solve.
   - destruct G ;  [ | destruct G] ; inversion Hlen.
     split with (s0 :: s :: G).
     repeat split.
     + apply Permutation_Type_swap.
     + intros n; destruct y; destruct x; simpl; nra.
     + destruct y; destruct x; simpl; nra.
-    + destruct x; destruct y; simpl; perm_Type_solve.
+    + destruct x; destruct y; simpl; Permutation_Type_solve.
   - destruct (IHHperm1 G Hlen) as [H [Hperm'[[Hsum Hone] Hpc]]].
     destruct (IHHperm2 H) as [H2 [Hperm2'[[Hsum2 Hone2] Hpc2]]].
     { apply Permutation_Type_length in Hperm1.
@@ -266,7 +265,7 @@ Proof.
       apply Hlen. }
     split with H2.
     repeat split.
-    + perm_Type_solve.
+    + Permutation_Type_solve.
     + intros n.
       etransitivity ; [ apply (Hsum n) | apply (Hsum2 n)].
     + etransitivity ; [ apply Hone | apply Hone2].
@@ -283,7 +282,7 @@ Proof.
 Qed.
 
 Lemma concat_with_coeff_mul_all_0 : forall G L,
-    Forall_Type (fun x => x = None) L ->
+    Forall_inf (fun x => x = None) L ->
     concat_with_coeff_mul G L = nil.
 Proof.
   intros G L; revert G; induction L; intros G Ha0; destruct G; simpl; auto.
@@ -307,7 +306,7 @@ Proof.
     try (esplit with (r, s, D); split; assumption);
     try (simpl max_diamond_term in Hnd; exfalso; lia);
     [ split with (a :: r , s, D) | split with (r , a :: s, D) | split with (r, s, (a,A) :: D)];
-    simpl; split; try perm_Type_solve; try lra.
+    simpl; split; try Permutation_Type_solve; try lra.
 Qed.
 
 Lemma only_diamond_seq_decomp_no_diamond :
@@ -327,7 +326,7 @@ Proof.
     try (esplit with (r, s); split; assumption);
     try (simpl max_diamond_term in Hnd; exfalso; lia);
     [ split with (a :: r , s) | split with (r , a :: s)];
-    simpl; split; try perm_Type_solve; try lra.
+    simpl; split; try Permutation_Type_solve; try lra.
 Qed.
 
 Lemma concat_with_coeff_mul_only_diamond_decomp :
@@ -351,7 +350,7 @@ Proof.
   rewrite <- only_diamond_seq_mul.
   apply seq_mul_perm with _ _ r0 in Hperma.
   rewrite ? seq_mul_app in Hperma.
-  perm_Type_solve.
+  Permutation_Type_solve.
 Qed.
 
 Lemma concat_with_coeff_mul_only_diamond_decomp_no_diamond :
@@ -376,7 +375,7 @@ Proof.
   rewrite <- only_diamond_seq_mul.
   apply seq_mul_perm with _ _ r0 in Hperma.
   rewrite ? seq_mul_app in Hperma.
-  perm_Type_solve.
+  Permutation_Type_solve.
 Qed.
   
 Lemma concat_with_coeff_copy_only_diamond : forall G L,
@@ -389,7 +388,7 @@ Proof.
 Qed.
 
 Lemma concat_with_coeff_copy_all_0 : forall G L,
-    Forall_Type (fun x => x = 0%nat) L ->
+    Forall_inf (fun x => x = 0%nat) L ->
     concat_with_coeff_copy G L = nil.
 Proof.
   intros G L; revert G; induction L; intros G Ha0; destruct G; simpl; auto.
@@ -605,7 +604,7 @@ Proof.
   intros G L1; revert G; induction L1; intros G L2 Hlen; destruct L2; inversion Hlen ; [ destruct G; simpl; apply Permutation_Type_nil_nil | ].
   destruct G ; [ apply Permutation_Type_nil_nil | ].
   simpl add_nat_list; simpl concat_with_coeff_copy.
-  transitivity ((copy_seq a s ++ copy_seq n s) ++ (concat_with_coeff_copy G L1 ++ concat_with_coeff_copy G L2)) ; [ | perm_Type_solve].
+  transitivity ((copy_seq a s ++ copy_seq n s) ++ (concat_with_coeff_copy G L1 ++ concat_with_coeff_copy G L2)) ; [ | Permutation_Type_solve].
   apply Permutation_Type_app ; [ | apply IHL1]; try assumption.
   rewrite copy_seq_plus; reflexivity.
 Qed.

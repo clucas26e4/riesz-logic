@@ -12,12 +12,13 @@ Require Import RL.hmr.tech_lemmas.
 Require Import RL.hmr.lambda_prop_tools.
 Require Import RL.hmr.soundness.
 
-Require Import List_Type_more.
-Require Import Bool_more.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
 Require Import Lra.
 Require Import Lia.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 
@@ -31,7 +32,7 @@ Proof with try assumption; try reflexivity.
       apply hmrr_ID_gen...
       apply hmrr_INIT.
     + apply hmrr_can with t2 (r :: nil) (r :: nil)...
-      apply hmrr_ex_seq with (((r, -S t2) :: (r, t1) :: nil) ++ ((r, -S t3) :: (r, t2) :: nil)); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with (((r, -S t2) :: (r, t1) :: nil) ++ ((r, -S t3) :: (r, t2) :: nil)); [ Permutation_Type_solve | ].
       apply hmrr_M; try reflexivity; [ apply (completeness_1 _ _ _ Heq1) | apply (completeness_1 _ _ _ Heq2)].
     + revert r; induction c; (try rename r into r0); intros r.
       * apply completeness_1.
@@ -47,7 +48,7 @@ Proof with try assumption; try reflexivity.
         apply hmrr_ID...
         apply hmrr_INIT.
       * simpl.
-        apply hmrr_ex_seq with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil) ; [perm_Type_solve | ].
+        apply hmrr_ex_seq with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil) ; [Permutation_Type_solve | ].
         apply hmrr_ID...
         apply hmrr_INIT.
       * simpl.
@@ -56,35 +57,35 @@ Proof with try assumption; try reflexivity.
         apply hmrr_INIT.
       * unfold evalContext; fold evalContext.
         unfold minus; fold minus.
-        apply hmrr_ex_seq with ((vec (r :: nil) (evalContext c1 t1 /\S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ nil) ; [ perm_Type_solve | ].
+        apply hmrr_ex_seq with ((vec (r :: nil) (evalContext c1 t1 /\S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ nil) ; [ Permutation_Type_solve | ].
         apply hmrr_min.
-        -- apply hmrr_ex_seq with  ((vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ (vec (r :: nil) (evalContext c1 t1)) ++ nil); [ perm_Type_solve | ].
+        -- apply hmrr_ex_seq with  ((vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ (vec (r :: nil) (evalContext c1 t1)) ++ nil); [ Permutation_Type_solve | ].
            apply hmrr_max.
            apply hmrr_W.
            apply IHc1.
-        -- apply hmrr_ex_seq with  ((vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ (vec (r :: nil) (evalContext c2 t1)) ++ nil); [ perm_Type_solve | ].
+        -- apply hmrr_ex_seq with  ((vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ (vec (r :: nil) (evalContext c2 t1)) ++ nil); [ Permutation_Type_solve | ].
            apply hmrr_max.
            eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
            apply hmrr_W.
            eapply hmrr_ex_seq ; [ | apply IHc2].
-           perm_Type_solve.
+           Permutation_Type_solve.
       * unfold evalContext; fold evalContext.
         unfold minus; fold minus.
         change ((r, -S evalContext c1 t2 /\S -S evalContext c2 t2)
                   :: (r, evalContext c1 t1 \/S evalContext c2 t1) :: nil) with
             ((vec (r ::nil) (-S evalContext c1 t2 /\S -S evalContext c2 t2)) ++ (vec (r ::nil) (evalContext c1 t1 \/S evalContext c2 t1)) ++ nil).
         apply hmrr_min.
-        -- apply hmrr_ex_seq with  ((vec (r :: nil) (evalContext c1 t1 \/S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c1 t2)) ++ nil); [ perm_Type_solve | ].
+        -- apply hmrr_ex_seq with  ((vec (r :: nil) (evalContext c1 t1 \/S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c1 t2)) ++ nil); [ Permutation_Type_solve | ].
            apply hmrr_max.
            apply hmrr_W.
            eapply hmrr_ex_seq ; [ | apply IHc1].
-           perm_Type_solve.
-        -- apply hmrr_ex_seq with  ((vec (r :: nil) (evalContext c1 t1 \/S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c2 t2)) ++ nil); [ perm_Type_solve | ].
+           Permutation_Type_solve.
+        -- apply hmrr_ex_seq with  ((vec (r :: nil) (evalContext c1 t1 \/S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c2 t2)) ++ nil); [ Permutation_Type_solve | ].
            apply hmrr_max.
            eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
            apply hmrr_W.
            eapply hmrr_ex_seq ; [ | apply IHc2].
-           perm_Type_solve.
+           Permutation_Type_solve.
       * unfold evalContext; fold evalContext; unfold minus; fold minus.
         change ((r, (-S evalContext c1 t2) -S (evalContext c2 t2))
                   :: (r, evalContext c1 t1 +S evalContext c2 t1) :: nil)
@@ -92,18 +93,18 @@ Proof with try assumption; try reflexivity.
         apply hmrr_plus.
         apply hmrr_ex_seq with (vec (r :: nil) (evalContext c1 t1 +S evalContext c2 t1) ++
                                vec (r :: nil) (-S evalContext c1 t2) ++
-                               vec (r :: nil) (-S evalContext c2 t2) ++ nil) ; [ perm_Type_solve | ].
+                               vec (r :: nil) (-S evalContext c2 t2) ++ nil) ; [ Permutation_Type_solve | ].
         apply hmrr_plus.
-        apply hmrr_ex_seq with (((r, -S evalContext c1 t2) :: (r, evalContext c1 t1) :: nil) ++ ((r, -S evalContext c2 t2) :: (r, evalContext c2 t1) :: nil)) ; [ perm_Type_solve | ].
+        apply hmrr_ex_seq with (((r, -S evalContext c1 t2) :: (r, evalContext c1 t1) :: nil) ++ ((r, -S evalContext c2 t2) :: (r, evalContext c2 t1) :: nil)) ; [ Permutation_Type_solve | ].
         apply hmrr_M; try reflexivity; [ apply IHc1 | apply IHc2].
       * unfold evalContext; fold evalContext; unfold minus; fold minus.
         change ((r, r0 *S (-S evalContext c t2)) :: (r, r0 *S evalContext c t1) :: nil) with ((vec (r :: nil) (r0 *S (-S evalContext c t2))) ++ (vec (r :: nil) (r0 *S evalContext c t1)) ++ nil).
         apply hmrr_mul.
-        apply hmrr_ex_seq with (vec (r :: nil) (r0 *S evalContext c t1) ++ vec (mul_vec r0 (r :: nil)) (-S evalContext c t2) ++  nil) ; [ perm_Type_solve | ].
+        apply hmrr_ex_seq with (vec (r :: nil) (r0 *S evalContext c t1) ++ vec (mul_vec r0 (r :: nil)) (-S evalContext c t2) ++  nil) ; [ Permutation_Type_solve | ].
         apply hmrr_mul.
         simpl.
         eapply hmrr_ex_seq; [ | apply IHc].
-        perm_Type_solve.
+        Permutation_Type_solve.
       * simpl.
         change ((r, coone) :: (r, one) :: nil) with (vec (r :: nil) coone ++ vec (r :: nil) one ++ nil).
         apply hmrr_one; [ | apply hmrr_INIT].
@@ -123,12 +124,12 @@ Proof with try assumption; try reflexivity.
       apply completeness_1; apply Heq.
     + unfold minus; fold minus.
       unfold HMR_M_can. do_HMR_logical.
-      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) (t3)) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) (t3)) ++ nil); [ Permutation_Type_solve | ].
       do 3 (apply hmrr_ID_gen; try reflexivity).
       apply hmrr_INIT.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ nil); [ Permutation_Type_solve | ].
       do 2 (apply hmrr_ID_gen; try reflexivity).
       apply hmrr_INIT.
     + unfold HMR_M_can; do_HMR_logical.
@@ -143,12 +144,12 @@ Proof with try assumption; try reflexivity.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
       unfold mul_vec.
-      apply hmrr_ex_seq with ((vec ((time_pos (minus_pos Hlt) r) ::(time_pos b r) :: nil) (-S t)) ++ (vec ((time_pos a r) :: nil) t) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec ((time_pos (minus_pos Hlt) r) ::(time_pos b r) :: nil) (-S t)) ++ (vec ((time_pos a r) :: nil) t) ++ nil); [ Permutation_Type_solve | ].
       apply hmrr_ID_gen ; [ | apply hmrr_INIT ].
       simpl; destruct a; destruct b; destruct r; unfold minus_pos.
       simpl; nra.
     + pattern t at 2; rewrite <- minus_minus.
-      apply hmrr_ex_seq with ((vec (r :: nil) (One *S (-S (-S t)))) ++ (vec (r :: nil) (-S t)) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (r :: nil) (One *S (-S (-S t)))) ++ (vec (r :: nil) (-S t)) ++ nil); [ Permutation_Type_solve | ].
       apply hmrr_mul.
       apply hmrr_ID_gen; [ destruct r; simpl; nra | apply hmrr_INIT].
     + unfold minus; fold minus.
@@ -159,13 +160,13 @@ Proof with try assumption; try reflexivity.
       nra.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with ((vec (mul_vec x (r :: nil)) (-S t1)) ++ (vec (mul_vec x (r :: nil)) ( t1)) ++ (vec (mul_vec x (r :: nil)) (-S t2))++ (vec (mul_vec x (r :: nil)) (t2)) ++ nil) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (mul_vec x (r :: nil)) (-S t1)) ++ (vec (mul_vec x (r :: nil)) ( t1)) ++ (vec (mul_vec x (r :: nil)) (-S t2))++ (vec (mul_vec x (r :: nil)) (t2)) ++ nil) ; [ Permutation_Type_solve | ].
       do 2 (apply hmrr_ID_gen; try reflexivity).
       apply hmrr_INIT.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
       unfold mul_vec.
-      apply hmrr_ex_seq with ((vec ((time_pos x r) :: (time_pos y r) :: nil) (-S t)) ++ (vec (time_pos (plus_pos x y) r :: nil) t) ++ nil) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec ((time_pos x r) :: (time_pos y r) :: nil) (-S t)) ++ (vec (time_pos (plus_pos x y) r :: nil) t) ++ nil) ; [ Permutation_Type_solve | ].
       apply hmrr_ID_gen; [ | apply hmrr_INIT].
       destruct r; destruct x; destruct y; unfold plus_pos; simpl; nra.
     + unfold minus; fold minus.
@@ -240,7 +241,7 @@ Proof with try assumption; try reflexivity.
           (seq_diamond (vec (r :: nil) (-S t1) ++ vec (r :: nil) (-S t2) ++ vec (r :: nil) (t1 +S t2) ++ nil)).
       apply hmrr_diamond_no_one.
       do_HMR_logical.
-      apply hmrr_ex_seq with (vec (r :: nil) (-S t2) ++ vec (r :: nil) t2 ++ vec (r :: nil) (-S t1) ++ vec (r :: nil) t1 ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with (vec (r :: nil) (-S t2) ++ vec (r :: nil) t2 ++ vec (r :: nil) (-S t1) ++ vec (r :: nil) t1 ++ nil); [ Permutation_Type_solve | ].
       apply hmrr_ID_gen; try reflexivity.
       apply hmrr_ID_gen; try reflexivity.
       apply hmrr_INIT.
@@ -313,7 +314,7 @@ Proof with try assumption; try reflexivity.
       apply hmrr_ID_gen...
       apply hmrr_INIT.
     + apply hmrr_can with t2 (r :: nil) (r :: nil)...
-      apply hmrr_ex_seq with (((r, -S t1) :: (r, t2) :: nil) ++ ((r, -S t2) :: (r, t3) :: nil)); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with (((r, -S t1) :: (r, t2) :: nil) ++ ((r, -S t2) :: (r, t3) :: nil)); [ Permutation_Type_solve | ].
       apply hmrr_M; try reflexivity; [ apply (completeness_2 _ _ _ Heq1) | apply (completeness_2 _ _ _ Heq2)].
     + revert r;induction c; try (rename r into r0); intros r.
       * apply completeness_2.
@@ -328,7 +329,7 @@ Proof with try assumption; try reflexivity.
         apply hmrr_ID...
         apply hmrr_INIT.
       * simpl.
-        apply hmrr_ex_seq with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil) ; [perm_Type_solve | ].
+        apply hmrr_ex_seq with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil) ; [Permutation_Type_solve | ].
         apply hmrr_ID...
         apply hmrr_INIT.
       * simpl.
@@ -350,7 +351,7 @@ Proof with try assumption; try reflexivity.
            eapply hmrr_ex_seq ; [ apply Permutation_Type_swap | ].
            apply IHc2.
       * simpl. unfold HMR_M_can; do_HMR_logical.
-        apply hmrr_ex_seq with (((r, -S evalContext c1 t1) :: (r, evalContext c1 t2) :: nil) ++ ((r, -S evalContext c2 t1) :: (r, evalContext c2 t2) :: nil)) ; [ perm_Type_solve | ].
+        apply hmrr_ex_seq with (((r, -S evalContext c1 t1) :: (r, evalContext c1 t2) :: nil) ++ ((r, -S evalContext c2 t1) :: (r, evalContext c2 t2) :: nil)) ; [ Permutation_Type_solve | ].
         apply hmrr_M; try reflexivity; [apply IHc1 | apply IHc2].
       * simpl; unfold HMR_M_can; do_HMR_logical.
         apply IHc.
@@ -373,12 +374,12 @@ Proof with try assumption; try reflexivity.
       apply completeness_2; apply Heq.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) (t3)) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) (t3)) ++ nil); [ Permutation_Type_solve | ].
       do 3 (apply hmrr_ID_gen; try reflexivity).
       apply hmrr_INIT.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ nil); [ Permutation_Type_solve | ].
       do 2 (apply hmrr_ID_gen; try reflexivity).
       apply hmrr_INIT.
     + unfold minus; fold minus.
@@ -394,7 +395,7 @@ Proof with try assumption; try reflexivity.
       unfold HMR_M_can; do_HMR_logical.
       unfold mul_vec.
       rewrite minus_minus.
-      apply hmrr_ex_seq with ((vec (time_pos a r :: nil) (-S t)) ++ (vec (time_pos (minus_pos Hlt) r :: time_pos b r :: nil) t) ++ nil); [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (time_pos a r :: nil) (-S t)) ++ (vec (time_pos (minus_pos Hlt) r :: time_pos b r :: nil) t) ++ nil); [ Permutation_Type_solve | ].
       apply hmrr_ID_gen ; [ | apply hmrr_INIT ].
       destruct r; destruct a; destruct b; unfold minus_pos.
       simpl; nra.
@@ -409,13 +410,13 @@ Proof with try assumption; try reflexivity.
       nra.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with ((vec (mul_vec x (r :: nil)) (-S t1)) ++ (vec (mul_vec x (r :: nil)) ( t1)) ++ (vec (mul_vec x (r :: nil)) (-S t2))++ (vec (mul_vec x (r :: nil)) (t2)) ++ nil) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (mul_vec x (r :: nil)) (-S t1)) ++ (vec (mul_vec x (r :: nil)) ( t1)) ++ (vec (mul_vec x (r :: nil)) (-S t2))++ (vec (mul_vec x (r :: nil)) (t2)) ++ nil) ; [ Permutation_Type_solve | ].
       do 2 (apply hmrr_ID_gen; try reflexivity).
       apply hmrr_INIT.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
       unfold mul_vec.
-      apply hmrr_ex_seq with ((vec (time_pos (plus_pos x y) r :: nil) (-S t)) ++ (vec (time_pos x r :: time_pos y r :: nil) t) ++ nil) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((vec (time_pos (plus_pos x y) r :: nil) (-S t)) ++ (vec (time_pos x r :: time_pos y r :: nil) t) ++ nil) ; [ Permutation_Type_solve | ].
       apply hmrr_ID_gen; [ | apply hmrr_INIT].
       destruct r; destruct x; destruct y; unfold plus_pos; simpl; nra.
     + unfold minus; fold minus.
@@ -482,16 +483,16 @@ Proof with try assumption; try reflexivity.
         apply hmrr_INIT.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with (seq_diamond (vec (r :: nil) ((-S t1) -S t2) ++ vec (r :: nil) t1 ++ vec (r :: nil) t2 ++ nil)) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with (seq_diamond (vec (r :: nil) ((-S t1) -S t2) ++ vec (r :: nil) t1 ++ vec (r :: nil) t2 ++ nil)) ; [ Permutation_Type_solve | ].
       apply hmrr_diamond_no_one.
       apply hmrr_plus.
-      apply hmrr_ex_seq with (vec (r :: nil) (-S t2) ++ vec (r :: nil) t2 ++ vec (r :: nil) (-S t1) ++ vec (r :: nil) t1 ++ nil) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with (vec (r :: nil) (-S t2) ++ vec (r :: nil) t2 ++ vec (r :: nil) (-S t1) ++ vec (r :: nil) t1 ++ nil) ; [ Permutation_Type_solve | ].
       apply hmrr_ID_gen; try reflexivity.
       apply hmrr_ID_gen; try reflexivity.
       apply hmrr_INIT.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
-      apply hmrr_ex_seq with (seq_diamond (vec (r :: nil) (r0 *S (-S t)) ++ vec (mul_vec r0 (r :: nil)) t ++ nil)); [perm_Type_solve | ].
+      apply hmrr_ex_seq with (seq_diamond (vec (r :: nil) (r0 *S (-S t)) ++ vec (mul_vec r0 (r :: nil)) t ++ nil)); [Permutation_Type_solve | ].
       apply hmrr_diamond_no_one; apply hmrr_mul.
       apply hmrr_ID_gen; try reflexivity.
       apply hmrr_INIT.
@@ -517,13 +518,13 @@ Proof with try assumption; try reflexivity.
     + unfold minus; fold minus.
       unfold HMR_M_can; do_HMR_logical.
       * apply hmrr_W; apply hmrr_W.
-        apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) t1) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) t3) ++ nil); [ perm_Type_solve | ].
+        apply hmrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) t1) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) t3) ++ nil); [ Permutation_Type_solve | ].
         apply hmrr_ID_gen...
         apply hmrr_ID_gen...
         apply hmrr_INIT.
       * apply hmrr_W.
         eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ]; apply hmrr_W.
-        apply hmrr_ex_seq with ((vec (r :: nil) (-S t2)) ++ (vec (r :: nil) t2) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) t3) ++ nil); [ perm_Type_solve | ].
+        apply hmrr_ex_seq with ((vec (r :: nil) (-S t2)) ++ (vec (r :: nil) t2) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) t3) ++ nil); [ Permutation_Type_solve | ].
         apply hmrr_ID_gen...
         apply hmrr_ID_gen...
         apply hmrr_INIT.
@@ -548,10 +549,10 @@ Proof.
     apply add_M_le_frag.
   - destruct a as (a , A).
     simpl in *.
-    apply hmrr_ex_seq with (T ++ (a , A) :: D); [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (T ++ (a , A) :: D); [ Permutation_Type_solve | ].
     apply (IHT (hmr_frag_add_CAN (hmr_frag_add_M (hmr_frag_add_CAN (hmr_frag_add_M P))))).
     replace a with (time_pos a One) by (destruct a; unfold One; apply Rpos_eq; simpl; nra).
-    apply hmrr_ex_seq with ((vec (mul_vec a (One :: nil)) A) ++ (vec (One :: nil) (sem_seq T)) ++ D) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with ((vec (mul_vec a (One :: nil)) A) ++ (vec (One :: nil) (sem_seq T)) ++ D) ; [ Permutation_Type_solve | ].
     apply hmrr_mul_can_inv.
     apply hmrr_plus_can_inv.
     apply pi.
@@ -573,11 +574,11 @@ Proof with try assumption; try reflexivity.
   - unfold sem_hseq in pi; fold (sem_hseq (T2 :: H)) in pi.
     change ((One, sem_seq T \/S sem_hseq (T2 :: H)) :: nil) with ((vec (One :: nil) (sem_seq T \/S sem_hseq (T2 :: H))) ++ nil) in pi.
     apply hmrr_max_can_inv in pi.
-    apply hmrr_ex_hseq with ((T2 :: H) ++ (T :: G)); [ perm_Type_solve | ].
+    apply hmrr_ex_hseq with ((T2 :: H) ++ (T :: G)); [ Permutation_Type_solve | ].
     apply HMR_le_frag with (hmr_frag_add_CAN (hmr_frag_add_M (hmr_frag_add_CAN (hmr_frag_add_M (hmr_frag_add_CAN (hmr_frag_add_M P)))))).
-    { destruct P; repeat split; simpl; apply leb_refl. }
+    { destruct P; repeat split; Bool.destr_bool. }
     refine (IHlist _ (hmr_frag_add_CAN (hmr_frag_add_M (hmr_frag_add_CAN (hmr_frag_add_M P)))) (T :: G) _) ; [ now auto | ].
-    apply hmrr_ex_hseq with (T :: ((One , sem_hseq (T2 :: H)) :: nil) :: G) ; [ perm_Type_solve | ].
+    apply hmrr_ex_hseq with (T :: ((One , sem_hseq (T2 :: H)) :: nil) :: G) ; [ Permutation_Type_solve | ].
     replace T with (T ++ nil) by now rewrite app_nil_r.
     apply HMR_sem_seq.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
@@ -608,7 +609,7 @@ Lemma int_lambda_prop :
     HMR_M G ->
     { L &
       prod (length L = length G)
-           ((Exists_Type (fun x => x <> 0%nat) L) *
+           ((Exists_inf (fun x => x <> 0%nat) L) *
             (forall n, sum_weight_with_coeff n G (map nat_oRpos L) = 0) *
             (0 <= sum_weight_with_coeff_one G (map nat_oRpos L)) *
             (HMR_M ((concat_with_coeff_copy (only_diamond_hseq G) L) :: nil)))}.
@@ -617,7 +618,7 @@ Proof.
   induction pi.
   - split with (1%nat :: nil).
     repeat split; try reflexivity.
-    + apply Exists_Type_cons_hd.
+    + apply Exists_inf_cons_hd.
       intros H; inversion H.
     + intros n.
       simpl; nra.
@@ -630,16 +631,16 @@ Proof.
     + simpl; rewrite Hlen; reflexivity.
   - inversion Ha; subst.
     destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons ;[ | apply Forall_Type_cons]; try assumption. }
+    { apply Forall_inf_cons ;[ | apply Forall_inf_cons]; try assumption. }
     destruct L; [ | destruct L]; try now inversion Hlen.
     split with ((n + n0)%nat :: L).
     repeat split; auto.
     + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
+      * apply Exists_inf_cons_hd.
         destruct n; destruct n0; intros H; inversion H.
         apply H0; reflexivity.
       * inversion X1; subst; auto.
-        apply Exists_Type_cons_hd.
+        apply Exists_inf_cons_hd.
         destruct n0 ; [ exfalso; apply H0; reflexivity | ].
         destruct n; intros H; inversion H.
     + intros n1.
@@ -661,10 +662,10 @@ Proof.
     + simpl in Hind |- *.
       rewrite ? copy_seq_plus; simpl.
       eapply hmrr_ex_seq ; [ | apply Hind].
-      perm_Type_solve.      
+      Permutation_Type_solve.      
   - inversion Ha; inversion X0; subst.
     destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons; try assumption.
+    { apply Forall_inf_cons; try assumption.
       apply seq_basic_app; assumption. }
     destruct L; try now inversion Hlen.
     split with (n :: n :: L).
@@ -694,13 +695,13 @@ Proof.
       apply copy_seq_app.
   - inversion Ha; subst.
     destruct IHpi1 as [L1 [Hlen1 [[[Hex1 Hsum1] Hone1] Hind1]]].
-    { apply Forall_Type_cons ; [ apply seq_basic_app_inv_l with T2 | ]; try assumption. }
+    { apply Forall_inf_cons ; [ apply seq_basic_app_inv_l with T2 | ]; try assumption. }
     destruct L1; try now inversion Hlen1.
     destruct n.
     { split with (0%nat :: L1).
       repeat split; auto. }
     destruct IHpi2 as [L2 [Hlen2 [[[Hex2 Hsum2] Hone2] Hind2]]].
-    { apply Forall_Type_cons ; [ apply seq_basic_app_inv_r with T1 | ]; try assumption. }
+    { apply Forall_inf_cons ; [ apply seq_basic_app_inv_r with T1 | ]; try assumption. }
     destruct L2; try now inversion Hlen2.
     destruct n0.
     { split with (0%nat :: L2).
@@ -711,7 +712,7 @@ Proof.
       rewrite add_nat_list_length ; [ rewrite map_length; assumption | ].
       rewrite 2 map_length.
       lia.
-    + apply Exists_Type_cons_hd.
+    + apply Exists_inf_cons_hd.
       intros H; inversion H.
     + intros n'; specialize (Hsum1 n'); specialize (Hsum2 n'); simpl in Hsum1, Hsum2.
       change (match n with
@@ -765,20 +766,20 @@ Proof.
       rewrite <- (copy_seq_twice (only_diamond_seq T2)).
       replace ((S n * S n0)%nat) with ((S n0 * S n)%nat) by lia.
       rewrite <- copy_seq_twice.
-      apply hmrr_ex_seq with ((concat_with_coeff_copy (only_diamond_hseq G) (add_nat_list (map (Nat.mul (S n0)) L1) (map (Nat.mul (S n)) L2))) ++ (copy_seq (S n0) (copy_seq (S n) (only_diamond_seq T1)) ++ copy_seq (S n) (copy_seq (S n0) (only_diamond_seq T2)))) ; [ perm_Type_solve | ].
+      apply hmrr_ex_seq with ((concat_with_coeff_copy (only_diamond_hseq G) (add_nat_list (map (Nat.mul (S n0)) L1) (map (Nat.mul (S n)) L2))) ++ (copy_seq (S n0) (copy_seq (S n) (only_diamond_seq T1)) ++ copy_seq (S n) (copy_seq (S n0) (only_diamond_seq T2)))) ; [ Permutation_Type_solve | ].
       eapply hmrr_ex_seq ; [ apply Permutation_Type_app ; [ symmetry; apply concat_with_coeff_copy_add_nat_list_perm | reflexivity] | ].
       { rewrite ? map_length; simpl in *; lia. }
       eapply hmrr_ex_seq ; [ apply Permutation_Type_app ; [ apply Permutation_Type_app; symmetry; apply concat_with_coeff_copy_mul_nat_list | reflexivity]  | ].
       apply hmrr_ex_seq with (copy_seq (S n) (copy_seq (S n0) (only_diamond_seq T2) ++ (concat_with_coeff_copy (only_diamond_hseq G) L2)) ++ copy_seq (S n0) (copy_seq (S n) (only_diamond_seq T1) ++ (concat_with_coeff_copy (only_diamond_hseq G) L1))).
       { etransitivity ; [ apply Permutation_Type_app ; apply copy_seq_app  | ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       change hmr_frag_M with (hmr_frag_add_M hmr_frag_M).
       apply hmrr_M; [ reflexivity | | ];
         apply hmrr_C_copy_inv; assumption.
   - inversion f.
   - inversion Ha; subst.
     destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons; try assumption.
+    { apply Forall_inf_cons; try assumption.
       eapply seq_basic_app_inv_r; eapply seq_basic_app_inv_r; apply X. }
     split with L.
     repeat split; auto.
@@ -820,15 +821,15 @@ Proof.
   - destruct r; [ | inversion Ha; inversion X; inversion X1].
     destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
     { inversion Ha; subst.
-      apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption. }
+      apply Forall_inf_cons ; [ | apply Forall_inf_cons ]; assumption. }
     destruct L ; [ | destruct L]; try now inversion Hlen.
     split with ((n + n0)%nat :: L).
     repeat split; auto.
     + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
+      * apply Exists_inf_cons_hd.
         lia.
       * inversion X; subst; auto.
-        apply Exists_Type_cons_hd; lia.
+        apply Exists_inf_cons_hd; lia.
     + intros n1.
       specialize (Hsum n1).
       destruct n; destruct n0; simpl in *; try rewrite Nat.add_0_r; try nra.
@@ -852,7 +853,7 @@ Proof.
     repeat split; try assumption.
   - inversion Ha; subst.
     destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
-    { apply Forall_Type_cons; try assumption.
+    { apply Forall_inf_cons; try assumption.
       eapply seq_basic_app_inv_r; eapply seq_basic_app_inv_r; apply X. }
     split with L.
     repeat split; auto.
@@ -889,7 +890,7 @@ Proof.
       clear - r0 Hind.
       induction n; try apply Hind.
       eapply hmrr_ex_seq ; [ | apply hmrr_one ; [ apply r0 | apply IHn]].
-      simpl; perm_Type_solve.
+      simpl; Permutation_Type_solve.
   - split with (1%nat :: nil).
     repeat split; auto.
     + intros n.
@@ -912,8 +913,8 @@ Proof.
       apply pi.
   - destruct IHpi as [L [Hlen [[[Hex Hsum] Hone] Hind]]].
     { inversion Ha; subst.
-      apply Forall_Type_cons; try assumption.
-      apply seq_basic_perm with T2; [ perm_Type_solve | apply X]. }
+      apply Forall_inf_cons; try assumption.
+      apply seq_basic_perm with T2; [ Permutation_Type_solve | apply X]. }
     split with L.
     destruct L; try now inversion Hlen.
     repeat split; auto.
@@ -937,7 +938,7 @@ Proof.
     + apply Permutation_Type_length in p.
       apply Permutation_Type_length in Hperm'.
       lia.
-    + apply Exists_Type_Permutation_Type with L; assumption.
+    + apply Exists_inf_Permutation_Type with L; assumption.
     + intros n.
       rewrite <- (Hsum' n); apply Hsum.
     + rewrite <- Hone'; apply Hone.
@@ -951,7 +952,7 @@ Lemma int_lambda_prop_inv :
     hseq_is_basic G ->
     { L &
       prod (length L = length G)
-           ((Exists_Type (fun x => x <> 0%nat) L) *
+           ((Exists_inf (fun x => x <> 0%nat) L) *
             (forall n, sum_weight_with_coeff n G (map nat_oRpos L) = 0) *
             (0 <= sum_weight_with_coeff_one G (map nat_oRpos L)) *
             (HMR_M ((concat_with_coeff_copy (only_diamond_hseq G) L) :: nil)))} ->
@@ -962,7 +963,7 @@ Proof.
              hseq_is_basic H ->
              { L &
       prod (length L = length G)
-           ((Exists_Type (fun x => x <> 0%nat) L) *
+           ((Exists_inf (fun x => x <> 0%nat) L) *
             (forall n, (sum_weight_var n H - sum_weight_covar n H) + sum_weight_with_coeff n G (map nat_oRpos L) = 0) *
             (0 <= (sum_weight_one H - sum_weight_coone H) + sum_weight_with_coeff_one G (map nat_oRpos L)) *
             (HMR_M ((flat_map only_diamond_seq H ++ concat_with_coeff_copy (only_diamond_hseq G) L) :: nil)))} + HMR_M H ->
@@ -970,7 +971,7 @@ Proof.
   { intros G Hat [L [Hlen [[[Hex Hsum] Hone] Hind]]].
     change G with (nil ++ G).
     refine (X G nil Hat _ _).
-    - apply Forall_Type_nil.
+    - apply Forall_inf_nil.
     - left.
       split with L.
       repeat split; auto.
@@ -982,15 +983,15 @@ Proof.
   induction n; intros G Heqn H HatG HatH [ [L [Hlen [[[Hex Hsum] Hone] Hind]]] | pi].
   - destruct L; inversion Hlen; inversion Hex.
   - destruct G; inversion Heqn; rewrite app_nil_r; apply pi.
-  - destruct (Exists_Type_split _ _ _ Hex) as [[[r La] Lb] [Hp HeqL]].
-    assert (Permutation_Type L (r :: La ++ Lb)) as Hperm by (rewrite HeqL ; perm_Type_solve).
+  - destruct (Exists_inf_split _ _ _ Hex) as [[[r La] Lb] [Hp HeqL]].
+    assert (Permutation_Type L (r :: La ++ Lb)) as Hperm by (rewrite HeqL ; Permutation_Type_solve).
     destruct (sum_weight_with_coeff_perm_l_int G _ _ Hperm) as [G' [HpermG [[Hsum' Hone'] Hpc]]].
     { lia. }
     destruct G' as [ | T G'].
     { symmetry in HpermG; apply Permutation_Type_nil in HpermG.
       subst; inversion Heqn. }
-    apply hmrr_ex_hseq with (T :: H ++ G') ; [ perm_Type_solve | ].
-    apply (Permutation_Type_Forall_Type _ _ _ HpermG) in HatG.
+    apply hmrr_ex_hseq with (T :: H ++ G') ; [ Permutation_Type_solve | ].
+    apply (Permutation_Type_Forall_inf HpermG) in HatG.
     inversion HatG; clear x l H1 H2.
     destruct r.
     { exfalso.
@@ -1001,9 +1002,9 @@ Proof.
     + rewrite (Permutation_Type_length HpermG) in Heqn; simpl in Heqn.
       apply eq_add_S; apply Heqn.
     + apply X0.
-    + apply Forall_Type_cons; try assumption.
+    + apply Forall_inf_cons; try assumption.
       apply copy_seq_basic; apply X.
-    + destruct (Forall_Exists_Type_dec (fun x => x = 0%nat)) with (La ++ Lb).
+    + destruct (Forall_inf_Exists_inf_dec (fun x => x = 0%nat)) with (La ++ Lb).
       { intro x; destruct x; [ left | right]; lia. }
       * right.
         apply basic_proof_all_eq.
@@ -1023,7 +1024,7 @@ Proof.
            ++ remember (La ++ Lb); clear - f.
               induction l; simpl in *; auto.
               inversion f; subst.
-              apply Forall_Type_cons; auto.
+              apply Forall_inf_cons; auto.
         -- simpl in *.
            change (match r with
                    | 0%nat => 1
@@ -1036,7 +1037,7 @@ Proof.
            ++ remember (La ++ Lb); clear - f.
               induction l; simpl in *; auto.
               inversion f; subst.
-              apply Forall_Type_cons; auto.
+              apply Forall_inf_cons; auto.
         -- eapply hmrr_ex_seq ; [ | apply Hind].
            simpl.
            etransitivity ; [ | apply Permutation_Type_app_swap].
@@ -1077,7 +1078,7 @@ Proof.
            apply Permutation_Type_app; [ | reflexivity].
            rewrite ? concat_with_coeff_copy_only_diamond.
            rewrite <- only_diamond_seq_app; apply only_diamond_seq_perm.
-           perm_Type_solve.
+           Permutation_Type_solve.
   - eapply hmrr_ex_hseq; [ apply Permutation_Type_app_comm | ].
     apply hmrr_W_gen.
     apply pi.
@@ -1155,5 +1156,5 @@ Proof.
         apply INR_inj in H0.
         apply sqrt2_not_rational with (S n) (S n0); auto.
         lia.
-    + repeat apply Forall_Type_cons; try apply Forall_Type_nil; apply I.
+    + repeat apply Forall_inf_cons; try apply Forall_inf_nil; apply I.
 Qed.

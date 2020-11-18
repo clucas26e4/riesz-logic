@@ -7,12 +7,13 @@ Require Import RL.hr.hr.
 Require Import RL.hr.tech_lemmas.
 
 Require Import CMorphisms.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
+
+Require Import OLlibs.List_Type.
+Require Import OLlibs.List_more.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 (** Proof of Lemma 3.40 *)
 Lemma hrr_mul_vec : forall L,
@@ -42,11 +43,11 @@ Proof.
   - destruct L; [ | destruct L]; try destruct p as [r1 T1']; try destruct p0 as [r2 T2']; inversion HeqG; subst.
     destruct r1 ; [ | destruct r2].
     + simpl.
-      apply hrr_ex_hseq with ((seq_mul_vec r2 T2' :: map (fun x : list Rpos * sequent => seq_mul_vec (fst x) (snd x)) L) ++ (nil :: nil)); [ perm_Type_solve |] .
+      apply hrr_ex_hseq with ((seq_mul_vec r2 T2' :: map (fun x : list Rpos * sequent => seq_mul_vec (fst x) (snd x)) L) ++ (nil :: nil)); [ Permutation_Type_solve |] .
       apply hrr_W_gen.
       apply hrr_INIT.
     + simpl.
-      apply hrr_ex_hseq with ((seq_mul_vec (r :: r1) T1' :: map (fun x : list Rpos * sequent => seq_mul_vec (fst x) (snd x)) L) ++ (nil :: nil)); [ perm_Type_solve |] .
+      apply hrr_ex_hseq with ((seq_mul_vec (r :: r1) T1' :: map (fun x : list Rpos * sequent => seq_mul_vec (fst x) (snd x)) L) ++ (nil :: nil)); [ Permutation_Type_solve |] .
       apply hrr_W_gen.
       apply hrr_INIT.
     + simpl.
@@ -62,7 +63,7 @@ Proof.
         etransitivity ; [ apply seq_mul_vec_perm_r; apply (seq_mul_vec_app_r _ _ (r0 :: r2)) | ].
         etransitivity ; [ apply seq_mul_vec_app_r | ].
         etransitivity ; [ apply Permutation_Type_app ; [ apply seq_mul_vec_twice_comm | reflexivity ] | ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       change (seq_mul_vec (vec_mul_vec (r :: r1) (r0 :: r2)) (T1' ++ T2') :: map (fun x => seq_mul_vec (fst x) (snd x)) L)
         with
           (map (fun x => seq_mul_vec (fst x) (snd x)) ((vec_mul_vec (r :: r1) (r0 :: r2) , T1' ++ T2') :: L)).
@@ -196,7 +197,7 @@ Proof.
     apply hrr_S.
     apply hrr_ex_seq with ((T1' ++ T2') ++ seq_mul_vec (r1 ++ r2) D).
     { rewrite seq_mul_vec_app_l.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     change (((T1' ++ T2') ++ seq_mul_vec (r1 ++ r2) D)
               :: map (fun x : list Rpos * list (Rpos * term) => snd x ++ seq_mul_vec (fst x) D) L ++ H)
       with
@@ -281,9 +282,9 @@ Proof.
         split with ((nil, a) :: L).
         simpl; split ; [ rewrite H1; reflexivity |  rewrite H2].
         rewrite app_nil_r; reflexivity. }
-    apply hrr_ex_hseq with (G ++ ((T1 ++ T2) :: nil)); [ perm_Type_solve | ].
+    apply hrr_ex_hseq with (G ++ ((T1 ++ T2) :: nil)); [ Permutation_Type_solve | ].
     change (hr_frag_T) with hr_frag_T; apply hrr_C_gen.
-    apply hrr_ex_hseq with (((T1 ++ T2) :: G) ++ G); [ perm_Type_solve | ].
+    apply hrr_ex_hseq with (((T1 ++ T2) :: G) ++ G); [ Permutation_Type_solve | ].
     pattern G at 1; rewrite Heq2.
     replace ((T1 ++ T2)
                :: map (fun x : list Rpos * list (Rpos * term) => snd x ++ seq_mul_vec (fst x) T2) L)

@@ -7,15 +7,14 @@ Require Import RL.hr.hseq.
 Require Import RL.hr.hr.
 
 Require Import CMorphisms.
-Require Import List_more.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
 Require Import Lia.
-Require Import Wf_nat_more.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 
@@ -58,7 +57,7 @@ Proof.
       etransitivity ; [ | apply Hperm1].
       apply Hlen. }
     split with L''.
-    repeat split; [ perm_Type_solve | ].
+    repeat split; [ Permutation_Type_solve | ].
     intros n.
     etransitivity ; [ apply (H n) | apply (H' n)].
 Qed.
@@ -94,13 +93,13 @@ Proof.
       etransitivity ; [ symmetry ; apply Hperm1 | ].
       apply Hlen. }
     split with H2.
-    repeat split; [ perm_Type_solve | ].
+    repeat split; [ Permutation_Type_solve | ].
     intros n.
     etransitivity ; [ apply (H' n) | apply (H'' n)].
 Qed.
 
 Lemma sum_weight_with_coeff_all_0 : forall G L n,
-    Forall_Type (fun x => x = 0) L ->
+    Forall_inf (fun x => x = 0) L ->
     sum_weight_with_coeff n G L = 0.
 Proof.
   intros G L; revert G; induction L; intros G n Hall; destruct G; try reflexivity.
@@ -147,24 +146,24 @@ Proof.
   simpl; rewrite IHL1; reflexivity.
 Qed.
 
-Lemma Forall_Type_R_pos_add_R_list : forall L1 L2,
-    Forall_Type (fun x => 0 <= x) L1 ->
-    Forall_Type (fun x => 0 <= x) L2 ->
-    Forall_Type (fun x => 0 <= x) (add_R_list L1 L2).
+Lemma Forall_inf_R_pos_add_R_list : forall L1 L2,
+    Forall_inf (fun x => 0 <= x) L1 ->
+    Forall_inf (fun x => 0 <= x) L2 ->
+    Forall_inf (fun x => 0 <= x) (add_R_list L1 L2).
 Proof.
-  induction L1; intros L2 Hall1 Hall2; destruct L2; simpl; try apply Forall_Type_nil.
+  induction L1; intros L2 Hall1 Hall2; destruct L2; simpl; try apply Forall_inf_nil.
   inversion Hall1; inversion Hall2; subst.
-  apply Forall_Type_cons; auto.
+  apply Forall_inf_cons; auto.
   nra.
 Qed.
 
-Lemma Forall_Type_R_pos_Rmult : forall r L1,
+Lemma Forall_inf_R_pos_Rmult : forall r L1,
     0 <= r ->
-    Forall_Type (fun x => 0 <= x) L1 ->
-    Forall_Type (fun x => 0 <= x) (map (Rmult r) L1).
+    Forall_inf (fun x => 0 <= x) L1 ->
+    Forall_inf (fun x => 0 <= x) (map (Rmult r) L1).
 Proof.
   intros r; induction L1; intros Hr Hall1; auto.
-  inversion Hall1; subst; apply Forall_Type_cons; auto.
+  inversion Hall1; subst; apply Forall_inf_cons; auto.
   nra.
 Qed.
 
@@ -384,17 +383,17 @@ Lemma lambda_prop :
     HR_T_M G ->
     { L &
       prod (length L = length G)
-           ((Exists_Type (fun x => 0 < x) L) *
-            (Forall_Type (fun x => 0 <= x) L) *
+           ((Exists_inf (fun x => 0 < x) L) *
+            (Forall_inf (fun x => 0 <= x) L) *
             (forall n, sum_weight_with_coeff n G L = 0))}.
 Proof.
   intros G Ha pi.
   induction pi.
   - split with (1 :: nil).
     repeat split; try reflexivity.
-    + apply Exists_Type_cons_hd.
+    + apply Exists_inf_cons_hd.
       nra.
-    + apply Forall_Type_cons; [ | apply Forall_Type_nil].
+    + apply Forall_inf_cons; [ | apply Forall_inf_nil].
       nra.
     + intros n.
       simpl; nra.
@@ -403,24 +402,24 @@ Proof.
     split with (0 :: L).
     repeat split; auto.
     + simpl; rewrite Hlen; reflexivity.
-    + apply Forall_Type_cons; try assumption; try nra.
+    + apply Forall_inf_cons; try assumption; try nra.
     + intros n.
       simpl.
       rewrite (Hsum n).
       nra.
   - inversion Ha; subst.
     destruct IHpi as [L [Hlen [[Hex Hall] Hsum]]].
-    { apply Forall_Type_cons ;[ | apply Forall_Type_cons]; try assumption. }
+    { apply Forall_inf_cons ;[ | apply Forall_inf_cons]; try assumption. }
     destruct L; [ | destruct L]; try now inversion Hlen.
     split with ((r + r0) :: L).
     inversion Hall; inversion X1; subst.
     repeat split; auto.
     + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
+      * apply Exists_inf_cons_hd.
         nra.
       * inversion X3; subst; auto.
-        apply Exists_Type_cons_hd; nra.
-    + apply Forall_Type_cons; try assumption; nra.
+        apply Exists_inf_cons_hd; nra.
+    + apply Forall_inf_cons; try assumption; nra.
     + intros n.
       simpl.
       specialize (Hsum n).
@@ -428,7 +427,7 @@ Proof.
       nra.
   - inversion Ha; inversion X0; subst.
     destruct IHpi as [L [Hlen [[Hex Hall] Hsum]]].
-    { apply Forall_Type_cons; try assumption.
+    { apply Forall_inf_cons; try assumption.
       apply seq_atomic_app; assumption. }
     destruct L; try now inversion Hlen.
     split with (r :: r :: L).
@@ -443,29 +442,29 @@ Proof.
       nra.
   - inversion Ha; subst.
     destruct IHpi1 as [L1 [Hlen1 [[Hex1 Hall1] Hsum1]]].
-    { apply Forall_Type_cons ; [ apply seq_atomic_app_inv_l with T2 | ]; try assumption. }
+    { apply Forall_inf_cons ; [ apply seq_atomic_app_inv_l with T2 | ]; try assumption. }
     destruct L1; try now inversion Hlen1.
     destruct (Req_dec r 0).
     { split with (0 :: L1).
       repeat split; auto.
       - inversion Hex1; subst; try now (exfalso; nra).
-        apply Exists_Type_cons_tl.
+        apply Exists_inf_cons_tl.
         apply X1.
-      - apply Forall_Type_cons ; [ lra | ].
+      - apply Forall_inf_cons ; [ lra | ].
         inversion Hall1; assumption.
       - intros n; specialize (Hsum1 n).
         rewrite e in Hsum1.
         simpl in *; nra. }
     destruct IHpi2 as [L2 [Hlen2 [[Hex2 Hall2] Hsum2]]].
-    { apply Forall_Type_cons ; [ apply seq_atomic_app_inv_r with T1 | ]; try assumption. }
+    { apply Forall_inf_cons ; [ apply seq_atomic_app_inv_r with T1 | ]; try assumption. }
     destruct L2; try now inversion Hlen2.
     destruct (Req_dec r0 0).
     { split with (0 :: L2).
       repeat split; auto.
       - inversion Hex2; subst; try now (exfalso; nra).
-        apply Exists_Type_cons_tl.
+        apply Exists_inf_cons_tl.
         apply X1.
-      - apply Forall_Type_cons ; [ lra | ].
+      - apply Forall_inf_cons ; [ lra | ].
         inversion Hall2; assumption.
       - intros n0; specialize (Hsum2 n0).
         rewrite e in Hsum2.
@@ -477,12 +476,12 @@ Proof.
       rewrite add_R_list_length ; [ rewrite map_length; assumption | ].
       rewrite 2 map_length.
       lia.
-    + apply Exists_Type_cons_hd.
+    + apply Exists_inf_cons_hd.
       inversion Hall2; inversion Hall1; subst.
       nra.
     + inversion Hall1; inversion Hall2; subst.
-      apply Forall_Type_cons; [ nra | ].
-      apply Forall_Type_R_pos_add_R_list; apply Forall_Type_R_pos_Rmult; assumption.
+      apply Forall_inf_cons; [ nra | ].
+      apply Forall_inf_R_pos_add_R_list; apply Forall_inf_R_pos_Rmult; assumption.
     + intros n; specialize (Hsum1 n); specialize (Hsum2 n); simpl in Hsum1, Hsum2.
       simpl.
       rewrite sum_weight_seq_var_app; rewrite sum_weight_seq_covar_app.
@@ -491,7 +490,7 @@ Proof.
       simpl in *; nra.
   - inversion Ha; subst.
     destruct IHpi as [L [Hlen [[Hex Hall] Hsum]]].
-    { apply Forall_Type_cons; try assumption.
+    { apply Forall_inf_cons; try assumption.
       apply seq_atomic_mul; apply X. }
     destruct L; try now inversion Hlen.
     inversion Hall; subst.
@@ -500,15 +499,15 @@ Proof.
     split with (r0 * r :: L).
     repeat split; auto.
     + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
+      * apply Exists_inf_cons_hd.
         nra.
-      * apply Exists_Type_cons_tl; apply X2.
-    + apply Forall_Type_cons; try assumption; try nra.
+      * apply Exists_inf_cons_tl; apply X2.
+    + apply Forall_inf_cons; try assumption; try nra.
     + intros n; specialize (Hsum n);rewrite sum_weight_seq_var_mul in Hsum; rewrite sum_weight_seq_covar_mul in Hsum; simpl in *.
       nra.
   - inversion Ha; subst.
     destruct IHpi as [L [Hlen [[Hex Hall] Hsum]]].
-    { apply Forall_Type_cons; try assumption.
+    { apply Forall_inf_cons; try assumption.
       eapply seq_atomic_app_inv_r; eapply seq_atomic_app_inv_r; apply X. }
     split with L.
     repeat split; auto.
@@ -542,17 +541,17 @@ Proof.
   - destruct r; [ | inversion Ha; inversion X; inversion X1].
     destruct IHpi as [L [Hlen [[Hex Hall] Hsum]]].
     { inversion Ha; subst.
-      apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption. }
+      apply Forall_inf_cons ; [ | apply Forall_inf_cons ]; assumption. }
     destruct L ; [ | destruct L]; try now inversion Hlen.
     inversion Hall; inversion X; subst.
     split with (r + r0 :: L).
     repeat split; auto.
     + inversion Hex; subst.
-      * apply Exists_Type_cons_hd.
+      * apply Exists_inf_cons_hd.
         nra.
       * inversion X1; subst; auto.
-        apply Exists_Type_cons_hd; nra.
-    + apply Forall_Type_cons; try assumption; nra.
+        apply Exists_inf_cons_hd; nra.
+    + apply Forall_inf_cons; try assumption; nra.
     + intros n.
       simpl.
       specialize (Hsum n).
@@ -564,8 +563,8 @@ Proof.
     repeat split; try assumption.
   - destruct IHpi as [L [Hlen [[Hex Hall] Hsum]]].
     { inversion Ha; subst.
-      apply Forall_Type_cons; try assumption.
-      apply seq_atomic_perm with T2; [ perm_Type_solve | apply X]. }
+      apply Forall_inf_cons; try assumption.
+      apply seq_atomic_perm with T2; [ Permutation_Type_solve | apply X]. }
     split with L.
     destruct L; try now inversion Hlen.
     repeat split; auto.
@@ -583,8 +582,8 @@ Proof.
       etransitivity ; [ | apply p].
       etransitivity ; [ | apply Hlen].
       symmetry; apply Hperm'.
-    + apply Exists_Type_Permutation_Type with L; assumption.
-    + apply Forall_Type_Permutation_Type with L; assumption.
+    + apply Exists_inf_Permutation_Type with L; assumption.
+    + apply Forall_inf_Permutation_Type with L; assumption.
     + intros n.
       rewrite <- (H' n); apply Hsum.
   - inversion f.
@@ -595,8 +594,8 @@ Lemma lambda_prop_inv :
     hseq_is_atomic G ->
     { L &
       prod (length L = length G)
-           ((Exists_Type (fun x => 0 < x) L) *
-            (Forall_Type (fun x => 0 <= x) L) *
+           ((Exists_inf (fun x => 0 < x) L) *
+            (Forall_inf (fun x => 0 <= x) L) *
             (forall n, sum_weight_with_coeff n G L = 0))} ->
     HR_T_M G.
 Proof.
@@ -605,14 +604,14 @@ Proof.
              hseq_is_atomic H ->
              { L &
                prod (length L = length G)
-                    ((Exists_Type (fun x => 0 < x) L) *
-                     (Forall_Type (fun x => 0 <= x) L) *
+                    ((Exists_inf (fun x => 0 < x) L) *
+                     (Forall_inf (fun x => 0 <= x) L) *
                      (forall n, (sum_weight_var n H - sum_weight_covar n H) + sum_weight_with_coeff n G L = 0))} + HR_T_M H ->
              HR_T_M (H ++  G)).
   { intros G Hat [L [Hlen [[Hex Hall] Hsum]]].
     change G with (nil ++ G).
     refine (X G nil Hat _ _).
-    - apply Forall_Type_nil.
+    - apply Forall_inf_nil.
     - left.
       split with L.
       repeat split; auto.
@@ -623,28 +622,28 @@ Proof.
   induction n; intros G Heqn H HatG HatH [ [L [Hlen [[Hex Hall] Hsum]]] | pi].
   - destruct L; inversion Hlen; inversion Hex.
   - destruct G; inversion Heqn; rewrite app_nil_r; apply pi.
-  - destruct (Exists_Type_split _ _ _ Hex) as [[[r La] Lb] [Hp HeqL]].
-    assert (Permutation_Type L (r :: La ++ Lb)) as Hperm by (rewrite HeqL ; perm_Type_solve).
+  - destruct (Exists_inf_split _ _ _ Hex) as [[[r La] Lb] [Hp HeqL]].
+    assert (Permutation_Type L (r :: La ++ Lb)) as Hperm by (rewrite HeqL ; Permutation_Type_solve).
     destruct (sum_weight_with_coeff_perm_l G _ _ Hperm) as [G' [HpermG Hsum']].
     { lia. }
     destruct G' as [ | T G'].
     { symmetry in HpermG; apply Permutation_Type_nil in HpermG.
       subst; inversion Heqn. }
-    apply hrr_ex_hseq with (T :: H ++ G') ; [ perm_Type_solve | ].
+    apply hrr_ex_hseq with (T :: H ++ G') ; [ Permutation_Type_solve | ].
     apply R_blt_lt in Hp.
     apply hrr_T with (existT _ r Hp); try reflexivity.
     change (seq_mul (existT (fun r0 : R => (0 <? r0) = true) r Hp) T :: H ++ G')
       with
         ((seq_mul (existT (fun r0 : R => (0 <? r0) = true) r Hp) T :: H) ++ G').
     assert (hseq_is_atomic (T :: G')) as HatG'.
-    { apply Forall_Type_Permutation_Type with G; try assumption. }
+    { apply Forall_inf_Permutation_Type with G; try assumption. }
     apply IHn.
     + apply Permutation_Type_length in HpermG.
       rewrite HpermG in Heqn; simpl in Heqn; inversion Heqn; auto.
     + inversion HatG'; auto.
-    + apply Forall_Type_cons; auto.
+    + apply Forall_inf_cons; auto.
       apply seq_atomic_mul; now inversion HatG'.
-    + destruct (Forall_Exists_Type_dec (fun x => x = 0)) with (La ++ Lb).
+    + destruct (Forall_inf_Exists_inf_dec (fun x => x = 0)) with (La ++ Lb).
       { intros x.
         case_eq (x <? 0) ; case_eq (0 <? x); intros H1; intros H2.
         - apply R_blt_lt in H1; apply R_blt_lt in H2.
@@ -680,24 +679,22 @@ Proof.
               clear - e X.
               induction Lb; try now inversion e.
               inversion e; subst.
-              ** apply Exists_Type_cons_hd.
+              ** apply Exists_inf_cons_hd.
                  inversion X; subst.
                  nra.
-              ** apply Exists_Type_cons_tl.
+              ** apply Exists_inf_cons_tl.
                  inversion X; subst.
                  apply IHLb; try assumption.
            ++ simpl in *.
               inversion e; subst.
-              ** apply Exists_Type_cons_hd.
+              ** apply Exists_inf_cons_hd.
                  inversion Hall; subst.
                  nra.
-              ** apply Exists_Type_cons_tl.
+              ** apply Exists_inf_cons_tl.
                  inversion Hall; subst.
                  now apply IHLa.
         -- rewrite HeqL in Hall.
-           destruct (Forall_Type_app_inv _ _ _ Hall).
-           inversion f0; subst.
-           now apply Forall_Type_app.
+           apply Forall_inf_app; [apply Forall_inf_app_l in Hall | apply Forall_inf_app_r in Hall; inversion Hall]; assumption.
         -- intros n0.
            specialize (Hsum' n0); specialize (Hsum n0).
            simpl in *.

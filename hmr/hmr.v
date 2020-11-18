@@ -5,12 +5,13 @@ Require Import RL.hmr.semantic.
 Require Import RL.hmr.hseq.
 
 Require Import CMorphisms.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 
@@ -21,9 +22,9 @@ Record hmr_frag := mk_hmr_frag {
                       hmr_CAN : bool }.
 
 Definition le_hmr_frag P Q :=
-  prod (Bool.leb (hmr_T P) (hmr_T Q))
-       (prod (Bool.leb (hmr_M P) (hmr_M Q))
-             (Bool.leb (hmr_CAN P) (hmr_CAN Q))).
+  prod (Bool.le (hmr_T P) (hmr_T Q))
+       (prod (Bool.le (hmr_M P) (hmr_M Q))
+             (Bool.le (hmr_CAN P) (hmr_CAN Q))).
 
 Lemma le_hmr_frag_trans : forall P Q R,
   le_hmr_frag P Q -> le_hmr_frag Q R -> le_hmr_frag P R.
@@ -31,14 +32,13 @@ Proof.
 intros P Q R H1 H2.
 destruct H1 as (Ht1 & Hm1 & Hcan1).
 destruct H2 as (Ht2 & Hm2 & Hcan2).
-repeat (split; [eapply leb_trans; try eassumption | ]).
-eapply leb_trans; eassumption.
+repeat split; destruct P; destruct Q; destruct R; Bool.destr_bool.
 Qed.
 
 Instance le_hmr_frag_po : PreOrder le_hmr_frag.
 Proof.
 split.
-- repeat split; apply leb_refl.
+- repeat split; destruct x; Bool.destr_bool.
 - intros P Q R.
   apply le_hmr_frag_trans.
 Qed.
@@ -53,32 +53,33 @@ Definition hmr_frag_rm_CAN P := mk_hmr_frag (hmr_T P) (hmr_M P) false.
 Lemma add_T_le_frag : forall P, le_hmr_frag P (hmr_frag_add_T P).
 Proof.
   intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma add_M_le_frag : forall P, le_hmr_frag P (hmr_frag_add_M P).
 Proof.
   intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma add_CAN_le_frag : forall P, le_hmr_frag P (hmr_frag_add_CAN P).
 Proof.
   intros P.
-  repeat (split; try apply leb_refl; try apply leb_true).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma rm_T_le_frag : forall P, le_hmr_frag (hmr_frag_rm_T P) P.
 Proof.
   intros P.
-  repeat (split; try apply leb_refl).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 Lemma rm_M_le_frag : forall P, le_hmr_frag (hmr_frag_rm_M P) P.
 Proof.
   intros P.
-  repeat (split; try apply leb_refl).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
+
 Lemma rm_CAN_le_frag : forall P, le_hmr_frag (hmr_frag_rm_CAN P) P.
 Proof.
   intros P.
-  repeat (split; try apply leb_refl).
+  repeat split; destruct P; Bool.destr_bool.
 Qed.
 
 (** only the following fragments are interesting for what we want to do *)
@@ -216,10 +217,10 @@ Proof.
   intros G H; revert G; induction H as [ | T H]; intros G pi.
   - apply pi.
   - simpl; apply hmrr_C.
-    apply hmrr_ex_hseq with (H ++ T :: T :: G); [ perm_Type_solve | ].
+    apply hmrr_ex_hseq with (H ++ T :: T :: G); [ Permutation_Type_solve | ].
     apply IHH.
     eapply hmrr_ex_hseq ; [ | apply pi].
-    perm_Type_solve.
+    Permutation_Type_solve.
 Defined.
 
 Lemma modal_depth_proof_C_gen P :
@@ -266,11 +267,11 @@ Lemma hmrr_C_copy_inv P : forall G T n,
 Proof.
   intros G T; induction n; intros pi.
   - simpl.
-    apply hmrr_ex_hseq with (G ++ (nil :: nil)) ; [ perm_Type_solve | ].
+    apply hmrr_ex_hseq with (G ++ (nil :: nil)) ; [ Permutation_Type_solve | ].
     apply hmrr_W_gen; apply hmrr_INIT.
   - simpl.
     specialize (IHn pi).
     apply hmrr_M; try reflexivity; try assumption.
     apply HMR_le_frag with P; try assumption.
-    destruct P; repeat split; simpl; try reflexivity; try apply leb_true.
+    destruct P; repeat split; Bool.destr_bool.
 Qed.

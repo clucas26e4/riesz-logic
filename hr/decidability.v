@@ -14,16 +14,15 @@ Require Import RL.hr.can_elim.
 Require Import RL.hr.M_elim.
 
 Require Import CMorphisms.
-Require Import List_more.
-Require Import List_Type.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
 Require Import Lia.
 Require Import FunctionalExtensionality.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 
@@ -36,7 +35,7 @@ Fixpoint pos_indexes (L : list R) :=
   end.
 
 Lemma pos_indexes_nth : forall L i,
-    In_Type i (pos_indexes L) ->
+    In_inf i (pos_indexes L) ->
     0 < nth i L 0.
 Proof.
   induction L; intros i Hin; simpl in Hin; try now exfalso.
@@ -44,32 +43,32 @@ Proof.
   - destruct i.
     + apply R_blt_lt in H; apply H.
     + simpl; apply IHL.
-      apply In_Type_map_S_inv.
+      apply In_inf_map_S_inv.
       inversion Hin; [ exfalso; inversion H0 | ].
       apply X.
   - destruct i.
     + exfalso.
-      apply not_0_In_Type_map_S with (pos_indexes L).
+      apply not_0_In_inf_map_S with (pos_indexes L).
       apply Hin.
-    + apply IHL; apply In_Type_map_S_inv; apply Hin.
+    + apply IHL; apply In_inf_map_S_inv; apply Hin.
 Qed.
 
-Lemma pos_indexes_Forall_Type : forall L,
-    Forall_Type (fun n : nat => (n < length L)%nat) (pos_indexes L).
+Lemma pos_indexes_Forall_inf : forall L,
+    Forall_inf (fun n : nat => (n < length L)%nat) (pos_indexes L).
 Proof.
-  induction L; [ apply Forall_Type_nil | ].
+  induction L; [ apply Forall_inf_nil | ].
   simpl.
   case_eq (0 <? a); intros _.
-  - apply Forall_Type_cons.
+  - apply Forall_inf_cons.
     + lia.
-    + apply Forall_Type_lt_map_S.
+    + apply Forall_inf_lt_map_S.
       apply IHL.
-  - apply Forall_Type_lt_map_S; apply IHL.
+  - apply Forall_inf_lt_map_S; apply IHL.
 Qed.
 
-Lemma pos_indexes_not_In_Type : forall L i,
+Lemma pos_indexes_not_In_inf : forall L i,
     (i < length L)%nat ->
-    (In_Type i (pos_indexes L) -> False) ->
+    (In_inf i (pos_indexes L) -> False) ->
     (nth i L 0 <= 0).
 Proof.
   induction L; intros i Hlen H; try now inversion Hlen.
@@ -81,14 +80,14 @@ Proof.
     intros Hin.
     apply H.
     right.
-    apply in_Type_map.
+    apply in_inf_map.
     apply Hin.
   - destruct i; [ simpl; apply R_blt_nlt in Hlt; lra | ].
     simpl.
     apply IHL; [simpl in Hlen; lia | ].
     intros Hin.
     apply H.
-    apply in_Type_map; apply Hin.
+    apply in_inf_map; apply Hin.
 Qed.
 
 Lemma pos_indexes_order : forall L,
@@ -233,40 +232,40 @@ Proof.
 Qed.
 
 Lemma FOL_R_term_sem_upd_val_vec_lt : forall val a vx vr,
-    Forall_Type (fun x => max_var_FOL_R_term a < x)%nat vx ->
+    Forall_inf (fun x => max_var_FOL_R_term a < x)%nat vx ->
     FOL_R_term_sem (upd_val_vec val vx vr) a = FOL_R_term_sem val a.
 Proof.
   intros val; induction a; intros vx vr Hall.
   - simpl.
     apply upd_val_vec_not_in.
     intros Hin.
-    apply (Forall_Type_forall Hall) in Hin.
+    apply (Forall_inf_forall Hall) in Hin.
     simpl in Hin; lia.
   - reflexivity.
-  - simpl; rewrite IHa1; [ rewrite IHa2 | ]; try reflexivity; refine (Forall_Type_arrow _ _ Hall);
+  - simpl; rewrite IHa1; [ rewrite IHa2 | ]; try reflexivity; refine (Forall_inf_arrow _ _ Hall);
       intros a Hlt; simpl in Hlt; lia.
-  - simpl; rewrite IHa1; [ rewrite IHa2 | ]; try reflexivity; refine (Forall_Type_arrow _ _ Hall);
+  - simpl; rewrite IHa1; [ rewrite IHa2 | ]; try reflexivity; refine (Forall_inf_arrow _ _ Hall);
       intros a Hlt; simpl in Hlt; lia.
 Qed.
 
 Lemma eval_p_seq_upd_val_vec_lt : forall val T vx vr,
-    Forall_Type (fun x => max_var_weight_p_seq T < x)%nat vx ->
+    Forall_inf (fun x => max_var_weight_p_seq T < x)%nat vx ->
     eval_p_sequent (upd_val_vec val vx vr) T = eval_p_sequent val T.
 Proof.
   intros val; induction T; intros vx vr Hall; simpl; try reflexivity.
   destruct a as [a A].
-  rewrite ? FOL_R_term_sem_upd_val_vec_lt ; [ | refine (Forall_Type_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
-  rewrite IHT ; [ | refine (Forall_Type_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
+  rewrite ? FOL_R_term_sem_upd_val_vec_lt ; [ | refine (Forall_inf_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
+  rewrite IHT ; [ | refine (Forall_inf_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
   reflexivity.
 Qed.
   
 Lemma eval_p_hseq_upd_val_vec_lt : forall val G vx vr,
-    Forall_Type (fun x => max_var_weight_p_hseq G < x)%nat vx ->
+    Forall_inf (fun x => max_var_weight_p_hseq G < x)%nat vx ->
     map (eval_p_sequent (upd_val_vec val vx vr)) G = map (eval_p_sequent val) G.
 Proof.
   intros val; induction G; intros vx vr Hall; simpl; try reflexivity.
-  rewrite eval_p_seq_upd_val_vec_lt ; [ | refine (Forall_Type_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
-  rewrite IHG ; [ | refine (Forall_Type_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
+  rewrite eval_p_seq_upd_val_vec_lt ; [ | refine (Forall_inf_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
+  rewrite IHG ; [ | refine (Forall_inf_arrow _ _ Hall); intros a' Hlt'; simpl in Hlt'; lia].
   reflexivity.
 Qed.
 
@@ -277,11 +276,11 @@ Proof.
   rewrite FOL_R_term_sem_eval_p_hseq.
   rewrite map_val_seq_var.
   rewrite eval_p_hseq_upd_val_vec_lt; try reflexivity.
-  apply forall_Forall_Type.
+  apply forall_Forall_inf.
   intros x Hin.
   case_eq (max_var_weight_p_hseq G <? x)%nat; intros H; [ apply Nat.ltb_lt in H | apply Nat.ltb_nlt in H]; auto.
   exfalso.
-  apply not_In_Type_seq with (S (max_var_weight_p_hseq G)) (length L) x; try lia.
+  apply not_In_inf_seq with (S (max_var_weight_p_hseq G)) (length L) x; try lia.
   apply Hin.
 Qed.  
 
@@ -296,7 +295,7 @@ Lemma cond_is_in_make_subsets : forall n l,
     l <> nil ->
     (forall i, nth i l 0 < n)%nat ->
     (forall i j, (j < length l)%nat -> (i < j)%nat -> (nth i l 0 > nth j l 0)%nat) ->
-    In_Type l (make_subsets n).
+    In_inf l (make_subsets n).
 Proof.
   induction n; intros l Hnnil Hle Hlt.
   - specialize (Hle 0%nat).
@@ -307,8 +306,8 @@ Proof.
       destruct l.
       * left; reflexivity.
       * right.
-        apply in_Type_or_app; left.
-        apply in_Type_map_cons.
+        apply in_inf_or_app; left.
+        apply in_inf_map_cons.
         apply IHn.
         -- intros H'; inversion H'.
         -- intros i.
@@ -331,7 +330,7 @@ Proof.
            change (nth (S i) (S n :: n0 :: l) 0%nat) with (nth i (n0 :: l) 0%nat) in *.
            change (nth (S j) (S n :: n0 :: l) 0)%nat with (nth j (n0 :: l) 0%nat) in *.
            apply H'; simpl in *; lia.
-    + right; apply in_Type_or_app; right.
+    + right; apply in_inf_or_app; right.
       apply IHn.
       -- intros H'; inversion H'.
       -- intros i.
@@ -350,7 +349,7 @@ Proof.
 Qed.
 
 Lemma cond_is_in_make_subsets_inv : forall n l,
-    In_Type l (make_subsets n) ->
+    In_inf l (make_subsets n) ->
     (l <> nil) * (forall i, nth i l 0 < n)%nat * (forall i j, (j < length l)%nat -> (i < j)%nat -> (nth i l 0 > nth j l 0)%nat).
 Proof.
   induction n; intros l; [ intros Hin | intros [Heq | Hin]].
@@ -362,8 +361,8 @@ Proof.
     + intros i j Hlen Hlt.
       destruct j ; [inversion Hlt | ].
       destruct j; try now inversion Hlen.
-  - destruct (in_Type_app_or _ _ _ Hin).
-    + destruct (in_Type_map_cons_inv _ _ _ _ i) as [l' [Heq Hin']]; subst.
+  - destruct (in_inf_app_or _ _ _ Hin).
+    + destruct (in_inf_map_cons_inv _ _ _ _ i) as [l' [Heq Hin']]; subst.
       destruct (IHn l' Hin') as [[Hnnil Hlen] Hlt].
       clear i Hin.
       repeat split.
@@ -397,32 +396,32 @@ Fixpoint complementary (v : list nat) n :=
   | i :: v => remove (Nat.eq_dec) i (complementary v n)
   end.
 
-Lemma In_Type_complementary : forall v n i,
-    In_Type i v ->
-    In_Type i (complementary v n) ->
+Lemma In_inf_complementary : forall v n i,
+    In_inf i v ->
+    In_inf i (complementary v n) ->
     False.
 Proof.
   induction v; intros n i Hin1 Hin2; [ inversion Hin1 | ].
   simpl in Hin2.
   case_eq (i =? a); intros H.
   - apply Nat.eqb_eq in H; subst.
-    apply In_Type_remove_not in Hin2.
+    apply In_inf_remove_not in Hin2.
     apply Hin2.
   - inversion Hin1; [ apply Nat.eqb_neq in H; lia | ].
     apply IHv with n i; auto.
-    apply In_Type_remove_In_Type in Hin2.
+    apply In_inf_remove_In_inf in Hin2.
     apply Hin2.
 Qed.
 
-Lemma In_Type_complementary_inv : forall v n i,
+Lemma In_inf_complementary_inv : forall v n i,
     (i < n)%nat ->
-    (In_Type i (complementary v n) -> False) ->
-    In_Type i v.
+    (In_inf i (complementary v n) -> False) ->
+    In_inf i v.
 Proof.
   induction v; intros n i Hlt H.
   - exfalso; apply H.
     replace i with (i + 0)%nat by lia.
-    apply In_Type_seq.
+    apply In_inf_seq.
     apply Hlt.
   - simpl in *.
     case_eq (a =? i); intros Heq.
@@ -432,66 +431,66 @@ Proof.
       apply IHv with n; auto.
       intros Hin.
       apply H.
-      apply In_Type_remove_In_Type_inv.
+      apply In_inf_remove_In_inf_inv.
       apply Nat.eqb_neq in Heq; split; auto.    
 Qed.
 
-Lemma In_Type_complementary2 : forall v n i,
-    In_Type i (complementary v n) ->
-    In_Type i v ->
+Lemma In_inf_complementary2 : forall v n i,
+    In_inf i (complementary v n) ->
+    In_inf i v ->
     False.
 Proof.
   induction v; intros n i Hin1 Hin2; [ inversion Hin2 | ].
   simpl in Hin1.
   case_eq (i =? a); intros H.
   - apply Nat.eqb_eq in H; subst.
-    apply In_Type_remove_not in Hin1.
+    apply In_inf_remove_not in Hin1.
     apply Hin1.
   - inversion Hin2; [ apply Nat.eqb_neq in H; lia | ].
     apply IHv with n i; auto.
-    apply In_Type_remove_In_Type in Hin1.
+    apply In_inf_remove_In_inf in Hin1.
     apply Hin1.
 Qed.
 
-Lemma In_Type_complementary2_inv : forall v n i,
+Lemma In_inf_complementary2_inv : forall v n i,
     (i < n)%nat ->
-    (In_Type i v -> False) ->
-    In_Type i (complementary v n).
+    (In_inf i v -> False) ->
+    In_inf i (complementary v n).
 Proof.
   induction v; intros n i Hlt H.
   - replace i with (i + 0)%nat by lia.
-    apply In_Type_seq.
+    apply In_inf_seq.
     apply Hlt.
   - simpl in *.
     case_eq (a =? i); intros Heq.
     + exfalso; apply H; left; apply Nat.eqb_eq; apply Heq.
-    + apply In_Type_remove_In_Type_inv.
+    + apply In_inf_remove_In_inf_inv.
       apply Nat.eqb_neq in Heq; split; auto.    
 Qed.
 
 Lemma complementary_partition : forall v n i,
     (i < n)%nat ->
-    (In_Type i v) + (In_Type i (complementary v n)).
+    (In_inf i v) + (In_inf i (complementary v n)).
 Proof.
   intros v n i Hlt.
-  assert (Hin := in_Type_dec Nat.eq_dec i v).
+  assert (Hin := in_inf_dec Nat.eq_dec i v).
   inversion Hin.
   - left; apply X.
   - right.
-    apply In_Type_complementary2_inv; auto.
+    apply In_inf_complementary2_inv; auto.
 Qed.  
   
-Lemma In_Type_complementary_lt : forall L n i,
-    In_Type i (complementary L n) ->
+Lemma In_inf_complementary_lt : forall L n i,
+    In_inf i (complementary L n) ->
     (i < n)%nat.
 Proof.
   induction L; intros n i Hin.
   - simpl complementary in Hin.
     replace n with (0 + n)%nat by lia.
-    apply In_Type_seq_lt.
+    apply In_inf_seq_lt.
     apply Hin.
   - simpl in Hin.
-    apply In_Type_remove_In_Type in Hin as [Hneq Hin].
+    apply In_inf_remove_In_inf in Hin as [Hneq Hin].
     apply IHL; auto.
 Qed.
 
@@ -505,22 +504,22 @@ Fixpoint FOL_R_all_zero k (v : list nat) :=
   end.
 
 Lemma cond_FOL_R_all_zero_formula_sem : forall k v val,
-    (forall n, In_Type n v -> val (k + n)%nat = 0) ->
+    (forall n, In_inf n v -> val (k + n)%nat = 0) ->
     FOL_R_formula_sem val (FOL_R_all_zero k v).
 Proof.
   intros k; induction v; intros val H; [apply I | ].
   split.
   - apply H.
-    apply in_Type_eq.
+    apply in_inf_eq.
   - apply IHv.
     intros n Hin.
     apply H.
-    apply in_Type_cons; apply Hin.
+    apply in_inf_cons; apply Hin.
 Qed.
     
 Lemma cond_FOL_R_all_zero_formula_sem_inv : forall k v val,
     FOL_R_formula_sem val (FOL_R_all_zero k v) ->
-    forall n, In_Type n v -> val (k + n)%nat = 0.
+    forall n, In_inf n v -> val (k + n)%nat = 0.
 Proof.
   intros k; induction v; intros val Hf n Hin; inversion Hin; subst.
   - destruct Hf as [Heq _]; apply Heq.
@@ -536,22 +535,22 @@ Fixpoint FOL_R_all_gtz k (v : list nat ) :=
   end.
 
 Lemma cond_FOL_R_all_gtz_formula_sem : forall k v val,
-    (forall n, In_Type n v -> 0 < val (k + n)%nat) ->
+    (forall n, In_inf n v -> 0 < val (k + n)%nat) ->
     FOL_R_formula_sem val (FOL_R_all_gtz k v).
 Proof.
   intros k; induction v; intros val H; [apply I | ].
   split.
-  - specialize (H a (in_Type_eq a v)).
+  - specialize (H a (in_inf_eq a v)).
     split; simpl; lra.
   - apply IHv.
     intros n Hin.
     apply H.
-    apply in_Type_cons; apply Hin.
+    apply in_inf_cons; apply Hin.
 Qed.
     
 Lemma cond_FOL_R_all_gtz_formula_sem_inv : forall k v val,
     FOL_R_formula_sem val (FOL_R_all_gtz k v) ->
-    forall n, In_Type n v -> 0 < val (k + n)%nat.
+    forall n, In_inf n v -> 0 < val (k + n)%nat.
 Proof.
   intros k; induction v; intros val Hf n Hin; inversion Hin; subst.
   - destruct Hf as [[Hneq Hle] _].
@@ -642,7 +641,7 @@ Fixpoint FOL_R_atomic_case_aux G V :=
   end.
 
 Lemma cond_FOL_R_atomic_case_aux_formula_sem : forall G V val,
-    { v : _ & In_Type v V & FOL_R_formula_sem val (FOL_R_exists_phi G v)} ->
+    { v : _ & In_inf v V & FOL_R_formula_sem val (FOL_R_exists_phi G v)} ->
     FOL_R_formula_sem val (FOL_R_atomic_case_aux G V).
 Proof.
   intros G; induction V; intros val [v Hin Hf]; inversion Hin; subst.
@@ -655,14 +654,14 @@ Qed.
 
 Lemma cond_FOL_R_atomic_case_aux_formula_sem_inv : forall G V val,
     FOL_R_formula_sem val (FOL_R_atomic_case_aux G V) ->
-    { v : _ & In_Type v V & FOL_R_formula_sem val (FOL_R_exists_phi G v)}.
+    { v : _ & In_inf v V & FOL_R_formula_sem val (FOL_R_exists_phi G v)}.
 Proof.
   intros G V; induction V; intros val Hf; inversion Hf.
   - split with a; auto.
-    apply in_Type_eq.
+    apply in_inf_eq.
   - destruct (IHV val X) as [v Hin Hf'].
     split with v; try assumption.
-    now apply in_Type_cons.
+    now apply in_inf_cons.
 Qed.
 
 Definition FOL_R_atomic_case G  :=
@@ -730,10 +729,10 @@ Proof.
           intros i.
           case_eq (i <? length (pos_indexes L))%nat.
           + intros Hlt; apply Nat.ltb_lt in Hlt.
-            apply Forall_Type_nth; try assumption.
+            apply Forall_inf_nth; try assumption.
             rewrite map_length in Hlen.
             rewrite <- Hlen.
-            apply pos_indexes_Forall_Type.
+            apply pos_indexes_Forall_inf.
           + intros Hlt; apply Nat.ltb_nlt in Hlt; rewrite nth_overflow; destruct G; simpl; try lia.
             apply HR_not_empty in pi.
             exfalso; auto.            
@@ -749,24 +748,24 @@ Proof.
         rewrite map_length in Hlen; rewrite <- Hlen.
         rewrite upd_val_vec_eq.
         enough (nth n L (val (S (max_var_weight_p_hseq G) + n)%nat) <= 0).
-        { apply Forall_Type_nth with _ _ _ n (val ((S (max_var_weight_p_hseq G)) + n)%nat) in Hall; [ lra | ].
-          apply In_Type_complementary_lt with (rev (pos_indexes L)).
+        { apply Forall_inf_nth with _ _ _ n (val ((S (max_var_weight_p_hseq G)) + n)%nat) in Hall; [ lra | ].
+          apply In_inf_complementary_lt with (rev (pos_indexes L)).
           change (list (prod Rpos term)) with sequent in Hin.
           rewrite <- Hlen in Hin.
           apply Hin. }
         rewrite nth_indep with _ _ _ _ 0.
-        2:{ apply In_Type_complementary_lt with (rev (pos_indexes L)).
+        2:{ apply In_inf_complementary_lt with (rev (pos_indexes L)).
             change (list (prod Rpos term)) with sequent in Hin.
             rewrite <- Hlen in Hin.
             apply Hin. }
-        apply pos_indexes_not_In_Type.
-        -- apply In_Type_complementary_lt with (rev (pos_indexes L)).
+        apply pos_indexes_not_In_inf.
+        -- apply In_inf_complementary_lt with (rev (pos_indexes L)).
            change (list (prod Rpos term)) with sequent in Hin.
            rewrite <- Hlen in Hin.
            apply Hin.
         -- intros H'.
-           apply In_Type_complementary in Hin; auto.
-           apply In_Type_rev.
+           apply In_inf_complementary in Hin; auto.
+           apply In_inf_rev.
            apply H'.
       * apply cond_FOL_R_all_gtz_formula_sem.
         intros n Hin.
@@ -774,12 +773,12 @@ Proof.
         rewrite map_length in Hlen; rewrite <- Hlen.
         rewrite upd_val_vec_eq.
         assert (n < length L)%nat as Hlt.
-        { apply (@Forall_Type_forall _ (fun x => x < length L)%nat) with (pos_indexes L); [ apply pos_indexes_Forall_Type | ].
-          apply In_Type_rev_inv.
+        { apply (@Forall_inf_forall _ (fun x => x < length L)%nat) with (pos_indexes L); [ apply pos_indexes_Forall_inf | ].
+          apply In_inf_rev_inv.
           apply Hin. }
         rewrite nth_indep with _ _ _ _ 0; auto.
         apply pos_indexes_nth.
-        apply In_Type_rev_inv.
+        apply In_inf_rev_inv.
         apply Hin.        
       * apply cond_FOL_R_all_atoms_eq_formula_sem.
         intros n Hlen'.
@@ -807,25 +806,22 @@ Proof.
       * clear f1 f3.
         apply cond_is_in_make_subsets_inv in Hin as [[Hnnil Hle] Hlt].
         destruct v ; [ exfalso; apply Hnnil; auto | ].
-        apply Exists_Type_nth with 0.
-        split with n.
-        split.
-        -- rewrite map_length.
-           rewrite seq_length.
-           apply (Hle 0)%nat.
-        -- rewrite <- Hlen.
-           rewrite map_upd_val_vec_eq.
-           apply cond_FOL_R_all_gtz_formula_sem_inv with _ _ _ n in f2.
-           2:{ left; auto. }
-           rewrite <- Hlen in f2.
-           rewrite upd_val_vec_eq in f2.
-           rewrite nth_indep with _ _ _ _ (val ((S (max_var_weight_p_hseq G)) + n)%nat) ; [ apply f2 | ].
-           rewrite Hlen.
-           apply (Hle 0%nat).
+        apply nth_Exists_inf with n 0.
+        { rewrite map_length; rewrite seq_length.
+          apply (Hle 0%nat). }
+        rewrite <- Hlen.
+        rewrite map_upd_val_vec_eq.
+        apply cond_FOL_R_all_gtz_formula_sem_inv with _ _ _ n in f2.
+        2:{ left; auto. }
+        rewrite <- Hlen in f2.
+        rewrite upd_val_vec_eq in f2.
+        rewrite nth_indep with _ _ _ _ (val ((S (max_var_weight_p_hseq G)) + n)%nat) ; [ apply f2 | ].
+        rewrite Hlen.
+        apply (Hle 0%nat).
       * clear f3.
         rewrite <- Hlen.
         rewrite map_upd_val_vec_eq.
-        apply nth_Forall_Type.
+        apply nth_Forall_inf.
         intros i a' Hlt.
         destruct (complementary_partition v (length vr) i); auto.
         -- apply cond_FOL_R_all_gtz_formula_sem_inv with _ _ _ i in f2; auto.
@@ -887,7 +883,7 @@ Proof.
         assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
         destruct (H' val) as [H0 H0'].
-        { apply Forall_Type_cons; assumption. }
+        { apply Forall_inf_cons; assumption. }
         split.
         -- intros pi.
            apply H0.
@@ -929,7 +925,7 @@ Proof.
         assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
         destruct (H' val) as [H0 H0'].
-        { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons; [ | apply Forall_Type_cons] | ]; assumption. }
+        { simpl; apply Forall_inf_cons; [ apply Forall_inf_cons; [ | apply Forall_inf_cons] | ]; assumption. }
         split.
         -- intros pi.
            apply H0.
@@ -978,7 +974,7 @@ Proof.
         assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
         destruct (H' val) as [H0 H0'].
-        { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | ]; try assumption.
+        { simpl; apply Forall_inf_cons; [ apply Forall_inf_cons | ]; try assumption.
           simpl in *.
           apply R_blt_lt; apply R_blt_lt in H1.
           destruct r0 as [r0 Hr0]; clear - H1 Hr0; simpl; apply R_blt_lt in Hr0.
@@ -1040,7 +1036,7 @@ Proof.
         assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
         inversion Hwd''; subst.
         destruct (H' val) as [H0 H0'].
-        { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | apply Forall_Type_cons ; [ apply Forall_Type_cons | ] ]; assumption. }
+        { simpl; apply Forall_inf_cons; [ apply Forall_inf_cons | apply Forall_inf_cons ; [ apply Forall_inf_cons | ] ]; assumption. }
         split.
         -- intros pi.
            apply H0.
@@ -1103,9 +1099,9 @@ Proof.
            assert (Hwd'' := p_seq_well_defined_perm _ _ _ Hperm' X).
            inversion Hwd''; subst.
            destruct (H1' val) as [H10 H11].
-           { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | ]; assumption. }
+           { simpl; apply Forall_inf_cons; [ apply Forall_inf_cons | ]; assumption. }
            destruct (H2' val) as [H20 H21].
-           { simpl; apply Forall_Type_cons; [ apply Forall_Type_cons | ]; assumption. }
+           { simpl; apply Forall_inf_cons; [ apply Forall_inf_cons | ]; assumption. }
            split.
            ++ intros pi.
               split.

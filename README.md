@@ -8,6 +8,11 @@ Working with `Coq 8.12.0`
 If you have any trouble or question, please contact `christophe.lucas@ens-lyon.fr` or `matteo.mio@ens-lyon.fr`.
 
 ### How to compile
+The [OLlibs](https://github.com/olaure01/ollibs) must be installed. The [Opam](https://coq.inria.fr/opam-using.html)-based installation procedure for this is:
+
+	$ opam repo add coq-released https://coq.inria.fr/opam/released
+	$ opam install coq-ollibs
+
 To compile all the coq files and generate the documentation, type the following instruction in a terminal at the root of the project (where the file hr\_main\_results.v is).
 
 	$ make doc

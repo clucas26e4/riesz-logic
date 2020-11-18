@@ -7,15 +7,15 @@ Require Import RL.hmr.semantic.
 Require Import RL.hmr.hseq.
 
 Require Import CMorphisms.
-Require Import List_more.
-Require Import Bool_more.
-Require Import List_Type_more.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
 Require Import Lra.
 Require Import Lia.
-Require Import wf_prod.
 Require Import FunctionalExtensionality.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
+Require Import OLlibs.wf_prod.
 
 Local Open Scope R_scope.
 
@@ -31,7 +31,7 @@ Ltac sem_is_pos_decomp val a :=
 Definition p_sequent : Set := list (FOL_R_term * term).
 Definition p_seq_diamond (T : p_sequent) := map (fun x => (fst x, <S> (snd x))) T.
 
-Definition p_seq_is_basic (T : p_sequent) := Forall_Type (fun x => match x with (a , A) => is_basic A end) T.
+Definition p_seq_is_basic (T : p_sequent) := Forall_inf (fun x => match x with (a , A) => is_basic A end) T.
 
 Fixpoint eval_p_sequent (val : nat -> R) (T : p_sequent) : sequent :=
   match T with
@@ -53,7 +53,7 @@ Definition Permutation_Type_p_seq val (T1 T2 : p_sequent) := Permutation_Type (e
 
 Definition p_hypersequent : Set := list p_sequent.
 
-Definition p_hseq_is_basic G := Forall_Type p_seq_is_basic G.
+Definition p_hseq_is_basic G := Forall_inf p_seq_is_basic G.
 
 Definition Permutation_Type_p_hseq val (G1 G2 : p_hypersequent) := Permutation_Type (map (eval_p_sequent val) G1) (map (eval_p_sequent val) G2).
 
@@ -228,10 +228,10 @@ Fixpoint only_diamond_p_hseq G :=
 
 (** ** well defined hypersequent with regard to a valuation (i.e. all the weights of the hypersequent are strictly positive with this valuation) *)
 Definition p_seq_well_defined (val : nat -> R) (T : p_sequent) :=
-  Forall_Type (fun x => (0 <? FOL_R_term_sem val (fst x)) = true) T.
+  Forall_inf (fun x => (0 <? FOL_R_term_sem val (fst x)) = true) T.
 
 Definition p_hseq_well_defined (val : nat -> R) G : Type :=
-  Forall_Type (p_seq_well_defined val) G.
+  Forall_inf (p_seq_well_defined val) G.
 (** * Properties *)
 (** ** vec *)
 Lemma vec_app : forall vr1 vr2 A, vec (vr1 ++ vr2) A = vec vr1 A ++ vec vr2 A.
@@ -377,10 +377,10 @@ Qed.
 
 (** ** Sequent *)
 
-Lemma In_Type_seq_mul :
+Lemma In_inf_seq_mul :
   forall A r T,
-    In_Type A (seq_mul r T) ->
-    {' (b , B) : _ & prod (A = ((r *R b) , B)) (In_Type (b, B) T)}.
+    In_inf A (seq_mul r T) ->
+    {' (b , B) : _ & prod (A = ((r *R b) , B)) (In_inf (b, B) T)}.
 Proof.
   intros [a A] r; induction T; try destruct a0 as [b B]; intros Hin; simpl in *; inversion Hin.
   - split with (b , B); split; auto.
@@ -443,15 +443,7 @@ Proof.
     apply IHHperm1 with D.
     apply Heq.
 Qed.
-(*
-Lemma seq_mul_One : forall val T, Forall2_Type (fun x y => FOL_R_pred_sem val (x =R y)) (seq_mul (FOL_R_cst 1) T) T.
-  induction T; try reflexivity.
-  destruct a as (a , A).
-  unfold seq_mul; fold seq_mul.
-  replace (time_pos One a) with a by (apply Rpos_eq; destruct a; simpl; nra).
-  rewrite IHT; reflexivity.
-Qed. *)
-  
+
 Lemma seq_mul_app : forall T1 T2 r, seq_mul r (T1 ++ T2) = seq_mul r T1 ++ seq_mul r T2.
 Proof.
   induction T1; intros T2 r; try reflexivity.
@@ -459,15 +451,6 @@ Proof.
   simpl; rewrite IHT1.
   reflexivity.
 Qed.
-(*
-Lemma seq_mul_twice : forall T r1 r2,
-    seq_mul r1 (seq_mul r2 T) = seq_mul (time_pos r1 r2) T.
-Proof.
-  induction T as [ | [a A] T]; intros r1 r2; simpl; try reflexivity.
-  rewrite IHT.
-  replace (time_pos r1 (time_pos r2 a)) with (time_pos (time_pos r1 r2) a) by (apply Rpos_eq;destruct r1; destruct r2; destruct a; simpl; nra).
-  reflexivity.
-Qed.*)
 
 Fixpoint seq_mul_vec vr T :=
   match vr with
@@ -489,235 +472,6 @@ Proof.
   rewrite IHvr1.
   rewrite app_assoc; reflexivity.
 Qed.
-(*
-Lemma seq_mul_vec_app_r : forall T1 T2 vr,
-    Permutation_Type (seq_mul_vec vr (T1 ++ T2)) (seq_mul_vec vr T1 ++ seq_mul_vec vr T2).
-Proof.
-  intros T1 T2; induction vr; try reflexivity.
-  simpl.
-  rewrite seq_mul_app.
-  perm_Type_solve.
-Qed.
-
-
-Lemma seq_mul_vec_perm_r : forall vr T1 T2,
-    Permutation_Type T1 T2 ->
-    Permutation_Type (seq_mul_vec vr T1) (seq_mul_vec vr T2).
-Proof.
-  intros vr T1 T2 Hperm; induction Hperm; try perm_Type_solve.
-  - rewrite cons_is_app.
-    etransitivity ; [ apply seq_mul_vec_app_r | ].
-    rewrite (cons_is_app _ l').
-    etransitivity ; [ | symmetry; apply seq_mul_vec_app_r].
-    perm_Type_solve.
-  - rewrite (cons_is_app _ (x :: l)).
-    etransitivity ; [ apply seq_mul_vec_app_r | ].
-    rewrite (cons_is_app _ l).
-    etransitivity ; [ apply Permutation_Type_app; try apply seq_mul_vec_app_r; reflexivity | ].
-    rewrite (cons_is_app _ (y :: l)).
-    etransitivity ; [ | symmetry ; apply seq_mul_vec_app_r ].
-    rewrite (cons_is_app _ l).
-    etransitivity ; [ | symmetry; apply Permutation_Type_app; try apply seq_mul_vec_app_r; reflexivity ].
-    perm_Type_solve.
-Qed.
-
-Lemma seq_mul_vec_perm_l : forall vr1 vr2 T,
-    Permutation_Type vr1 vr2 ->
-    Permutation_Type (seq_mul_vec vr1 T) (seq_mul_vec vr2 T).
-Proof.
-  intros vr1 vr2 T Hperm; induction Hperm; try perm_Type_solve.
-Qed.
-    
-Lemma seq_mul_p_seq_mul_vec: forall T vr r,
-    seq_mul r (seq_mul_vec vr T) = seq_mul_vec vr (seq_mul r T).
-Proof.
-  intros T vr; revert T; induction vr; intros T r; try reflexivity.
-  simpl. rewrite seq_mul_app; rewrite IHvr; rewrite 2 seq_mul_twice.
-  replace (time_pos r a) with (time_pos a r) by (apply Rpos_eq; destruct r; destruct a; simpl; nra).
-  reflexivity.
-Qed.
-
-Lemma seq_mul_p_seq_mul_vec_2: forall T vr r,
-    seq_mul r (seq_mul_vec vr T) = seq_mul_vec (mul_vec r vr) T.
-Proof.
-  intros T vr; revert T; induction vr; intros T r; try reflexivity.
-  simpl. rewrite seq_mul_app; rewrite IHvr; rewrite seq_mul_twice.
-  reflexivity.
-Qed.
-  
-Lemma seq_mul_vec_twice : forall T vr1 vr2,
-    Permutation_Type (seq_mul_vec vr1 (seq_mul_vec vr2 T)) (seq_mul_vec (vec_mul_vec vr1 vr2) T).
-Proof.
-  intros T vr1; revert T; induction vr1; intros T vr2; try reflexivity.
-  simpl.
-  rewrite seq_mul_p_seq_mul_vec_2; rewrite seq_mul_vec_app_l.
-  specialize (IHvr1 T vr2).
-  perm_Type_solve.
-Qed.
-
-Lemma seq_mul_vec_twice_comm : forall T vr1 vr2,
-    Permutation_Type (seq_mul_vec vr1 (seq_mul_vec vr2 T)) (seq_mul_vec vr2 (seq_mul_vec vr1 T)).
-Proof.
-  intros T vr1; revert T; induction vr1; intros T vr2.
-  - simpl; rewrite seq_mul_vec_nil_r.
-    reflexivity.
-  -  simpl.
-     etransitivity ; [ | symmetry; apply seq_mul_vec_app_r].
-     apply Permutation_Type_app.
-     + rewrite seq_mul_p_seq_mul_vec.
-       reflexivity.
-     + apply IHvr1.
-Qed.
-
-Lemma seq_mul_vec_vec : forall A vr1 vr2,
-    Permutation_Type (seq_mul_vec vr1 (vec vr2 A)) (seq_mul_vec vr2 (vec vr1 A)).
-Proof.
-  intros A vr1; revert A; induction vr1; intros A vr2.
-  - simpl; rewrite seq_mul_vec_nil_r.
-    reflexivity.
-  -  simpl.
-     change ((a, A) :: vec vr1 A) with ((vec (a :: nil) A) ++ vec vr1 A).
-     etransitivity ; [ | symmetry; apply seq_mul_vec_app_r].
-     apply Permutation_Type_app.
-     + clear.
-       induction vr2; simpl; try reflexivity.
-       replace (time_pos a a0) with (time_pos a0 a) by (apply Rpos_eq; destruct a; destruct a0; simpl; nra).
-       apply Permutation_Type_skip.
-       apply IHvr2.
-     + apply IHvr1.
-Qed.
-
-Lemma seq_mul_vec_mul_vec : forall A r vr,
-    seq_mul r (vec vr A) = vec (mul_vec r vr) A.
-Proof.
-  intros A r vr; induction vr; simpl; try rewrite IHvr; try reflexivity.
-Qed.
-
-Lemma seq_mul_vec_vec_mul_vec : forall vr vs A,
-    seq_mul_vec vr (vec vs A) = vec (vec_mul_vec vr vs) A.
-Proof.
-  induction vr; intros vs A.
-  - reflexivity.
-  - simpl.
-    rewrite vec_app.
-    rewrite IHvr.
-    rewrite seq_mul_vec_mul_vec.
-    reflexivity.
-Qed.
-
-    
-Lemma seq_mul_perm : forall T1 T2 r,
-    Permutation_Type T1 T2 ->
-    Permutation_Type (seq_mul r T1) (seq_mul r T2).
-Proof.
-  intros T1 T2 r Hperm; induction Hperm; try destruct x; try destruct y; try now constructor.
-  transitivity (seq_mul r l'); assumption.
-Qed.
-
-(** ** Substitution *)
-
-Lemma subs_p_seq_app : forall D D' n t, subs_p_seq (D ++ D') n t = subs_p_seq D n t ++ subs_p_seq D' n t.
-Proof.
-  induction D; intros D' n t; simpl; try rewrite IHD; try destruct a; try reflexivity.
-Qed.
-
-Lemma subs_p_seq_vec : forall D n t A r, subs_p_seq ((vec r A) ++ D) n t = vec r (subs A n t) ++ subs_p_seq D n t.
-Proof.
-  intros D n t A; induction r;simpl; try rewrite IHr; try reflexivity.
-Qed.
-
-Lemma subs_p_seq_ex : forall T1 T2 n t, Permutation_Type T1 T2 -> Permutation_Type (subs_p_seq T1 n t) (subs_p_seq T2 n t).
-Proof.
-  intros T1 T2 n t Hperm; induction Hperm; try destruct x; try destruct y; simpl; try now constructor.
-  transitivity (subs_p_seq l' n t); assumption.
-Qed.
-
-Fixpoint subs_p_hseq (G : hypersequent) n t :=
-  match G with
-  | nil => nil
-  | D :: G => (subs_p_seq D n t) :: (subs_p_hseq G n t)
-  end.
-
-Lemma subs_p_hseq_ex : forall G1 G2 n t, Permutation_Type G1 G2 -> Permutation_Type (subs_p_hseq G1 n t) (subs_p_hseq G2 n t).
-Proof.
-  intros G1 G2 n t Hperm; induction Hperm; try destruct x; try destruct y; simpl; try now constructor.
-  transitivity (subs_p_hseq l' n t); assumption.
-Qed.
-
-(** ** Basic *)
-
-Lemma copy_p_seq_basic : forall n T, seq_is_basic T -> seq_is_basic (copy_p_seq n T).
-Proof.
-  induction n; intros T Hat; simpl; [ apply Forall_Type_nil | ].
-  apply Forall_Type_app; auto.
-  apply IHn; assumption.
-Qed.
-
-Lemma seq_basic_app : forall T1 T2,
-    seq_is_basic T1 ->
-    seq_is_basic T2 ->
-    seq_is_basic (T1 ++ T2).
-Proof.
-  intros T1 T2 Hat1.
-  induction Hat1; intros Hat2.
-  - apply Hat2.
-  - simpl; apply Forall_Type_cons; try assumption.
-    apply IHHat1.
-    apply Hat2.
-Qed.
-
-Lemma seq_basic_perm : forall T1 T2,
-    Permutation_Type T1 T2 ->
-    seq_is_basic T1 ->
-    seq_is_basic T2.
-Proof.
-  intros T1 T2 Hperm; induction Hperm; intro Hat.
-  - apply Forall_Type_nil.
-  - inversion Hat; subst; apply Forall_Type_cons; [ | apply IHHperm]; assumption.
-  - inversion Hat; inversion X0; subst.
-    apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption.
-  - apply IHHperm2; apply IHHperm1; apply Hat.
-Qed.
-
-Lemma hseq_basic_perm : forall G H,
-    Permutation_Type G H ->
-    hseq_is_basic G ->
-    hseq_is_basic H.
-Proof.
-  intros G H Hperm; induction Hperm; intro Hat.
-  - apply Forall_Type_nil.
-  - inversion Hat; subst; apply Forall_Type_cons; [ | apply IHHperm]; assumption.
-  - inversion Hat; inversion X0; subst.
-    apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption.
-  - apply IHHperm2; apply IHHperm1; apply Hat.
-Qed.
-
-Lemma seq_basic_app_inv_l : forall T1 T2,
-    seq_is_basic (T1 ++ T2) ->
-    seq_is_basic T1.
-Proof.
-  intros T1; induction T1; intros T2 Hat; try now constructor.
-  simpl in Hat; inversion Hat; subst.
-  apply Forall_Type_cons; try assumption.
-  apply IHT1 with T2; apply X0.
-Qed.
-
-Lemma seq_basic_app_inv_r : forall T1 T2,
-    seq_is_basic (T1 ++ T2) ->
-    seq_is_basic T2.
-Proof.
-  intros T1; induction T1; intros T2 Hat; try assumption.
-  simpl in Hat; inversion Hat; subst.
-  apply IHT1; assumption.
-Qed.
-
-Lemma seq_basic_mul : forall T r,
-    seq_is_basic T ->
-    seq_is_basic (seq_mul r T).
-Proof.
-  intros T r Hat; induction Hat; try destruct x; simpl; try now constructor.
-Qed.
-*)
 
 (** ** Diamond properties *)
   
@@ -949,39 +703,39 @@ Lemma p_seq_non_basic_perm :
                  Permutation_Type T (A :: D) &
                  ~ (is_basic (snd A)) }.
 Proof.
-  induction T; intros Hnat; [exfalso; apply Hnat; apply Forall_Type_nil | ].
+  induction T; intros Hnat; [exfalso; apply Hnat; apply Forall_inf_nil | ].
   destruct a as [a A].
   destruct A.
   - destruct IHT as [[A D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (A, ((a, var n) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (A, ((a, covar n) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - split with ((a, zero), T); auto.
   - split with ((a, A1 +S A2), T); auto.
   - split with ((a, r *S A), T); auto.
   - split with ((a, A1 \/S A2), T); auto.
   - split with ((a, A1 /\S A2), T); auto.
   - destruct IHT as [[A D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (A, ((a, one) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (A, ((a, coone) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - destruct IHT as [[B D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (B, ((a, <S> A) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
 Qed.
 
 Lemma p_seq_basic_seq_basic : forall val T,
@@ -989,11 +743,11 @@ Lemma p_seq_basic_seq_basic : forall val T,
     seq_is_basic (eval_p_sequent val T).
 Proof.
   intros val T; induction T; intros Hall.
-  - apply Forall_Type_nil.
+  - apply Forall_inf_nil.
   - destruct a as [a A].
     simpl in Hall |- *.
     inversion Hall; subst.
-    sem_is_pos_decomp val a; intros; simpl; try apply Forall_Type_cons; try apply IHT; auto.
+    sem_is_pos_decomp val a; intros; simpl; try apply Forall_inf_cons; try apply IHT; auto.
     destruct A; inversion X; auto.
 Qed.
 
@@ -1001,8 +755,8 @@ Lemma p_hseq_basic_hseq_basic : forall val G,
     p_hseq_is_basic G ->
     hseq_is_basic (map (eval_p_sequent val) G).
 Proof.
-  intros val; induction G; intros Hat; try apply Forall_Type_nil.
-  simpl; inversion Hat; subst; apply Forall_Type_cons; [ apply p_seq_basic_seq_basic | apply IHG]; auto.
+  intros val; induction G; intros Hat; try apply Forall_inf_nil.
+  simpl; inversion Hat; subst; apply Forall_inf_cons; [ apply p_seq_basic_seq_basic | apply IHG]; auto.
 Qed.
 
 (** Complexity related theorem *)
@@ -1048,7 +802,7 @@ Qed.
 
 Lemma max_diamond_p_seq_concat :
   forall L k,
-    Forall_Type (fun x => max_diamond_p_seq x < S k)%nat L ->
+    Forall_inf (fun x => max_diamond_p_seq x < S k)%nat L ->
     (max_diamond_p_seq (concat L) < S k)%nat.
 Proof.
   induction L; intros k Hall; inversion Hall; subst; simpl in *; try lia.
@@ -1111,7 +865,7 @@ Lemma complexity_p_hseq_perm_fst : forall G,
       destruct IHG as [[T H] Hperm Heq].
       { intros H; inversion H. }
       split with (T, (a :: H)).
-      * transitivity (a :: T :: H); perm_Type_solve.
+      * transitivity (a :: T :: H); Permutation_Type_solve.
       * rewrite (complexity_p_hseq_perm _ _ Hperm).
         rewrite (complexity_p_hseq_perm _ _ Hperm) in Heq.
         rewrite Heq; reflexivity.
@@ -1155,9 +909,9 @@ Lemma p_seq_is_basic_complexity_0_inv :
     HMR_complexity_p_seq T = 0%nat ->
     p_seq_is_basic T.
 Proof.
-  induction T; intros Heq; [ apply Forall_Type_nil |] .
+  induction T; intros Heq; [ apply Forall_inf_nil |] .
   destruct a as [a A]; simpl in *.
-  apply Forall_Type_cons ; [ apply is_basic_complexity_0_inv  | apply IHT]; lia.
+  apply Forall_inf_cons ; [ apply is_basic_complexity_0_inv  | apply IHT]; lia.
 Qed.
 
 Lemma p_hseq_is_basic_complexity_0 :
@@ -1177,10 +931,10 @@ Lemma p_hseq_is_basic_complexity_0_inv :
     fst (HMR_complexity_p_hseq G) = 0%nat ->
     p_hseq_is_basic G.
 Proof.
-  induction G; intros Heq; [ apply Forall_Type_nil | ].
+  induction G; intros Heq; [ apply Forall_inf_nil | ].
   simpl in *.
   case_eq (HMR_complexity_p_seq a =? fst (HMR_complexity_p_hseq G)); intros H; rewrite H in Heq; simpl in Heq ; [ apply Nat.eqb_eq in H | apply Nat.eqb_neq in H ].
-  { apply Forall_Type_cons; [ apply p_seq_is_basic_complexity_0_inv | apply IHG ]; lia. }
+  { apply Forall_inf_cons; [ apply p_seq_is_basic_complexity_0_inv | apply IHG ]; lia. }
   exfalso.
   case_eq (HMR_complexity_p_seq a <? fst (HMR_complexity_p_hseq G))%nat; intros H2; rewrite H2 in Heq; [apply Nat.ltb_lt in H2 | apply Nat.ltb_nlt in H2]; simpl in *; lia.
 Qed.
@@ -1825,17 +1579,17 @@ Proof.
   induction G; simpl in *; try (assert (H := max_var_weight_p_seq_only_diamond a)); lia.
 Qed.
 
-Lemma max_var_FOL_R_term_In_Type_p_seq :
+Lemma max_var_FOL_R_term_In_inf_p_seq :
   forall a A T,
-    In_Type (a, A) T ->
+    In_inf (a, A) T ->
     (max_var_FOL_R_term a <= max_var_weight_p_seq T)%nat.
 Proof.
   intros a A; induction T; intros Hin; try destruct a0 as [b B]; simpl in *; inversion Hin; try (inversion H; subst); try specialize (IHT X); lia.
 Qed.
 
-Lemma max_var_weight_p_seq_In_Type_p_hseq :
+Lemma max_var_weight_p_seq_In_inf_p_hseq :
   forall T G,
-    In_Type T G ->
+    In_inf T G ->
     (max_var_weight_p_seq T <= max_var_weight_p_hseq G)%nat.
 Proof.
   intros T; induction G; intros Hin; simpl in *; inversion Hin; subst; try specialize (IHG X); lia.
@@ -1844,7 +1598,7 @@ Qed.
 Lemma max_var_weight_p_seq_concat :
   forall L k,
     L <> nil ->
-    Forall_Type (fun x => max_var_weight_p_seq x < k)%nat L ->
+    Forall_inf (fun x => max_var_weight_p_seq x < k)%nat L ->
     (max_var_weight_p_seq (concat L) < k)%nat.
 Proof.
   induction L; intros k Hnnil Hall; inversion Hall; subst; simpl in *; [exfalso; apply Hnnil; reflexivity | ].
@@ -1875,7 +1629,7 @@ Lemma p_seq_well_defined_perm : forall val T D,
     p_seq_well_defined val D.
 Proof.
   intros val T D Hperm Hall.
-  apply (Forall_Type_Permutation_Type _ _ _ _ Hperm Hall).
+  apply (Forall_inf_Permutation_Type _ _ _ _ Hperm Hall).
 Qed.
 
 Lemma p_hseq_well_defined_perm : forall val G H,
@@ -1884,7 +1638,7 @@ Lemma p_hseq_well_defined_perm : forall val G H,
     p_hseq_well_defined val H.
 Proof.
   intros val G H Hperm Hall.
-  apply (Forall_Type_Permutation_Type _ _ _ _ Hperm Hall).
+  apply (Forall_inf_Permutation_Type _ _ _ _ Hperm Hall).
 Qed.
 
 Lemma p_seq_well_defined_seq_mul : forall val T r,
@@ -1895,7 +1649,7 @@ Proof.
   intros val; induction T; intros r Hr Hwd; auto.
   inversion Hwd; subst.
   destruct a as [a A].
-  apply Forall_Type_cons; [ | apply (IHT r Hr); apply X ].
+  apply Forall_inf_cons; [ | apply (IHT r Hr); apply X ].
   apply R_blt_lt; apply R_blt_lt in H0.
   simpl in *; nra.
 Qed.
@@ -1908,18 +1662,18 @@ Proof.
   intros val T; induction T; intros Hwd; auto.
   inversion Hwd; subst.
   destruct a as [a A].
-  destruct A; try (apply Forall_Type_cons; auto); apply IHT; apply X.
+  destruct A; try (apply Forall_inf_cons; auto); apply IHT; apply X.
 Qed.
 
 Lemma well_defined_concat :forall val G,
-    Forall_Type (p_seq_well_defined val) G ->
+    Forall_inf (p_seq_well_defined val) G ->
     p_seq_well_defined val (concat G).
 Proof.
   intros val; induction G; intros Hall; inversion Hall as [ | x1 x2 Hwd Hall']; subst.
   - simpl.
-    apply Forall_Type_nil.
+    apply Forall_inf_nil.
   - simpl.
-    apply Forall_Type_app; auto.
+    apply Forall_inf_app; auto.
     apply IHG.
     apply Hall'.
 Qed.
@@ -1930,10 +1684,10 @@ Lemma p_seq_well_defined_upd_val :
     p_seq_well_defined val T ->
     p_seq_well_defined (upd_val val x r) T.
 Proof.
-  intros val T x r; induction T; intros Hlt Hwd; [ apply Forall_Type_nil | ].
+  intros val T x r; induction T; intros Hlt Hwd; [ apply Forall_inf_nil | ].
   destruct a as [a A].
   inversion Hwd; subst.
-  simpl in *; apply Forall_Type_cons; [ | apply IHT; auto; lia].
+  simpl in *; apply Forall_inf_cons; [ | apply IHT; auto; lia].
   simpl.
   rewrite upd_val_term_lt; auto.
   lia.
@@ -1945,16 +1699,16 @@ Lemma p_hseq_well_defined_upd_val:
     p_hseq_well_defined val G ->
     p_hseq_well_defined (upd_val val x r) G.
 Proof.
-  intros val G x r; induction G; intros Hlt Hwd; [ apply Forall_Type_nil | ].
+  intros val G x r; induction G; intros Hlt Hwd; [ apply Forall_inf_nil | ].
   inversion Hwd; subst.
-  simpl in *; apply Forall_Type_cons; [ | apply IHG; auto; lia].
+  simpl in *; apply Forall_inf_cons; [ | apply IHG; auto; lia].
   apply p_seq_well_defined_upd_val; auto.
   lia.
 Qed.
 
 Lemma p_seq_well_defined_upd_val_vec:
   forall val T vx vr,
-    Forall_Type (fun x => (max_var_weight_p_seq T < x)%nat) vx ->
+    Forall_inf (fun x => (max_var_weight_p_seq T < x)%nat) vx ->
     p_seq_well_defined val T ->
     p_seq_well_defined (upd_val_vec val vx vr) T.
 Proof.
@@ -1966,7 +1720,7 @@ Qed.
 
 Lemma p_hseq_well_defined_upd_val_vec :
   forall val G vx vr,
-    Forall_Type (fun x => max_var_weight_p_hseq G < x)%nat vx ->
+    Forall_inf (fun x => max_var_weight_p_hseq G < x)%nat vx ->
     p_hseq_well_defined val G ->
     p_hseq_well_defined (upd_val_vec val vx vr) G.
 Proof.
@@ -1989,23 +1743,23 @@ Proof.
   sem_is_pos_decomp val r; intros e He;
     [ | exfalso; clear - H e; apply R_blt_lt in H; apply R_blt_lt in e; lra
       | exfalso; clear - H e; apply R_blt_lt in H; lra].
-  replace H with e by apply UIP_bool.
+  replace H with e by (apply Eqdep_dec.UIP_dec; apply Bool.bool_dec).
   reflexivity.
 Qed.
 
 Lemma to_p_sequent_well_defined : forall val T,
     p_seq_well_defined val (to_p_sequent T).
 Proof.
-  intros val; induction T; [ apply Forall_Type_nil | ].
+  intros val; induction T; [ apply Forall_inf_nil | ].
   destruct a as [[a Ha] A]; simpl.
-  apply Forall_Type_cons; assumption.
+  apply Forall_inf_cons; assumption.
 Qed.
 
 Lemma to_p_hypersequent_well_defined : forall val G,
     p_hseq_well_defined val (to_p_hypersequent G).
 Proof.
-  intros val; induction G; [ apply Forall_Type_nil | ].
-  apply Forall_Type_cons; [ apply to_p_sequent_well_defined | assumption ].
+  intros val; induction G; [ apply Forall_inf_nil | ].
+  apply Forall_inf_cons; [ apply to_p_sequent_well_defined | assumption ].
 Qed.
 
 Lemma eval_p_sequent_to_p_sequent : forall val T,
@@ -2017,7 +1771,7 @@ Proof.
     rewrite ? He;
     [ | exfalso; clear - e Ha; simpl in *; apply R_blt_lt in Ha; apply R_blt_lt in e; nra
       | exfalso; clear - e Ha; simpl in *; apply R_blt_lt in Ha; nra].
-  replace e with Ha by (apply UIP_bool).
+  replace e with Ha by (apply Eqdep_dec.UIP_dec; apply Bool.bool_dec).
   rewrite IHT; reflexivity.
 Qed.
 
@@ -2042,7 +1796,7 @@ Proof.
 Qed.
 
 Lemma eval_p_sequent_upd_val_vec_lt : forall val T vx vr,
-    Forall_Type (fun x => (max_var_weight_p_seq T < x)%nat) vx ->
+    Forall_inf (fun x => (max_var_weight_p_seq T < x)%nat) vx ->
     eval_p_sequent (upd_val_vec val vx vr) T = eval_p_sequent val T.
 Proof.
   intros val T vx; revert val; induction vx; intros val vr Hall; auto.
@@ -2063,7 +1817,7 @@ Proof.
 Qed.
 
 Lemma eval_p_hseq_upd_val_vec_lt : forall val G vx vr,
-    Forall_Type (fun x => (max_var_weight_p_hseq G < x)%nat) vx ->
+    Forall_inf (fun x => (max_var_weight_p_hseq G < x)%nat) vx ->
     map (eval_p_sequent (upd_val_vec val vx vr)) G = map (eval_p_sequent val) G.
 Proof.
   intros val G vx; revert val; induction vx; intros val vr Hall; auto.
@@ -2086,7 +1840,7 @@ Lemma only_diamond_eval_p_seq:
     only_diamond_seq (eval_p_sequent val T) = eval_p_sequent val (only_diamond_p_seq T).
 Proof.
   intros val; induction T; simpl; try destruct a as [a A]; auto.
-  sem_is_pos_decomp val a; destruct A; simpl; sem_is_pos_decomp val a; intros; simpl; rewrite IHT; try (replace H with H0 by apply UIP_bool); try reflexivity;
+  sem_is_pos_decomp val a; destruct A; simpl; sem_is_pos_decomp val a; intros; simpl; rewrite IHT; try (replace H with H0 by (apply Eqdep_dec.UIP_dec; apply Bool.bool_dec) ); try reflexivity;
     try (exfalso;
          clear - H H0;
          try apply R_blt_lt in H + apply R_blt_nlt in H;

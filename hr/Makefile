@@ -1,5 +1,5 @@
 
-COQ = coqc -R $(OLLIBSDIR) '' -R .. "RL"
+COQ = coqc -R .. "RL"
 COQDOC = coqdoc -g -R .. "RL"
 
 VFILES = $(wildcard *.v)
@@ -30,21 +30,14 @@ clean:
 .PHONY: clean
 .PRECIOUS: %.vo %.glob
 
-
-OLLIBSDIR = ../../ollibs
 UTILDIR = ../Utilities
 
 .DEFAULT_GOAL := all
 
-all: ollibs utilities $(VFILES:.v=.vo)
-
-ollibs:
-	cd $(OLLIBSDIR) && $(MAKE)
+all: utilities $(VFILES:.v=.vo)
 
 utilities:
 	cd $(UTILDIR) && $(MAKE)
-
-include $(OLLIBSDIR)/ollibs.mk
 
 term.vo : term.v $(UTILDIR)/Rpos.vo
 semantic.vo : semantic.v $(UTILDIR)/Rpos.vo term.vo
@@ -56,7 +49,7 @@ tech_lemmas.vo : tech_lemmas.v hr.vo hseq.vo $(UTILDIR)/Rpos.vo term.vo semantic
 soundness.vo : soundness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo
 completeness.vo : completeness.v $(UTILDIR)/Rpos.vo term.vo hseq.vo hr.vo semantic.vo interpretation.vo tactics.vo lambda_prop_tools.vo tech_lemmas.vo $(UTILDIR)/riesz_logic_List_more.vo soundness.vo
 invertibility.vo : invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo hr_perm_lemmas.vo
-M_elim.vo : M_elim.v invertibility.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo
+M_elim.vo : M_elim.v $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo tech_lemmas.vo
 can_elim.vo : can_elim.v invertibility.vo $(UTILDIR)/Rpos.vo term.vo semantic.vo hseq.vo hr.vo M_elim.vo hr_perm_lemmas.vo
 
 p_hseq.vo : p_hseq.v $(UTILDIR)/Rpos.vo term.vo semantic.vo $(UTILDIR)/lt_nat_tuples.vo $(UTILDIR)/FOL_R.vo hseq.vo

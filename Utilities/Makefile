@@ -1,5 +1,5 @@
 
-COQ = coqc -R $(OLLIBSDIR) '' -R .. "RL"
+COQ = coqc -R .. "RL"
 COQDOC = coqdoc -g -R .. "RL"
 
 VFILES = $(wildcard *.v)
@@ -30,19 +30,9 @@ clean:
 .PHONY: clean
 .PRECIOUS: %.vo %.glob
 
-
-OLLIBSDIR = ../../ollibs
-
 .DEFAULT_GOAL := all
 
-all: cutelim
-
-ollibs:
-	cd $(OLLIBSDIR) && $(MAKE)
-
-cutelim: ollibs $(VFILES:.v=.vo)
-
-include $(OLLIBSDIR)/ollibs.mk
+all:  $(VFILES:.v=.vo)
 
 Rpos.vo : Rpos.v
 FOL_R.vo : FOL_R.v Rpos.vo riesz_logic_List_more.vo

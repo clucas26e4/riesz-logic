@@ -15,10 +15,11 @@ Require Import RL.hmr.M_elim.
 Require Import RL.hmr.can_elim.
 Require Import RL.hmr.decidability.
 
-Require Import List_more.
 Require Import Reals.
 Require Import Lra.
 Require Import Lia.
+
+Require Import OLlibs.List_more.
 
 (** Theorem 4.3 *)
 Lemma HMR_soundness P : forall G,

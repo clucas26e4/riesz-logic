@@ -1,7 +1,8 @@
 Require Import Rpos.
+
+Require Import OLlibs.List_more.
 (** * Definition of terms of Riesz spaces in Negative Normal Form (i.e. built over the signature (0,+,.) where . is the external multiplication by a positive real) *)
 (** ** Term *)
-Require Import List_more.
 
 Inductive term : Type :=
 | var : nat -> term
@@ -115,14 +116,14 @@ Notation "'neg' A" := ((-S A) \/S zero) (at level 5).
 Notation "'abs' A" := (A \/S (-S A)) (at level 5).
 
 (** Definition of atoms *)
-Fixpoint is_atom A :=
+Definition is_atom A :=
   match A with
   | var _ => True
   | covar _ => True
   | _ => False
   end.
 
-Fixpoint is_basic A :=
+Definition is_basic A :=
   match A with
   | var _ => True
   | covar _ => True

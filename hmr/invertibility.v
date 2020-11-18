@@ -8,12 +8,13 @@ Require Import RL.hmr.hmr_perm_lemmas.
 Require Import RL.hmr.tech_lemmas.
 
 Require Import CMorphisms.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
 
 (** * Generalized version of the invertibilty of the logical rules *)
 (** L is a list of pair of a vector r_i and a sequent T_i.
@@ -47,7 +48,7 @@ Proof.
         (map (fun x  => snd x) (p :: p :: L)).
     apply IHpi.
     inversion Hperm.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_cons]; assumption.
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_cons]; assumption.
   - destruct L; [ | destruct L]; try now inversion Hperm.
     destruct p as [r1 T1']; destruct p0 as [r2 T2'].
     simpl in Hperm.
@@ -57,23 +58,23 @@ Proof.
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1 ++ r2, T1' ++ T2') :: L)).
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
-    rewrite vec_app; perm_Type_solve.    
+    simpl; apply Forall2_inf_cons; try assumption.
+    rewrite vec_app; Permutation_Type_solve.    
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r T]; simpl in *.
     apply decomp_M_case in X as [[[[D1 D2] r1] r2] [H1' [[H2' H3] H4]]].
     apply hmrr_ex_seq with (D1 ++ D2).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_M; try assumption.
     + change (D1 :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, D1) :: L)).
       apply IHpi1.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
     + change (D2 :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r2, D2) :: L)).
       apply IHpi2.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     apply hmrr_T with r; try assumption.
@@ -87,7 +88,7 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((mul_vec r r', seq_mul r T') :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
+    apply Forall2_inf_cons; [ | assumption].
     rewrite <- seq_mul_vec_mul_vec; rewrite <- seq_mul_app.
     apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
@@ -97,60 +98,60 @@ Proof.
     assert (zero <> (var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change (Db :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     destruct (perm_decomp_vec_eq _ _ _ _ _ X) as [ [[[[a1 b1] c1] T'] D'] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec c1 zero ++ T').
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_Z.
     change (T' :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with ( map (fun x : list Rpos * list (Rpos * term) => snd x) ((a1 , T') :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     assert (zero <> A +S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (A +S B) ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_plus; try assumption.
     change ((vec r A ++ vec r B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, vec r A ++ vec r B ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     assert (zero <> r0 *S A) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (r0 *S A) ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_mul; try assumption.
     apply hmrr_ex_seq with (vec (mul_vec r0 r) A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec (mul_vec r0 r) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, vec (mul_vec r0 r) A ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -159,20 +160,20 @@ Proof.
     apply hmrr_ex_seq with (vec r (A \/S B) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_max; try assumption.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r B ++ Db) :: (vec r A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, vec r B ++ Db) :: (r1, vec r A ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption] ]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption] ]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -181,24 +182,24 @@ Proof.
     apply hmrr_ex_seq with (vec r (A /\S B) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_min; try assumption.
     + apply hmrr_ex_seq with (vec r A ++ Db).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec r A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, vec r A ++ Db) :: L)).
       apply IHpi1.
       simpl.
-      apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
     + apply hmrr_ex_seq with (vec r B ++ Db).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec r B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, vec r B ++ Db) :: L)).
       apply IHpi2.
       simpl.
-      apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -206,21 +207,21 @@ Proof.
     assert (zero <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change (Db :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
     assert (zero <> coone) as Hnc by now auto.
     assert (zero <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ Db) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ Db) ; [ Permutation_Type_solve | ].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
     apply seq_diamond_perm_decomp in H5' as [Db'' H5']; subst.
@@ -232,7 +233,7 @@ Proof.
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_nil].
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
     apply Permutation_Type_app; try reflexivity.
     apply Permutation_Type_app; try reflexivity.
@@ -243,13 +244,13 @@ Proof.
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
-    apply Permutation_Type_app; perm_Type_solve.    
+    apply Permutation_Type_app; Permutation_Type_solve.    
   - destruct L; inversion Hperm; subst.
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     transitivity T2; assumption.    
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -258,13 +259,13 @@ Proof.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_can with A r s; try assumption.
     apply hmrr_ex_seq with (vec s (-S A) ++ vec r A ++ T1).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec s (-S A) ++ vec r A ++ T1) :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => snd x) ((r1, vec s (-S A) ++ vec r A ++ T1) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
 Qed.
     
 Lemma hmrr_plus_inv_gen P : forall L A B,
@@ -299,37 +300,37 @@ Proof.
            (p :: p :: L)).
     apply IHpi.
     simpl.
-    do 2 (apply Forall2_Type_cons; try assumption).
+    do 2 (apply Forall2_inf_cons; try assumption).
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [p1 p2];
       destruct p0 as [p1' p2'];
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
-      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_map; perm_Type_solve | ]).
+      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_map; Permutation_Type_solve | ]).
     simpl in *;
       apply hmrr_S;
-      (apply hmrr_ex_seq with (vec (fst p'') A ++ vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
+      (apply hmrr_ex_seq with (vec (fst p'') A ++ vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
       change ((vec (fst p'') A ++ vec (fst p'') B ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) (p'' :: L));
       apply IHpi;
-      simpl; apply Forall2_Type_cons;
-        [ rewrite Heqp'';simpl; rewrite vec_app ; perm_Type_solve | rewrite ? map_app; repeat (try apply Forall2_Type_app; try assumption)].
+      simpl; apply Forall2_inf_cons;
+        [ rewrite Heqp'';simpl; rewrite vec_app ; Permutation_Type_solve | rewrite ? map_app; repeat (try apply Forall2_inf_app; try assumption)].
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r T]; simpl in *.
     apply decomp_M_case in X as [[[[D1 D2] r1] r2] [H1' [[H2' H3] H4]]].
     apply hmrr_ex_seq with ((vec r1 A ++ vec r1 B ++ D1) ++ (vec r2 A ++ vec r2 B ++ D2)).
-    { transitivity (vec (r1 ++ r2) A ++ vec (r1 ++ r2) B ++ (D1 ++ D2)) ; [rewrite ? vec_app; perm_Type_solve | ].
-      apply Permutation_Type_app ; [ apply vec_perm; perm_Type_solve | ].
-      apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+    { transitivity (vec (r1 ++ r2) A ++ vec (r1 ++ r2) B ++ (D1 ++ D2)) ; [rewrite ? vec_app; Permutation_Type_solve | ].
+      apply Permutation_Type_app ; [ apply vec_perm; Permutation_Type_solve | ].
+      apply Permutation_Type_app; [ apply vec_perm | ]; Permutation_Type_solve. }
     apply hmrr_M; try assumption.
     + change ((vec r1 A ++ vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, D1) :: L)).
       apply IHpi1.
-      simpl; apply Forall2_Type_cons ;  assumption.
+      simpl; apply Forall2_inf_cons ;  assumption.
     + change ((vec r2 A ++ vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r2, D2) :: L)).
       apply IHpi2.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     apply hmrr_T with r; try assumption.
@@ -343,7 +344,7 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((mul_vec r r', seq_mul r T') :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
+    apply Forall2_inf_cons; [ | assumption].
     rewrite <- seq_mul_vec_mul_vec; rewrite <- seq_mul_app.
     apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
@@ -353,15 +354,15 @@ Proof.
     assert (A +S B <> (var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec r1 A ++ vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -370,15 +371,15 @@ Proof.
     apply hmrr_ex_seq with (vec r zero ++ vec r1 A ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     change ((vec r1 A ++ vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -390,37 +391,37 @@ Proof.
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_plus.
       apply hmrr_ex_seq with (vec a1 A0 ++ vec a1 B0 ++ (vec r A0 ++ vec r B0 ++ T')).
-      { transitivity (vec a1 A0 ++ vec a1 B0 ++ (vec (b1 ++ c1) A0 ++ vec (b1 ++ c1) B0 ++ T')); [ do 2 (apply Permutation_Type_app ; [ reflexivity | ]) ; do 2 (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve) | ].
+      { transitivity (vec a1 A0 ++ vec a1 B0 ++ (vec (b1 ++ c1) A0 ++ vec (b1 ++ c1) B0 ++ T')); [ do 2 (apply Permutation_Type_app ; [ reflexivity | ]) ; do 2 (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve) | ].
         rewrite ? vec_app.
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       change ((vec a1 A0 ++ vec a1 B0 ++ vec r A0 ++ vec r B0 ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ vec (fst x) B0 ++ snd x) L)
         with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ vec (fst x) B0 ++ snd x) ((a1 , vec r A0 ++ vec r B0 ++ T') :: L)).
       apply IHpi.
       simpl.
-      apply Forall2_Type_cons; [ | assumption].
+      apply Forall2_inf_cons; [ | assumption].
       transitivity (vec (b1 ++ c1) A0 ++ vec (b1 ++ c1) B0 ++ T).
-      { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
+      { repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
       etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
-      perm_Type_solve.      
+      Permutation_Type_solve.      
     + intros Hneq.
       destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
       apply hmrr_ex_seq with (vec r (A0 +S B0) ++ vec r1 A ++ vec r1 B ++ Db).
       { etransitivity; [ apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_plus; try assumption.
       apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec r A0 ++ vec r B0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec r1 A ++ vec r1 B ++ (vec r A0 ++ vec r B0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, vec r A0 ++ vec r B0 ++ Db) :: L)).
       apply IHpi.
       simpl.
-      apply Forall2_Type_cons; [ | assumption].
-      perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption].
+      Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -429,17 +430,17 @@ Proof.
     apply hmrr_ex_seq with (vec r (r0 *S A0) ++ vec r1 A ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_mul; try assumption.
     apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec (mul_vec r0 r) A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ vec r1 B ++ (vec (mul_vec r0 r) A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, vec (mul_vec r0 r) A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -448,20 +449,20 @@ Proof.
     apply hmrr_ex_seq with (vec r (A0 \/S B0) ++ vec r1 A ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_max; try assumption.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec r A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec r B0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ vec r1 B ++ (vec r B0 ++ Db)) :: (vec r1 A ++ vec r1 B ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, vec r B0 ++ Db) :: (r1, vec r A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption] ]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption] ]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -470,24 +471,24 @@ Proof.
     apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 A ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_min; try assumption.
     + apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec r A0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec r1 A ++ vec r1 B ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, vec r A0 ++ Db) :: L)).
       apply IHpi1.
       simpl.
-      apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
     + apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec r B0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec r1 A ++ vec r1 B ++ (vec r B0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, vec r B0 ++ Db) :: L)).
       apply IHpi2.
       simpl.
-      apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -495,15 +496,15 @@ Proof.
     assert (A +S B <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 A ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec r1 A ++ vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
     assert (A +S B <> coone) as Hnc by now auto.
@@ -515,13 +516,13 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
     change ((vec s coone ++ vec r one ++ Db'') :: nil)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_nil].
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
     apply Permutation_Type_app; try reflexivity.
     apply Permutation_Type_app; try reflexivity.
@@ -532,13 +533,13 @@ Proof.
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
-    apply Permutation_Type_app; perm_Type_solve. 
+    apply Permutation_Type_app; Permutation_Type_solve. 
   - destruct L; inversion Hperm; subst.
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     transitivity T2; assumption.    
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A +S B) ++ snd x) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -547,13 +548,13 @@ Proof.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_can with A0 r s; try assumption.
     apply hmrr_ex_seq with (vec r1 A ++ vec r1 B ++ (vec s (-S A0) ++ vec r A0 ++ T1)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ vec r1 B ++ vec s (-S A0) ++ vec r A0 ++ T1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((r1, vec s (-S A0) ++ vec r A0 ++ T1) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
 Qed.
     
 Lemma hmrr_mul_inv_gen P : forall L a A,
@@ -586,37 +587,37 @@ Proof with try assumption.
            (p :: p :: L)).
     apply IHpi.
     simpl.
-    do 2 (apply Forall2_Type_cons; try assumption).
+    do 2 (apply Forall2_inf_cons; try assumption).
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [p1 p2];
       destruct p0 as [p1' p2'];
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
-      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_map; perm_Type_solve | ]);
+      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_map; Permutation_Type_solve | ]);
       simpl in *;
       apply hmrr_S;
-      (apply hmrr_ex_seq with (vec (mul_vec a (fst p'')) A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? mul_vec_app; rewrite ? vec_app; perm_Type_solve | ]);
+      (apply hmrr_ex_seq with (vec (mul_vec a (fst p'')) A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? mul_vec_app; rewrite ? vec_app; Permutation_Type_solve | ]);
       change ((vec (mul_vec a (fst p'')) A ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) (L))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) (p'' :: L));
       apply IHpi;
-      simpl; apply Forall2_Type_cons;
-         [ rewrite Heqp'';simpl; rewrite vec_app ; perm_Type_solve | rewrite ? map_app; repeat (try apply Forall2_Type_app; try assumption)].
+      simpl; apply Forall2_inf_cons;
+         [ rewrite Heqp'';simpl; rewrite vec_app ; Permutation_Type_solve | rewrite ? map_app; repeat (try apply Forall2_inf_app; try assumption)].
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r T]; simpl in *.
     apply decomp_M_case in X as [[[[D1 D2] r1] r2] [H1' [[H2' H3] H4]]].
     apply hmrr_ex_seq with ((vec (mul_vec a r1) A ++ D1) ++ (vec (mul_vec a r2) A ++ D2)).
-    { transitivity (vec (mul_vec a (r1 ++ r2)) A ++ (D1 ++ D2)) ; [rewrite ? mul_vec_app; rewrite ? vec_app; perm_Type_solve | ].
-      apply Permutation_Type_app ; [ apply vec_perm; apply mul_vec_perm; perm_Type_solve | ].
-      perm_Type_solve. }
+    { transitivity (vec (mul_vec a (r1 ++ r2)) A ++ (D1 ++ D2)) ; [rewrite ? mul_vec_app; rewrite ? vec_app; Permutation_Type_solve | ].
+      apply Permutation_Type_app ; [ apply vec_perm; apply mul_vec_perm; Permutation_Type_solve | ].
+      Permutation_Type_solve. }
     apply hmrr_M; try assumption.
     + change ((vec (mul_vec a r1) A ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, D1) :: L)).
       apply IHpi1.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
     + change ((vec (mul_vec a r2) A ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r2, D2) :: L)).
       apply IHpi2.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     apply hmrr_T with r; try assumption.
@@ -631,7 +632,7 @@ Proof with try assumption.
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((mul_vec r r', seq_mul r T') :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
+    apply Forall2_inf_cons; [ | assumption].
     rewrite <- seq_mul_vec_mul_vec; rewrite <- seq_mul_app.
     apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
@@ -641,15 +642,15 @@ Proof with try assumption.
     assert (a *S A <> (var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec (mul_vec a r1) A  ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec (mul_vec a r1) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -658,15 +659,15 @@ Proof with try assumption.
     apply hmrr_ex_seq with (vec r zero ++ vec (mul_vec a r1) A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     change ((vec (mul_vec a r1) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -675,17 +676,17 @@ Proof with try assumption.
     apply hmrr_ex_seq with (vec r (A0 +S B) ++ vec (mul_vec a r1) A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_plus; try assumption.
     apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec r A0 ++ vec r B ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec (mul_vec a r1) A ++ (vec r A0 ++ vec r B ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, vec r A0 ++ vec r B ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -696,37 +697,37 @@ Proof with try assumption.
       { etransitivity ; [apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm; apply mul_vec_perm; symmetry; assumption).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_mul.
       apply hmrr_ex_seq with (vec (mul_vec r0 a1) A0 ++ (vec (mul_vec r0 r) A0 ++ T')).
-      { transitivity (vec (mul_vec r0 a1) A0 ++ (vec (mul_vec r0 (b1 ++ c1)) A0 ++ T')); [ apply Permutation_Type_app ; try apply Permutation_Type_app; try (apply vec_perm; apply mul_vec_perm); try perm_Type_solve | ].
+      { transitivity (vec (mul_vec r0 a1) A0 ++ (vec (mul_vec r0 (b1 ++ c1)) A0 ++ T')); [ apply Permutation_Type_app ; try apply Permutation_Type_app; try (apply vec_perm; apply mul_vec_perm); try Permutation_Type_solve | ].
         rewrite ? mul_vec_app; rewrite ? vec_app.
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       change ((vec (mul_vec r0 a1) A0 ++ vec (mul_vec r0 r) A0 ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec r0 (fst x)) A0 ++ snd x) L)
         with ( map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec r0 (fst x)) A0 ++ snd x) ((a1 , vec (mul_vec r0 r) A0 ++ T') :: L)).
       apply IHpi.
       simpl.
-      apply Forall2_Type_cons; [ | assumption].
+      apply Forall2_inf_cons; [ | assumption].
       transitivity (vec (mul_vec r0 (b1 ++ c1)) A0 ++ T).
-      { repeat (try apply Permutation_Type_app; try (apply vec_perm; apply mul_vec_perm); try perm_Type_solve). }
+      { repeat (try apply Permutation_Type_app; try (apply vec_perm; apply mul_vec_perm); try Permutation_Type_solve). }
       etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; apply mul_vec_perm; symmetry; apply H2')); reflexivity] ].
-      perm_Type_solve.      
+      Permutation_Type_solve.      
     + intros Hneq.
       destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
       apply hmrr_ex_seq with (vec r (r0 *S A0) ++ vec (mul_vec a r1) A ++ Db).
       { etransitivity; [ apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_mul; try assumption.
       apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec (mul_vec r0 r) A0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec (mul_vec a r1) A ++ (vec (mul_vec r0 r) A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, vec (mul_vec r0 r) A0 ++ Db) :: L)).
       apply IHpi.
       simpl.
-      apply Forall2_Type_cons; [ | assumption].
-      perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption].
+      Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -735,20 +736,20 @@ Proof with try assumption.
     apply hmrr_ex_seq with (vec r (A0 \/S B) ++ vec (mul_vec a r1) A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_max; try assumption.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec r A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec r B ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec (mul_vec a r1) A ++ (vec r B ++ Db)) :: (vec (mul_vec a r1) A ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, vec r B ++ Db) :: (r1, vec r A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption] ]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption] ]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -757,24 +758,24 @@ Proof with try assumption.
     apply hmrr_ex_seq with (vec r (A0 /\S B) ++ vec (mul_vec a r1) A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_min; try assumption.
     + apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec r A0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec (mul_vec a r1) A ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, vec r A0 ++ Db) :: L)).
       apply IHpi1.
       simpl.
-      apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
     + apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec r B ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       change ((vec (mul_vec a r1) A ++ (vec r B ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
         with
           (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, vec r B ++ Db) :: L)).
       apply IHpi2.
       simpl.
-      apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -782,15 +783,15 @@ Proof with try assumption.
     assert (a *S A <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec (mul_vec a r1) A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec (mul_vec a r1) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
     assert (a *S A <> coone) as Hnc by now auto.
@@ -802,13 +803,13 @@ Proof with try assumption.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
     change ((vec s coone ++ vec r one ++ Db'') :: nil)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_nil].
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
     apply Permutation_Type_app; try reflexivity.
     apply Permutation_Type_app; try reflexivity.
@@ -819,13 +820,13 @@ Proof with try assumption.
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
-    apply Permutation_Type_app; perm_Type_solve. 
+    apply Permutation_Type_app; Permutation_Type_solve. 
   - destruct L; inversion Hperm; subst.
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     transitivity T2; assumption.    
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (a *S A) ++ snd x) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -834,13 +835,13 @@ Proof with try assumption.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_can with A0 r s; try assumption.
     apply hmrr_ex_seq with (vec (mul_vec a r1) A ++ (vec s (-S A0) ++ vec r A0 ++ T1)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec (mul_vec a r1) A ++ vec s (-S A0) ++ vec r A0 ++ T1) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((r1, vec s (-S A0) ++ vec r A0 ++ T1) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
 Qed.
 
 Lemma hmrr_max_inv_gen :
@@ -884,20 +885,20 @@ Proof.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_app_comm | ].
     apply IHpi.
     simpl.
-    do 2 (apply Forall2_Type_cons; try assumption).
+    do 2 (apply Forall2_inf_cons; try assumption).
   - destruct L; [ | destruct L]; inversion Hperm; inversion X0; subst.
     destruct p as [p1 p2];
       destruct p0 as [p1' p2'];
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
-      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((p1, p2) :: (p1',p2') :: L) ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_app; apply Permutation_Type_map; perm_Type_solve | ]);
+      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((p1, p2) :: (p1',p2') :: L) ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L)) ; [ apply Permutation_Type_app; apply Permutation_Type_map; Permutation_Type_solve | ]);
       simpl in *;
       apply hmrr_S;
-      (apply hmrr_ex_seq with (vec (fst p'') A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
+      (apply hmrr_ex_seq with (vec (fst p'') A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
       change ((vec (fst p'') A ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (L) ++ (vec p1 B ++ p2) :: (vec p1' B ++ p2') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (p'' :: L) ++ (vec p1 B ++ p2) :: (vec p1' B ++ p2') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L));
       (eapply hmrr_ex_hseq ; [ apply Permutation_Type_app_comm | ]);
       simpl; apply hmrr_S;
-        (apply hmrr_ex_seq with (vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
+        (apply hmrr_ex_seq with (vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
         change ((vec (fst p'') B ++ snd p'')
                   :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L) ++
                   (vec (fst p'') A ++ snd p'')
@@ -907,27 +908,27 @@ Proof.
             (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (p'' :: L) ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (p'' :: L));
         (eapply hmrr_ex_hseq ; [ apply Permutation_Type_app_comm | ]);
         apply IHpi;
-        simpl; apply Forall2_Type_cons;
-          [ rewrite Heqp'';simpl; rewrite vec_app ; perm_Type_solve | rewrite ? map_app; repeat (try apply Forall2_Type_app; try assumption)].
+        simpl; apply Forall2_inf_cons;
+          [ rewrite Heqp'';simpl; rewrite vec_app ; Permutation_Type_solve | rewrite ? map_app; repeat (try apply Forall2_inf_app; try assumption)].
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r T]; simpl in *.
     apply decomp_M_case in X as [[[[D1 D2] r1] r2] [H1' [[H2' H3] H4]]].
     apply hmrr_ex_seq with ((vec r1 A ++ D1) ++ (vec r2 A ++ D2)).
-    { transitivity (vec (r1 ++ r2) A ++ (D1 ++ D2)) ; [rewrite ? vec_app; perm_Type_solve | ].
-      apply Permutation_Type_app ; [ apply vec_perm| ] ; perm_Type_solve. }
+    { transitivity (vec (r1 ++ r2) A ++ (D1 ++ D2)) ; [rewrite ? vec_app; Permutation_Type_solve | ].
+      apply Permutation_Type_app ; [ apply vec_perm| ] ; Permutation_Type_solve. }
     assert (HMR_T_M ((vec r1 A ++ D1) :: (vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi11.
     { eapply hmrr_ex_hseq ; [ | apply (IHpi1 ((r1, D1) :: L))].
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       simpl.
-      apply Forall2_Type_cons; [ | assumption].
-      perm_Type_solve. }
+      apply Forall2_inf_cons; [ | assumption].
+      Permutation_Type_solve. }
     assert (HMR_T_M ((vec r2 A ++ D2) :: (vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi22.
     { eapply hmrr_ex_hseq ; [ | apply (IHpi2 ((r2, D2) :: L))].
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       simpl.
-      apply Forall2_Type_cons; [ | assumption].
-      perm_Type_solve. }
+      apply Forall2_inf_cons; [ | assumption].
+      Permutation_Type_solve. }
     assert (HMR_T_M ((vec r2 A ++ D2) :: (vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as pi21.
     { destruct r1 ; [ | destruct r2 ].
       - apply hmrr_W; apply hmrr_C.
@@ -952,7 +953,7 @@ Proof.
         { etransitivity ; [ apply Permutation_Type_app; apply seq_mul_vec_app_r | ].
           etransitivity ; [ | apply Permutation_Type_app; symmetry; apply seq_mul_vec_app_r].
           etransitivity ; [ apply Permutation_Type_app; (apply Permutation_Type_app ; [ apply seq_mul_vec_vec | reflexivity ] ) | ].
-          perm_Type_solve. }
+          Permutation_Type_solve. }
         apply hmrr_M; try reflexivity.
         + change hmr_frag_T_M with (hmr_frag_add_T (hmr_frag_add_M hmr_frag_T_M)); apply hmrr_T_vec_inv.
           eapply hmrr_ex_hseq ; [ etransitivity ; [apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
@@ -980,7 +981,7 @@ Proof.
         { etransitivity ; [ apply Permutation_Type_app; apply seq_mul_vec_app_r | ].
           etransitivity ; [ | apply Permutation_Type_app; symmetry; apply seq_mul_vec_app_r].
           etransitivity ; [ apply Permutation_Type_app; (apply Permutation_Type_app ; [ apply seq_mul_vec_vec | reflexivity ] ) | ].
-          perm_Type_solve. }
+          Permutation_Type_solve. }
         apply hmrr_M; try reflexivity.
         + change hmr_frag_T_M with (hmr_frag_add_T (hmr_frag_add_M hmr_frag_T_M)); apply hmrr_T_vec_inv.
           eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
@@ -994,8 +995,8 @@ Proof.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_skip; apply Permutation_Type_middle | ].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with ((vec r1 B ++ D1) ++ (vec r2 B ++ D2)).
-    { transitivity (vec (r1 ++ r2) B ++ (D1 ++ D2)) ; [rewrite ? vec_app; perm_Type_solve | ].
-      apply Permutation_Type_app ; [ apply vec_perm| ] ; perm_Type_solve. }
+    { transitivity (vec (r1 ++ r2) B ++ (D1 ++ D2)) ; [rewrite ? vec_app; Permutation_Type_solve | ].
+      apply Permutation_Type_app ; [ apply vec_perm| ] ; Permutation_Type_solve. }
     apply hmrr_M; try reflexivity ; (eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ]); apply hmrr_M; try reflexivity; try assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
@@ -1011,7 +1012,7 @@ Proof.
       reflexivity. }
     apply IHpi.      
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
+    apply Forall2_inf_cons; [ | assumption].
     rewrite <- seq_mul_vec_mul_vec; rewrite <- seq_mul_app.
     apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
@@ -1021,80 +1022,80 @@ Proof.
     assert (A \/S B <> (var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     eapply hmrr_ex_hseq; [ |  apply (IHpi ((r1 , Db) :: L))].
     { simpl.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     assert (A \/S B <> zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r zero ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
     apply hmrr_ex_seq with (vec r zero ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     eapply hmrr_ex_hseq; [ |  apply (IHpi ((r1 , Db) :: L))].
     { simpl.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     assert (A \/S B <> A0 +S B0) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (A0 +S B0) ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_plus; try assumption.
-    apply hmrr_ex_seq with (vec r1 A ++ (vec r A0 ++ vec r B0 ++ Db)) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec r1 A ++ (vec r A0 ++ vec r B0 ++ Db)) ; [ Permutation_Type_solve | ].
     eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
     apply hmrr_ex_seq with (vec r (A0 +S B0) ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_plus; try assumption.
-    apply hmrr_ex_seq with (vec r1 B ++ (vec r A0 ++ vec r B0 ++ Db)) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec r1 B ++ (vec r A0 ++ vec r B0 ++ Db)) ; [ Permutation_Type_solve | ].
     eapply hmrr_ex_hseq; [ |  apply (IHpi ((r1 , vec r A0 ++ vec r B0 ++ Db) :: L))].
     { simpl.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     assert (A \/S B <> r0 *S A0) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (r0 *S A0) ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_mul; try assumption.
-    apply hmrr_ex_seq with (vec r1 A ++ (vec (mul_vec r0 r) A0 ++ Db)) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec r1 A ++ (vec (mul_vec r0 r) A0 ++ Db)) ; [ Permutation_Type_solve | ].
     eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
     apply hmrr_ex_seq with (vec r (r0 *S A0) ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_mul; try assumption.
-    apply hmrr_ex_seq with (vec r1 B ++ (vec (mul_vec r0 r) A0 ++ Db)) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec r1 B ++ (vec (mul_vec r0 r) A0 ++ Db)) ; [ Permutation_Type_solve | ].
     eapply hmrr_ex_hseq; [ |  apply (IHpi ((r1 , vec (mul_vec r0 r) A0 ++ Db) :: L))].
     { simpl.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1105,26 +1106,26 @@ Proof.
       { etransitivity ; [apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_max.
       apply hmrr_W.
       apply hmrr_ex_seq with (vec a1 A0 ++ (vec r A0 ++ T')).
-      { transitivity (vec a1 A0 ++ (vec (b1 ++ c1) A0 ++ T')); [ apply Permutation_Type_app ; [ reflexivity | ] ;try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve | ].
+      { transitivity (vec a1 A0 ++ (vec (b1 ++ c1) A0 ++ T')); [ apply Permutation_Type_app ; [ reflexivity | ] ;try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve | ].
         rewrite ? vec_app.
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ]; simpl.
       apply hmrr_ex_seq with (vec c1 (A0 \/S B0) ++ vec (a1 ++ b1) B0 ++ T').
       { etransitivity ; [apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_max.
       eapply hmrr_ex_hseq; [ apply Permutation_Type_swap | ].
       apply hmrr_W.
       apply hmrr_ex_seq with (vec a1 B0 ++ (vec r B0 ++ T')).
-      { transitivity (vec a1 B0 ++ (vec (b1 ++ c1) B0 ++ T')); [ apply Permutation_Type_app ; [ reflexivity | ] ;try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve | ].
+      { transitivity (vec a1 B0 ++ (vec (b1 ++ c1) B0 ++ T')); [ apply Permutation_Type_app ; [ reflexivity | ] ;try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve | ].
         rewrite ? vec_app.
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       eapply hmrr_ex_hseq ; [ etransitivity ; [ apply Permutation_Type_middle | symmetry; rewrite app_comm_cons; symmetry; apply Permutation_Type_app_comm ] | ].
       simpl; apply C_A_B.
       eapply hmrr_ex_hseq ; [ etransitivity ; [ apply Permutation_Type_skip; apply Permutation_Type_swap | apply Permutation_Type_swap ] | ].
@@ -1137,37 +1138,37 @@ Proof.
         simpl; do 2 (apply Permutation_Type_skip).
         apply Permutation_Type_app_comm. }
       simpl.
-      apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption]]; perm_Type_solve.    
+      apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption]]; Permutation_Type_solve.    
     + intros Hneq.
       destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
       apply hmrr_ex_seq with (vec r (A0 \/S B0) ++ vec r1 A ++ Db).
       { etransitivity; [ apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_max; try assumption.
       apply hmrr_ex_seq with (vec r1 A ++ (vec r B0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
       apply hmrr_ex_seq with (vec r1 A ++ (vec r A0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       rewrite 2 app_comm_cons.
       eapply hmrr_ex_hseq;  [ apply Permutation_Type_app_comm | ].
       simpl;apply hmrr_ex_seq with (vec r (A0 \/S B0) ++ vec r1 B ++ Db).
       { etransitivity; [ apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_max; try assumption.
       apply hmrr_ex_seq with (vec r1 B ++ (vec r B0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
       apply hmrr_ex_seq with (vec r1 B ++ (vec r A0 ++ Db)).
-      { perm_Type_solve. }
+      { Permutation_Type_solve. }
       eapply hmrr_ex_hseq ; [ | apply (IHpi ((r1, vec r B0 ++ Db) :: (r1 , vec r A0 ++ Db) :: L)) ].
       { etransitivity ; [ apply Permutation_Type_app_comm | ].
         rewrite ? app_comm_cons.
         apply Permutation_Type_app; simpl; apply Permutation_Type_swap. }        
       simpl.
-      apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption] ]; perm_Type_solve.
+      apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption] ]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1181,7 +1182,7 @@ Proof.
         simpl; apply Permutation_Type_skip.
         apply Permutation_Type_app_comm. }
       simpl.
-      apply Forall2_Type_cons; [ |  assumption]; perm_Type_solve. }
+      apply Forall2_inf_cons; [ |  assumption]; Permutation_Type_solve. }
     assert (HMR_T_M ((vec r1 A ++ vec r B0 ++ Db) :: (vec r1 B ++ vec r B0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piBB.
     { eapply hmrr_ex_hseq ; [ | apply (IHpi2 ((r1 , vec r B0 ++ Db) :: L)) ].
       { simpl.
@@ -1190,7 +1191,7 @@ Proof.
         simpl; apply Permutation_Type_skip.
         apply Permutation_Type_app_comm. }
       simpl.
-      apply Forall2_Type_cons; [ |  assumption]; perm_Type_solve. }
+      apply Forall2_inf_cons; [ |  assumption]; Permutation_Type_solve. }
     assert (HMR_T_M ((vec r1 A ++ vec r A0 ++ Db) :: (vec r1 B ++ vec r B0 ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)) as piAB.
     { apply hmrr_C.
       eapply hmrr_ex_hseq; [ etransitivity ; [ apply Permutation_Type_swap | apply Permutation_Type_skip; apply Permutation_Type_swap ] | ].
@@ -1202,7 +1203,7 @@ Proof.
         apply Permutation_Type_app; try reflexivity.
         rewrite ? app_assoc; apply Permutation_Type_app; try reflexivity.
         etransitivity ; [ | apply Permutation_Type_app_comm].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_M; try reflexivity; [ eapply hmrr_ex_hseq ;
                                       [ etransitivity ;
                                         [ apply Permutation_Type_swap |
@@ -1222,7 +1223,7 @@ Proof.
         apply Permutation_Type_app; try reflexivity.
         rewrite ? app_assoc; apply Permutation_Type_app; try reflexivity.
         etransitivity ; [ | apply Permutation_Type_app_comm].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_M; try reflexivity; [ eapply hmrr_ex_hseq ;
                                       [ etransitivity ;
                                         [ apply Permutation_Type_swap |
@@ -1232,11 +1233,11 @@ Proof.
                                       apply hmrr_W;
                                       eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap  | ] ]; try assumption. }
     eapply hmrr_ex_hseq; [ apply Permutation_Type_skip; apply Permutation_Type_middle | ].
-    apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 A ++ Db); [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 A ++ Db); [ Permutation_Type_solve | ].
     apply hmrr_min;
       (eapply hmrr_ex_seq with (vec r1 A ++ vec r _ ++ Db) ; [ rewrite ? app_assoc; apply Permutation_Type_app; try apply Permutation_Type_app_comm; try reflexivity | ]);
       (eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ]);
-      (apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 B ++ Db); [ perm_Type_solve | ]);
+      (apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 B ++ Db); [ Permutation_Type_solve | ]);
       apply hmrr_min;
       (eapply hmrr_ex_seq with (vec r1 B ++ vec r _ ++ Db) ; [ rewrite ? app_assoc; apply Permutation_Type_app; try apply Permutation_Type_app_comm; try reflexivity | ]);
       (eapply hmrr_ex_hseq; [ apply Permutation_Type_swap | ]);
@@ -1248,13 +1249,13 @@ Proof.
     assert (A \/S B <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     apply hmrr_ex_hseq with ((vec r1 B ++ T1) :: (vec r1 A ++ Db) :: (map (fun x => vec (fst x) A ++ snd x) L) ++ (map (fun x => vec (fst x) B ++ snd x) L)).
     { etransitivity ; [ apply Permutation_Type_swap | ].
       apply Permutation_Type_skip.
       apply Permutation_Type_middle. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 B ++ Db) ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 B ++ Db) ; [ Permutation_Type_solve | ].
     apply hmrr_one; try assumption.
     apply hmrr_ex_hseq with (map (fun x => vec (fst x) A ++ snd x) ((r1, Db) :: L) ++ map (fun x => vec (fst x) B ++ snd x) ((r1, Db) :: L) ).
     { simpl.
@@ -1262,8 +1263,8 @@ Proof.
       apply Permutation_Type_skip; symmetry; apply Permutation_Type_middle. }
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
     assert (A \/S B <> coone) as Hnc by now auto.
@@ -1276,13 +1277,13 @@ Proof.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
     apply hmrr_W.
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
     apply hmrr_C.
     change ((vec s coone ++ vec r one ++ Db'') :: (vec s coone ++ vec r one ++ Db'') :: nil) with
         (map (fun x => vec (fst x) A ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil) ++ map (fun x => vec (fst x) B ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_nil].
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
     apply Permutation_Type_app; try reflexivity.
     apply Permutation_Type_app; try reflexivity.
@@ -1293,13 +1294,13 @@ Proof.
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
-    apply Permutation_Type_app; perm_Type_solve. 
+    apply Permutation_Type_app; Permutation_Type_solve. 
   - destruct L; inversion Hperm; subst.
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     transitivity T2; assumption.    
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A \/S B) ++ snd x) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_app; apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -1308,17 +1309,17 @@ Proof.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_can with A0 r s; try assumption.
     apply hmrr_ex_seq with (vec r1 A ++ (vec s (-S A0) ++ vec r A0 ++ T1)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     rewrite app_comm_cons.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_app_comm | ].
     simpl; apply hmrr_can with A0 r s; try assumption.
     apply hmrr_ex_seq with (vec r1 B ++ (vec s (-S A0) ++ vec r A0 ++ T1)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     eapply hmrr_ex_hseq; [ | apply (IHpi ((r1, vec s (-S A0) ++ vec r A0 ++ T1) :: L))].
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       reflexivity. }
     simpl.
-    apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
 Qed.
     
 Lemma hmrr_min_inv_gen_l : forall L A B,
@@ -1351,36 +1352,36 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x)
            (p :: p :: L)).
     apply IHpi.
-    do 2 (apply Forall2_Type_cons; try assumption).
+    do 2 (apply Forall2_inf_cons; try assumption).
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [p1 p2];
       destruct p0 as [p1' p2'];
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
-      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((p1, p2) :: (p1',p2') :: L )) ; [ apply Permutation_Type_map; perm_Type_solve | ]);
+      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((p1, p2) :: (p1',p2') :: L )) ; [ apply Permutation_Type_map; Permutation_Type_solve | ]);
       simpl in *;
       apply hmrr_S;
-      (apply hmrr_ex_seq with (vec (fst p'') A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
+      (apply hmrr_ex_seq with (vec (fst p'') A ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
       change ((vec (fst p'') A ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (L ))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) (p'' :: L ));
       apply IHpi;
-      simpl; apply Forall2_Type_cons;
-        [ rewrite Heqp'';simpl; rewrite vec_app ; perm_Type_solve | rewrite ? map_app; repeat (try apply Forall2_Type_app; try assumption)].
+      simpl; apply Forall2_inf_cons;
+        [ rewrite Heqp'';simpl; rewrite vec_app ; Permutation_Type_solve | rewrite ? map_app; repeat (try apply Forall2_inf_app; try assumption)].
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r T]; simpl in *.
     apply decomp_M_case in X as [[[[D1 D2] r1] r2] [H1' [[H2' H3] H4]]].
     apply hmrr_ex_seq with ((vec r1 A ++ D1) ++ (vec r2 A ++ D2)).
-    { transitivity (vec (r1 ++ r2) A ++ (D1 ++ D2)) ; [rewrite ? vec_app; perm_Type_solve | ].
-      apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+    { transitivity (vec (r1 ++ r2) A ++ (D1 ++ D2)) ; [rewrite ? vec_app; Permutation_Type_solve | ].
+      apply Permutation_Type_app; [ apply vec_perm | ]; Permutation_Type_solve. }
     apply hmrr_M; try assumption.
     + change ((vec r1 A ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, D1) :: L)).
       apply IHpi1.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
     + change ((vec r2 A ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r2, D2) :: L)).
       apply IHpi2.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     apply hmrr_T with r; try assumption.
@@ -1394,7 +1395,7 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((mul_vec r r', seq_mul r T') :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
+    apply Forall2_inf_cons; [ | assumption].
     rewrite <- seq_mul_vec_mul_vec; rewrite <- seq_mul_app.
     apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
@@ -1404,15 +1405,15 @@ Proof.
     assert (A /\S B <> (var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _  _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec r1 A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1421,15 +1422,15 @@ Proof.
     apply hmrr_ex_seq with (vec r zero ++ vec r1 A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     change ((vec r1 A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1438,17 +1439,17 @@ Proof.
     apply hmrr_ex_seq with (vec r (A0 +S B0) ++ vec r1 A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_plus; try assumption.
     apply hmrr_ex_seq with (vec r1 A ++ (vec r A0 ++ vec r B0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ (vec r A0 ++ vec r B0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, vec r A0 ++ vec r B0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1457,17 +1458,17 @@ Proof.
     apply hmrr_ex_seq with (vec r (r0 *S A0) ++ vec r1 A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_mul; try assumption.
     apply hmrr_ex_seq with (vec r1 A ++ (vec (mul_vec r0 r) A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ (vec (mul_vec r0 r) A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, vec (mul_vec r0 r) A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1476,20 +1477,20 @@ Proof.
     apply hmrr_ex_seq with (vec r (A0 \/S B0) ++ vec r1 A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_max; try assumption.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r1 A ++ (vec r A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r1 A ++ (vec r B0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ (vec r B0 ++ Db)) :: (vec r1 A ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, vec r B0 ++ Db) :: (r1, vec r A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption] ]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption] ]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1500,35 +1501,35 @@ Proof.
       { etransitivity ; [apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       assert (HMR_T_M ((vec a1 A0 ++ (vec r A0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)) as piA.
       { change ((vec a1 A0  ++ vec r A0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) ((a1 , vec r A0 ++ T') :: L)).
         apply IHpi1.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
+        apply Forall2_inf_cons; [ | assumption].
         transitivity (vec (b1 ++ c1) A0 ++ T).
-        { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
+        { repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
         etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       assert (HMR_T_M ((vec a1 A0 ++ (vec r B0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)) as piB.
       { change ((vec a1 A0  ++ vec r B0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A0 ++ snd x) ((a1 , vec r B0 ++ T') :: L)).
         apply IHpi2.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
+        apply Forall2_inf_cons; [ | assumption].
         transitivity (vec (b1 ++ c1) B0 ++ T).
-        { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
+        { repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
         etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_min.
       * apply hmrr_ex_seq with (vec a1 A0 ++ (vec r A0  ++ T')).
-        { transitivity (vec a1 A0  ++ (vec (b1 ++ c1) A0 ++ T')); [ apply Permutation_Type_app; try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve | ].
+        { transitivity (vec a1 A0  ++ (vec (b1 ++ c1) A0 ++ T')); [ apply Permutation_Type_app; try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve | ].
           rewrite ? vec_app.
-          perm_Type_solve. }
+          Permutation_Type_solve. }
         apply piA.
       * rewrite vec_app.
-        apply hmrr_ex_seq with (vec c1 B0 ++ vec b1 A0 ++ vec a1 A0 ++ T'); [ perm_Type_solve | ].
+        apply hmrr_ex_seq with (vec c1 B0 ++ vec b1 A0 ++ vec a1 A0 ++ T'); [ Permutation_Type_solve | ].
         apply mix_A_B.
         -- eapply hmrr_ex_seq ; [ | apply piA].
            rewrite ? app_assoc.
@@ -1537,7 +1538,7 @@ Proof.
            apply Permutation_Type_app ; try reflexivity.
            rewrite <- vec_app.
            apply vec_perm.
-           perm_Type_solve.
+           Permutation_Type_solve.
         -- eapply hmrr_ex_seq ; [ | apply piB].
            rewrite ? app_assoc.
            apply Permutation_Type_app; try reflexivity.
@@ -1545,32 +1546,32 @@ Proof.
            apply Permutation_Type_app ; try reflexivity.
            rewrite <- vec_app.
            apply vec_perm.
-           perm_Type_solve.
+           Permutation_Type_solve.
     + intros Hneq.
       destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
       apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 A ++ Db).
       { etransitivity; [ apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_min; try assumption.
       * apply hmrr_ex_seq with (vec r1 A ++ (vec r A0 ++ Db)).
-        { perm_Type_solve. }
+        { Permutation_Type_solve. }
         change ((vec r1 A ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
           with
             (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, vec r A0 ++ Db) :: L)).
         apply IHpi1.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
-        perm_Type_solve.
+        apply Forall2_inf_cons; [ | assumption].
+        Permutation_Type_solve.
       * apply hmrr_ex_seq with (vec r1 A ++ (vec r B0 ++ Db)).
-        { perm_Type_solve. }
+        { Permutation_Type_solve. }
         change ((vec r1 A ++ (vec r B0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
           with
             (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, vec r B0 ++ Db) :: L)).
         apply IHpi2.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
-        perm_Type_solve.
+        apply Forall2_inf_cons; [ | assumption].
+        Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1578,15 +1579,15 @@ Proof.
     assert (A /\S B <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 A ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec r1 A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
     assert (A /\S B <> coone) as Hnc by now auto.
@@ -1598,13 +1599,13 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
     change ((vec s coone ++ vec r one ++ Db'') :: nil)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_nil].
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
     apply Permutation_Type_app; try reflexivity.
     apply Permutation_Type_app; try reflexivity.
@@ -1615,13 +1616,13 @@ Proof.
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
-    apply Permutation_Type_app; perm_Type_solve. 
+    apply Permutation_Type_app; Permutation_Type_solve. 
   - destruct L; inversion Hperm; subst.
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     transitivity T2; assumption.
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A /\S B) ++ snd x) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -1630,13 +1631,13 @@ Proof.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_can with A0 r s; try assumption.
     apply hmrr_ex_seq with (vec r1 A  ++ (vec s (-S A0) ++ vec r A0 ++ T1)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 A ++ vec s (-S A0) ++ vec r A0 ++ T1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r1, vec s (-S A0) ++ vec r A0 ++ T1) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
 Qed.
     
 Lemma hmrr_min_inv_gen_r : forall L A B,
@@ -1669,36 +1670,36 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x)
            (p :: p :: L)).
     apply IHpi.
-    do 2 (apply Forall2_Type_cons; try assumption).
+    do 2 (apply Forall2_inf_cons; try assumption).
   - destruct L ; [ | destruct L]; inversion Hperm; inversion X0; subst.
     destruct p as [p1 p2];
       destruct p0 as [p1' p2'];
       remember ((p1 ++ p1'), (p2 ++ p2')) as p'';
-      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L )) ; [ apply Permutation_Type_map; perm_Type_solve | ]);
+      (apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((p1, p2) :: (p1',p2') :: L )) ; [ apply Permutation_Type_map; Permutation_Type_solve | ]);
       simpl in *;
       apply hmrr_S;
-      (apply hmrr_ex_seq with (vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; perm_Type_solve | ]);
+      (apply hmrr_ex_seq with (vec (fst p'') B ++ snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
       change ((vec (fst p'') B ++ snd p'') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (L ))
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) (p'' :: L ));
       apply IHpi;
-      simpl; apply Forall2_Type_cons;
-        [ rewrite Heqp'';simpl; rewrite vec_app ; perm_Type_solve | rewrite ? map_app; repeat (try apply Forall2_Type_app; try assumption)].
+      simpl; apply Forall2_inf_cons;
+        [ rewrite Heqp'';simpl; rewrite vec_app ; Permutation_Type_solve | rewrite ? map_app; repeat (try apply Forall2_inf_app; try assumption)].
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r T]; simpl in *.
     apply decomp_M_case in X as [[[[D1 D2] r1] r2] [H1' [[H2' H3] H4]]].
     apply hmrr_ex_seq with ((vec r1 B ++ D1) ++ (vec r2 B ++ D2)).
-    { transitivity (vec (r1 ++ r2) B ++ (D1 ++ D2)) ; [rewrite ? vec_app; perm_Type_solve | ].
-      apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+    { transitivity (vec (r1 ++ r2) B ++ (D1 ++ D2)) ; [rewrite ? vec_app; Permutation_Type_solve | ].
+      apply Permutation_Type_app; [ apply vec_perm | ]; Permutation_Type_solve. }
     apply hmrr_M; try assumption.
     + change ((vec r1 B ++ D1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, D1) :: L)).
       apply IHpi1.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
     + change ((vec r2 B ++ D2) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
         with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r2, D2) :: L)).
       apply IHpi2.
-      simpl; apply Forall2_Type_cons ; assumption.
+      simpl; apply Forall2_inf_cons ; assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     apply hmrr_T with r; try assumption.
@@ -1712,7 +1713,7 @@ Proof.
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((mul_vec r r', seq_mul r T') :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
+    apply Forall2_inf_cons; [ | assumption].
     rewrite <- seq_mul_vec_mul_vec; rewrite <- seq_mul_app.
     apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
@@ -1722,15 +1723,15 @@ Proof.
     assert (A /\S B <> (var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1739,15 +1740,15 @@ Proof.
     apply hmrr_ex_seq with (vec r zero ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     change ((vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1756,17 +1757,17 @@ Proof.
     apply hmrr_ex_seq with (vec r (A0 +S B0) ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_plus; try assumption.
     apply hmrr_ex_seq with (vec r1 B ++ (vec r A0 ++ vec r B0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 B ++ (vec r A0 ++ vec r B0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, vec r A0 ++ vec r B0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1775,17 +1776,17 @@ Proof.
     apply hmrr_ex_seq with (vec r (r0 *S A0) ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_mul; try assumption.
     apply hmrr_ex_seq with (vec r1 B ++ (vec (mul_vec r0 r) A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 B ++ (vec (mul_vec r0 r) A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, vec (mul_vec r0 r) A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1794,20 +1795,20 @@ Proof.
     apply hmrr_ex_seq with (vec r (A0 \/S B0) ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_max; try assumption.
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r1 B ++ (vec r A0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_swap | ].
     apply hmrr_ex_seq with (vec r1 B ++ (vec r B0 ++ Db)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 B ++ (vec r B0 ++ Db)) :: (vec r1 B ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, vec r B0 ++ Db) :: (r1, vec r A0 ++ Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | apply Forall2_Type_cons ; [ | assumption] ]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | apply Forall2_inf_cons ; [ | assumption] ]; Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1818,30 +1819,30 @@ Proof.
       { etransitivity ; [apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc.
         apply Permutation_Type_app; try (apply vec_perm;symmetry; assumption).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       assert (HMR_T_M ((vec a1 B0 ++ (vec r B0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)) as piB.
       { change ((vec a1 B0  ++ vec r B0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) ((a1 , vec r B0 ++ T') :: L)).
         apply IHpi2.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
+        apply Forall2_inf_cons; [ | assumption].
         transitivity (vec (b1 ++ c1) B0 ++ T).
-        { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
+        { repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
         etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       assert (HMR_T_M ((vec a1 B0 ++ (vec r A0  ++ T')) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)) as piA.
       { change ((vec a1 B0  ++ vec r A0  ++ T') :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) L)
           with ( map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B0 ++ snd x) ((a1 , vec r A0 ++ T') :: L)).
         apply IHpi1.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
+        apply Forall2_inf_cons; [ | assumption].
         transitivity (vec (b1 ++ c1) A0 ++ T).
-        { repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
+        { repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
         etransitivity ; [ | apply Permutation_Type_app ; [ reflexivity | do 2 (try apply Permutation_Type_app; try (apply vec_perm; symmetry; apply H2')); reflexivity] ].
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_min.
       * rewrite vec_app.
-        apply hmrr_ex_seq with (vec c1 A0 ++ vec b1 B0 ++ vec a1 B0 ++ T'); [ perm_Type_solve | ].
+        apply hmrr_ex_seq with (vec c1 A0 ++ vec b1 B0 ++ vec a1 B0 ++ T'); [ Permutation_Type_solve | ].
         apply mix_A_B.
         -- eapply hmrr_ex_seq ; [ | apply piB].
            rewrite ? app_assoc.
@@ -1850,7 +1851,7 @@ Proof.
            apply Permutation_Type_app ; try reflexivity.
            rewrite <- vec_app.
            apply vec_perm.
-           perm_Type_solve.
+           Permutation_Type_solve.
         -- eapply hmrr_ex_seq ; [ | apply piA].
            rewrite ? app_assoc.
            apply Permutation_Type_app; try reflexivity.
@@ -1858,37 +1859,37 @@ Proof.
            apply Permutation_Type_app ; try reflexivity.
            rewrite <- vec_app.
            apply vec_perm.
-           perm_Type_solve.
+           Permutation_Type_solve.
       * apply hmrr_ex_seq with (vec a1 B0 ++ (vec r B0  ++ T')).
-        { transitivity (vec a1 B0  ++ (vec (b1 ++ c1) B0 ++ T')); [ apply Permutation_Type_app; try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve | ].
+        { transitivity (vec a1 B0  ++ (vec (b1 ++ c1) B0 ++ T')); [ apply Permutation_Type_app; try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve | ].
           rewrite ? vec_app.
-          perm_Type_solve. }
+          Permutation_Type_solve. }
         apply piB.
     + intros Hneq.
       destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
       apply hmrr_ex_seq with (vec r (A0 /\S B0) ++ vec r1 B ++ Db).
       { etransitivity; [ apply Permutation_Type_app_comm | ].
         rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       apply hmrr_min; try assumption.
       * apply hmrr_ex_seq with (vec r1 B ++ (vec r A0 ++ Db)).
-        { perm_Type_solve. }
+        { Permutation_Type_solve. }
         change ((vec r1 B ++ (vec r A0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
           with
             (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, vec r A0 ++ Db) :: L)).
         apply IHpi1.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
-        perm_Type_solve.
+        apply Forall2_inf_cons; [ | assumption].
+        Permutation_Type_solve.
       * apply hmrr_ex_seq with (vec r1 B ++ (vec r B0 ++ Db)).
-        { perm_Type_solve. }
+        { Permutation_Type_solve. }
         change ((vec r1 B ++ (vec r B0 ++ Db)) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
           with
             (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, vec r B0 ++ Db) :: L)).
         apply IHpi2.
         simpl.
-        apply Forall2_Type_cons; [ | assumption].
-        perm_Type_solve.
+        apply Forall2_inf_cons; [ | assumption].
+        Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
@@ -1896,15 +1897,15 @@ Proof.
     assert (A /\S B <> one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 B ++ Db).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption].
-    perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption].
+    Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
     assert (A /\S B <> coone) as Hnc by now auto.
@@ -1916,13 +1917,13 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ perm_Type_solve | ].
+    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
     change ((vec s coone ++ vec r one ++ Db'') :: nil)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_nil].
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
     apply Permutation_Type_app; try reflexivity.
     apply Permutation_Type_app; try reflexivity.
@@ -1933,13 +1934,13 @@ Proof.
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
-    apply Permutation_Type_app; perm_Type_solve. 
+    apply Permutation_Type_app; Permutation_Type_solve. 
   - destruct L; inversion Hperm; subst.
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     transitivity T2; assumption.
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) (A /\S B) ++ snd x) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -1948,13 +1949,13 @@ Proof.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_can with A0 r s; try assumption.
     apply hmrr_ex_seq with (vec r1 B  ++ (vec s (-S A0) ++ vec r A0 ++ T1)).
-    { perm_Type_solve. }
+    { Permutation_Type_solve. }
     change ((vec r1 B ++ vec s (-S A0) ++ vec r A0 ++ T1) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
       with
         (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r1, vec s (-S A0) ++ vec r A0 ++ T1) :: L)).
     apply IHpi.
     simpl.
-    apply Forall2_Type_cons; [ | assumption]; perm_Type_solve.
+    apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
 Qed.
 
 Lemma hmrr_diamond_inv_gen : forall L,
@@ -1982,7 +1983,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (p :: p :: L)).
     apply IHpi.
-    apply Forall2_Type_cons ; [ | apply Forall2_Type_cons]; try assumption.
+    apply Forall2_inf_cons ; [ | apply Forall2_inf_cons]; try assumption.
   - destruct L ; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [[s1 r1] T1'].
     destruct p0 as [[s2 r2] T2'].
@@ -1990,7 +1991,7 @@ Proof.
     apply hmrr_S.
     apply hmrr_ex_seq with (vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ T1' ++ T2').
     { rewrite ? vec_app.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     change ((vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ T1' ++ T2')
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
@@ -1998,10 +1999,10 @@ Proof.
       with
         (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1 ++ s2, r1 ++ r2) , T1' ++ T2') :: L)).
     apply IHpi.
-    apply Forall2_Type_cons; try assumption.
+    apply Forall2_inf_cons; try assumption.
     simpl.
     rewrite ? vec_app; rewrite seq_diamond_app.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s r] T].
     apply decomp_M_case_2 in X as [[[[[[D1 D2] s1] s2] r1] r2] [H1 [[[H2 H3] H4] H5]]]; simpl in *.
@@ -2010,18 +2011,18 @@ Proof.
     apply hmrr_ex_seq with ((vec s1 coone ++ vec r1 one ++ D1') ++ (vec s2 coone ++ vec r2 one ++ D2')).
     { transitivity (vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ D1' ++ D2').
       - rewrite ? vec_app.
-        perm_Type_solve.
-      - repeat apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve.
+        Permutation_Type_solve.
+      - repeat apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve.
         apply seq_diamond_perm_inv.
         apply Permutation_Type_app_inv_l with (vec r one).
         apply Permutation_Type_app_inv_l with (vec s coone).
         inversion Hperm; subst.
         etransitivity ; [ | apply X].
         transitivity (vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ (seq_diamond (D1' ++ D2'))).
-        + repeat apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve.
+        + repeat apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve.
         + etransitivity ; [ | apply Permutation_Type_app ; symmetry; [ apply H4 | apply H5]].
           rewrite ? vec_app; rewrite seq_diamond_app.
-          perm_Type_solve. }
+          Permutation_Type_solve. }
     apply hmrr_M; try assumption.
     + change ((vec s1 coone ++ vec r1 one ++ D1')
                 :: map
@@ -2029,14 +2030,14 @@ Proof.
                    vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
         with
           (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),D1')::L)).
-      apply IHpi1; simpl; apply Forall2_Type_cons; assumption.
+      apply IHpi1; simpl; apply Forall2_inf_cons; assumption.
     + change ((vec s2 coone ++ vec r2 one ++ D2')
                 :: map
                 (fun x : list Rpos * list Rpos * list (Rpos * term) =>
                    vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
         with
           (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s2,r2),D2')::L)).
-      apply IHpi2; simpl; apply Forall2_Type_cons; assumption.
+      apply IHpi2; simpl; apply Forall2_inf_cons; assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_T with r; try assumption.
@@ -2048,7 +2049,7 @@ Proof.
       with
         (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((mul_vec r (fst r1), mul_vec r (snd r1)), seq_mul r T1) :: L)).
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
+    simpl; apply Forall2_inf_cons; try assumption.
     etransitivity ; [ apply seq_mul_perm; apply X | ].
     rewrite ? seq_mul_app; rewrite ? seq_mul_vec_mul_vec.
     rewrite seq_diamond_seq_mul.
@@ -2106,7 +2107,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
-    apply Forall2_Type_cons; try assumption.
+    apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
@@ -2138,7 +2139,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
-    apply Forall2_Type_cons; try assumption.
+    apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
@@ -2170,7 +2171,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
-    apply Forall2_Type_cons; try assumption.
+    apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
@@ -2202,7 +2203,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
-    apply Forall2_Type_cons; try assumption.
+    apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
@@ -2235,7 +2236,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::((s1,r1),T1)::L)).
     apply IHpi.
-    apply Forall2_Type_cons; try apply Forall2_Type_cons; try assumption.    
+    apply Forall2_inf_cons; try apply Forall2_inf_cons; try assumption.    
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
@@ -2267,7 +2268,7 @@ Proof.
                  vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
       with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi1.
-    apply Forall2_Type_cons; try assumption.
+    apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct (perm_decomp_vec_eq_2 T (seq_diamond T1) r1 s1 r s one coone) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]]; [ now auto | apply X | ].
@@ -2275,21 +2276,21 @@ Proof.
     2:{ exfalso.
         refine (seq_diamond_only_diamond T1 coone r2 _ _).
         - intros B Heq; inversion Heq.
-        - apply In_Type_to_In.
-          apply Permutation_Type_in_Type with (vec (r2 :: c2) coone ++ vec c1 one ++ D'); try perm_Type_solve.
+        - apply in_inf_in.
+          apply Permutation_Type_in_inf with (vec (r2 :: c2) coone ++ vec c1 one ++ D'); try Permutation_Type_solve.
           left; reflexivity. }
     destruct c1.
     2:{ exfalso.
         refine (seq_diamond_only_diamond T1 one r2 _ _).
         - intros B Heq; inversion Heq.
-        - apply In_Type_to_In.
-          apply Permutation_Type_in_Type with (vec (r2 :: c1) one ++ D'); try perm_Type_solve.
+        - apply in_inf_in.
+          apply Permutation_Type_in_inf with (vec (r2 :: c1) one ++ D'); try Permutation_Type_solve.
           left; reflexivity. }
     simpl in *; rewrite app_nil_r in *.
     apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec a2 coone ++ vec a1 one ++ T1).
-    { transitivity (vec (a2 ++ s) coone ++ vec (a1 ++ r) one ++ T1); [ | repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve) ].
+    { transitivity (vec (a2 ++ s) coone ++ vec (a1 ++ r) one ++ T1); [ | repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve) ].
       rewrite ? vec_app.
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec a2 coone ++ vec a1 one ++ T1)
               :: map
@@ -2298,8 +2299,8 @@ Proof.
       with
         (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((a2,a1), T1)::L)).
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
-    perm_Type_solve.    
+    simpl; apply Forall2_inf_cons; try assumption.
+    Permutation_Type_solve.    
   - destruct L ; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [[s' r'] T']; simpl in *.
     assert (Permutation_Type s s') as Hperms.
@@ -2316,16 +2317,16 @@ Proof.
           * apply seq_diamond_only_diamond.
             intros B Heq; inversion Heq.
         + apply H.
-          apply Permutation_Type_in with (vec (r0 :: s') coone ++ vec r' one ++ seq_diamond T'); try perm_Type_solve.
+          apply Permutation_Type_in with (vec (r0 :: s') coone ++ vec r' one ++ seq_diamond T'); try Permutation_Type_solve.
           left; reflexivity.
-      - destruct (in_Type_split a s') as [[s1' s2'] H].
-        + assert (In_Type (a , coone) (vec s' coone)).
-          * destruct (in_Type_app_or (vec s' coone) (vec r' one ++ seq_diamond T') (a , coone)); try assumption.
-            -- apply Permutation_Type_in_Type with (vec (a :: s) coone ++ vec r one ++ seq_diamond T); try perm_Type_solve; left; reflexivity.
+      - destruct (in_inf_split a s') as [[s1' s2'] H].
+        + assert (In_inf (a , coone) (vec s' coone)).
+          * destruct (in_inf_app_or (vec s' coone) (vec r' one ++ seq_diamond T') (a , coone)); try assumption.
+            -- apply Permutation_Type_in_inf with (vec (a :: s) coone ++ vec r one ++ seq_diamond T); try Permutation_Type_solve; left; reflexivity.
             -- clear - i.
                exfalso.
                induction r'.
-               ++ apply In_Type_to_In in i; refine (seq_diamond_only_diamond _ _ _ _ i).
+               ++ apply in_inf_in in i; refine (seq_diamond_only_diamond _ _ _ _ i).
                   intros B H; inversion H.
                ++ destruct i; try inversion e.
                   apply IHr'; apply i.
@@ -2334,7 +2335,7 @@ Proof.
             -- inversion H; subst; left; reflexivity.
             -- right; apply IHs'; apply X0.
         + subst.
-          transitivity (a :: s1' ++ s2'); try perm_Type_solve.
+          transitivity (a :: s1' ++ s2'); try Permutation_Type_solve.
           apply Permutation_Type_skip.
           apply IHs.
           apply Permutation_Type_cons_inv with (a , coone); rewrite ? vec_app in Hperm; simpl in *.
@@ -2343,7 +2344,7 @@ Proof.
           rewrite ? app_assoc.
           do 2 (try apply Permutation_Type_app; try reflexivity).
           rewrite vec_app.
-          perm_Type_solve. }
+          Permutation_Type_solve. }
     assert (Permutation_Type r r') as Hpermr.
     { clear - X Hperms.
       revert X; revert r'; induction r; intros r' Hperm.
@@ -2358,22 +2359,22 @@ Proof.
           * apply seq_diamond_only_diamond.
             intros B Heq; inversion Heq.
         + apply H.
-          apply Permutation_Type_in with (vec s' coone ++ vec (r :: r') one ++ seq_diamond T'); try perm_Type_solve.
+          apply Permutation_Type_in with (vec s' coone ++ vec (r :: r') one ++ seq_diamond T'); try Permutation_Type_solve.
           apply in_or_app; right.
           left; reflexivity.
-      - destruct (in_Type_split a r') as [[r1' r2'] H].
-        + assert (In_Type (a , one) (vec r' one)).
-          * destruct (in_Type_app_or (vec s' coone) (vec r' one ++ seq_diamond T') (a , one)).
-            -- apply Permutation_Type_in_Type with (vec s coone ++ vec (a :: r) one ++ seq_diamond T); try perm_Type_solve.
-               apply in_Type_or_app; right; left; reflexivity.
+      - destruct (in_inf_split a r') as [[r1' r2'] H].
+        + assert (In_inf (a , one) (vec r' one)).
+          * destruct (in_inf_app_or (vec s' coone) (vec r' one ++ seq_diamond T') (a , one)).
+            -- apply Permutation_Type_in_inf with (vec s coone ++ vec (a :: r) one ++ seq_diamond T); try Permutation_Type_solve.
+               apply in_inf_or_app; right; left; reflexivity.
             -- clear - i.
                exfalso.
                induction s'; inversion i; try inversion H.
                apply IHs'; apply X.
-            -- apply in_Type_app_or in i.
+            -- apply in_inf_app_or in i.
                destruct i; try assumption.
                exfalso.
-               apply In_Type_to_In in i.
+               apply in_inf_in in i.
                refine (seq_diamond_only_diamond _ _ _ _ i).
                intros B H; inversion H.
           * clear - X.
@@ -2381,23 +2382,23 @@ Proof.
             -- inversion H; subst; left; reflexivity.
             -- right; apply IHr'; apply X0.
         + subst.
-          transitivity (a :: r1' ++ r2'); try perm_Type_solve.
+          transitivity (a :: r1' ++ r2'); try Permutation_Type_solve.
           apply Permutation_Type_skip.
           apply IHr.
           apply Permutation_Type_cons_inv with (a , one); rewrite ? vec_app in Hperm; simpl in *.
           rewrite vec_app.
           etransitivity ; [ apply Permutation_Type_middle |  ].
           etransitivity ; [ apply Hperm | ].
-          perm_Type_solve. }
+          Permutation_Type_solve. }
     assert (Permutation_Type T T') as HpermT.
     { clear - X Hperms Hpermr.
       apply seq_diamond_perm_inv.
       apply Permutation_Type_app_inv_l with (vec r one).
       apply Permutation_Type_app_inv_l with (vec s coone).
       etransitivity ; [ apply X | ].
-      repeat (try apply Permutation_Type_app; try apply vec_perm; try perm_Type_solve). }
+      repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
     eapply hmrr_ex_seq; [ | apply pi].
-    repeat (try apply Permutation_Type_app; try apply vec_perm; try apply seq_diamond_perm; try perm_Type_solve).
+    repeat (try apply Permutation_Type_app; try apply vec_perm; try apply seq_diamond_perm; try Permutation_Type_solve).
   - destruct L; inversion Hperm; subst.
     destruct p0 as [[s r] T]; simpl in *.
     change ((vec s coone ++ vec r one ++ T)
@@ -2407,10 +2408,10 @@ Proof.
       with
         (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s,r), T) :: L)).
     apply IHpi.
-    simpl; apply Forall2_Type_cons; try assumption.
-    perm_Type_solve.
-  - destruct (Permutation_Type_Forall2 _ H G (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ seq_diamond (snd x)) L) (Permutation_Type_sym p) Hperm).
-    destruct (Permutation_Type_map_inv _ _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
+    simpl; apply Forall2_inf_cons; try assumption.
+    Permutation_Type_solve.
+  - destruct (Permutation_Type_Forall2_inf (Permutation_Type_sym p) Hperm).
+    destruct (Permutation_Type_map_inv _ _ (Permutation_Type_sym p0)) as [L' Heq Hperm1].
     eapply hmrr_ex_hseq ; [ apply Permutation_Type_map; symmetry; apply Hperm1 | ].
     apply IHpi.
     rewrite Heq in f; apply f.
@@ -2483,12 +2484,12 @@ Proof.
     - destruct IHG as [ L [ H1 [H2 H3] ] ].
       split with ((nil, a) :: L).
       repeat split; simpl; [rewrite H1 | rewrite H2 | rewrite H3]; reflexivity. }
-  apply hmrr_ex_hseq with (G ++ (vec r B ++ T) :: (vec r A ++ T) :: nil) ; [ perm_Type_solve | ].
+  apply hmrr_ex_hseq with (G ++ (vec r B ++ T) :: (vec r A ++ T) :: nil) ; [ Permutation_Type_solve | ].
   apply hmrr_C_gen.
   apply hmrr_ex_hseq with (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((r, T) :: L) ++ map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((r, T) :: L)).
   { simpl.
     rewrite <- H2; rewrite <- H3.
-    perm_Type_solve. }
+    Permutation_Type_solve. }
   apply hmrr_max_inv_gen.
   simpl; rewrite <- H1.
   apply pi.

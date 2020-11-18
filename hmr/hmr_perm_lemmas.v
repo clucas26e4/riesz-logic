@@ -4,14 +4,15 @@ Require Import RL.hmr.term.
 Require Import RL.hmr.hseq.
 
 Require Import CMorphisms.
-Require Import List_Type_more.
-Require Import Permutation_Type.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
-Require Import Bool_more.
 Require Import Lra.
 
-Definition Allperm := (Forall2_Type (Permutation_Type (A:=Rpos * term))).
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
+
+Definition Allperm := (Forall2_inf (Permutation_Type (A:=Rpos * term))).
 
 Lemma decomp_Permutation_Type_2 A : forall l l' (x y : A),
     Permutation_Type (x :: y :: l) l' ->
@@ -19,20 +20,20 @@ Lemma decomp_Permutation_Type_2 A : forall l l' (x y : A),
                         {l' = l1 ++ y :: l2 ++ x :: l3}}.
 Proof.
   intros l l' x y Hperm.
-  destruct (in_Type_split x l') as [[la lb] Heq].
-  { apply Permutation_Type_in_Type with (x :: y :: l); [ apply Hperm | ].
+  destruct (in_inf_split x l') as [[la lb] Heq].
+  { apply Permutation_Type_in_inf with (x :: y :: l); [ apply Hperm | ].
     left; reflexivity. }
-  case (in_Type_app_or la lb y).
-  { apply Permutation_Type_in_Type with (y :: l) ; [ | left; reflexivity].
+  case (in_inf_app_or la lb y).
+  { apply Permutation_Type_in_inf with (y :: l) ; [ | left; reflexivity].
     apply Permutation_Type_cons_inv with x.
-    rewrite Heq in Hperm; perm_Type_solve. }
+    rewrite Heq in Hperm; Permutation_Type_solve. }
   - intros Hin.
-    apply in_Type_split in Hin as [[l1 l2] Heq' ].
+    apply in_inf_split in Hin as [[l1 l2] Heq' ].
     split with (l1 , l2 , lb).
     right; subst.
     rewrite <- ? app_assoc; reflexivity.
   - intros Hin.
-    apply in_Type_split in Hin as [[l1 l2] Heq' ].
+    apply in_inf_split in Hin as [[l1 l2] Heq' ].
     split with (la , l1 , l2).
     left; subst; reflexivity.
 Qed.
@@ -49,25 +50,25 @@ Proof.
   revert T1 T2 D Hperm; induction r; intros T1 T2 D Hperm.
   - simpl in Hperm.
     split with (T1 , T2, nil, nil).
-    simpl; repeat split; try perm_Type_solve.
+    simpl; repeat split; try Permutation_Type_solve.
   - simpl in Hperm.
-    case (in_Type_app_or T1 T2 (a , A)).
-    + apply Permutation_Type_in_Type with ((a, A) :: vec r A ++ D); try perm_Type_solve.
+    case (in_inf_app_or T1 T2 (a , A)).
+    + apply Permutation_Type_in_inf with ((a, A) :: vec r A ++ D); try Permutation_Type_solve.
       left; reflexivity.
     + intros Hin.
-      apply in_Type_split in Hin as [[l1 l2] Heq].
+      apply in_inf_split in Hin as [[l1 l2] Heq].
       destruct (IHr (l1 ++ l2) T2 D) as [[[[D1 D2] r1'] r2] [H1' [[H2 H3] H4]]].
       * apply Permutation_Type_cons_inv with (a, A).
-        rewrite Heq in Hperm; perm_Type_solve.
+        rewrite Heq in Hperm; Permutation_Type_solve.
       * split with (D1, D2, (a :: r1'), r2).
-        rewrite Heq; simpl; repeat split; try perm_Type_solve.
+        rewrite Heq; simpl; repeat split; try Permutation_Type_solve.
     + intros Hin.
-      apply in_Type_split in Hin as [[l1 l2] Heq].
+      apply in_inf_split in Hin as [[l1 l2] Heq].
       destruct (IHr T1 (l1 ++ l2) D) as [[[[D1 D2] r1'] r2] [H1' [[H2 H3] H4]]].
       * apply Permutation_Type_cons_inv with (a, A).
-        rewrite Heq in Hperm; perm_Type_solve.
+        rewrite Heq in Hperm; Permutation_Type_solve.
       * split with (D1, D2, r1', (a :: r2)).
-        rewrite Heq; simpl; repeat split; try perm_Type_solve.
+        rewrite Heq; simpl; repeat split; try Permutation_Type_solve.
 Qed.
     
 Lemma decomp_M_case_2 : forall T1 T2 r s D A B,
@@ -84,7 +85,7 @@ Proof.
   symmetry in H2.
   apply decomp_M_case in H2 as [[[[D1' D2'] s1] s2] [H1' [[H2' H3'] H4']]].
   split with (D1', D2', r1,r2,s1,s2).
-  repeat split; try perm_Type_solve.
+  repeat split; try Permutation_Type_solve.
 Qed.
 
 Lemma perm_decomp_vec_neq_2 : forall T D r s t A B C,
@@ -103,9 +104,9 @@ Proof.
   - split with (vec r A , D, nil, D).
     repeat split; try assumption; try reflexivity.
   - simpl in *.
-    assert (In_Type (a, C) D) as HinD.
-    { destruct (in_Type_app_or (vec r A) D (a , C)).
-      + apply Permutation_Type_in_Type with ((a, C) :: vec t C ++ T); try assumption.
+    assert (In_inf (a, C) D) as HinD.
+    { destruct (in_inf_app_or (vec r A) D (a , C)).
+      + apply Permutation_Type_in_inf with ((a, C) :: vec t C ++ T); try assumption.
         left; reflexivity.
       + exfalso.
         clear - i Hnv.
@@ -114,18 +115,18 @@ Proof.
           apply Hnv; apply H2.
         * apply IHr; apply X.
       + assumption. }
-    destruct (Add_Type_inv _ _ HinD) as [D' Hadd].
-    apply Permutation_Type_Add_Type in Hadd.
+    destruct (Add_inf_inv _ _ HinD) as [D' Hadd].
+    apply Permutation_Type_Add_inf in Hadd.
     destruct (IHt D' r) as [ [[[Ta Tb] Da ] Db] [H1 [[[H2 H3] H4] H5]]].
     { apply Permutation_Type_cons_inv with (a, C).
       etransitivity; [ apply Hperm | ].
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     split with (Ta, Tb, ((a, C):: Da), Db).
-    repeat split; try assumption; try reflexivity; try perm_Type_solve.
+    repeat split; try assumption; try reflexivity; try Permutation_Type_solve.
   - simpl in *.
-    assert (In_Type (a, B) D) as HinD.
-    { destruct (in_Type_app_or (vec r A) D (a , B)).
-      + apply Permutation_Type_in_Type with ((a, B) :: vec s (B) ++ vec t C ++ T); try assumption.
+    assert (In_inf (a, B) D) as HinD.
+    { destruct (in_inf_app_or (vec r A) D (a , B)).
+      + apply Permutation_Type_in_inf with ((a, B) :: vec s (B) ++ vec t C ++ T); try assumption.
         left; reflexivity.
       + exfalso.
         clear - i Hnc.
@@ -134,13 +135,13 @@ Proof.
           apply Hnc; apply H2.
         * apply IHr; apply X.
       + assumption. }
-    destruct (Add_Type_inv _ _ HinD) as [D' Hadd].
-    apply Permutation_Type_Add_Type in Hadd.
+    destruct (Add_inf_inv _ _ HinD) as [D' Hadd].
+    apply Permutation_Type_Add_inf in Hadd.
     destruct (IHs D' r) as [ [[[Ta Tb] Da ] Db] [H1 [[[H2 H3] H4] H5]]].
     { apply Permutation_Type_cons_inv with (a, B).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     split with (Ta, Tb, ((a, B):: Da), Db).
-    repeat split; try assumption; try reflexivity; try perm_Type_solve.
+    repeat split; try assumption; try reflexivity; try Permutation_Type_solve.
 Qed.
 
 
@@ -160,9 +161,9 @@ Proof.
   - split with (vec r A , D, nil, D).
     repeat split; try assumption; try reflexivity.
   - simpl in *.
-    assert (In_Type (a, B) D) as HinD.
-    { destruct (in_Type_app_or (vec r A) D (a , B)).
-      + apply Permutation_Type_in_Type with ((a, B) :: vec s B ++ T); try assumption.
+    assert (In_inf (a, B) D) as HinD.
+    { destruct (in_inf_app_or (vec r A) D (a , B)).
+      + apply Permutation_Type_in_inf with ((a, B) :: vec s B ++ T); try assumption.
         left; reflexivity.
       + exfalso.
         clear - i Hneq.
@@ -171,14 +172,14 @@ Proof.
           apply Hneq; apply H2.
         * apply IHr; apply X.
       + assumption. }
-    destruct (Add_Type_inv _ _ HinD) as [D' Hadd].
-    apply Permutation_Type_Add_Type in Hadd.
+    destruct (Add_inf_inv _ _ HinD) as [D' Hadd].
+    apply Permutation_Type_Add_inf in Hadd.
     destruct (IHs D' r) as [ [[[Ta Tb] Da ] Db] [H1 [[[H2 H3] H4] H5]]].
     { apply Permutation_Type_cons_inv with (a, B).
       etransitivity; [ apply Hperm | ].
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     split with (Ta, Tb, ((a, B):: Da), Db).
-    repeat split; try assumption; try reflexivity; try perm_Type_solve.
+    repeat split; try assumption; try reflexivity; try Permutation_Type_solve.
 Qed.
 
 Lemma perm_decomp_vec_eq : forall T D r s A,
@@ -193,10 +194,10 @@ Proof.
   intros T D r s A Hperm.
   revert D r Hperm; induction s; intros D r Hperm.
   + split with (r, nil, nil, D , D).
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   + simpl in Hperm.
-    case (in_Type_app_or (vec r A) D (a , A)).
-    * apply Permutation_Type_in_Type with ((a, A) :: vec s A ++ T); [apply Hperm | ].
+    case (in_inf_app_or (vec r A) D (a , A)).
+    * apply Permutation_Type_in_inf with ((a, A) :: vec s A ++ T); [apply Hperm | ].
       left; reflexivity.
     * intro Hin.
       assert { r' & Permutation_Type r (a :: r')}.
@@ -208,24 +209,24 @@ Proof.
           + inversion Heq; split with r; simpl; reflexivity.
           + specialize (IHr Hin) as [r' Hperm].
             split with (a0 :: r').
-            perm_Type_solve. }
+            Permutation_Type_solve. }
       destruct X as [r' Hperm'].
       destruct (IHs D r') as [ [[[[a1 b1] c1] T'] D'] [H1 [[[H2 H3] H4] H5]]].
       { apply Permutation_Type_cons_inv with (a, A).
-        transitivity (vec r A ++ D); try perm_Type_solve.
+        transitivity (vec r A ++ D); try Permutation_Type_solve.
         change ((a, A) :: vec r' A ++ D) with (vec (a :: r') A ++ D).
         apply Permutation_Type_app; try reflexivity.
         apply vec_perm; apply Hperm'. }
       split with (a1 , a :: b1, c1, T' , D').
-      repeat split; try perm_Type_solve.
+      repeat split; try Permutation_Type_solve.
     * intro Hin.
-      destruct (Add_Type_inv _ _ Hin) as [D' Hadd].
-      apply Permutation_Type_Add_Type in Hadd.
+      destruct (Add_inf_inv _ _ Hin) as [D' Hadd].
+      apply Permutation_Type_Add_inf in Hadd.
       destruct (IHs D' r) as [ [[[[a1 b1] c1] T'] D''] [H1 [[[H2 H3] H4] H5]]].
       { apply Permutation_Type_cons_inv with (a, A).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       split with (a1, b1, a :: c1 , T', D'').
-      repeat split; try perm_Type_solve.
+      repeat split; try Permutation_Type_solve.
 Qed.
 
 Lemma perm_decomp_vec_eq_2 : forall T D r s r' s' A B,
@@ -245,21 +246,21 @@ Proof.
   induction s'; [ intros s ; induction s ; [ intros r'; induction r'; [ intros r; induction r | ] | ] | ].
   - intros T D A B Hneq Hperm.
     split with (nil, nil,nil,nil,nil,nil , T , D).
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   - intros T D A B Hneq Hperm.
     simpl in *.
-    destruct (in_Type_split (a , A) T) as [[T1 T2] HeqT].
-    { apply Permutation_Type_in_Type with ((a , A) :: vec r A ++ D); try perm_Type_solve.
+    destruct (in_inf_split (a , A) T) as [[T1 T2] HeqT].
+    { apply Permutation_Type_in_inf with ((a , A) :: vec r A ++ D); try Permutation_Type_solve.
       left; reflexivity. }
     subst.
     destruct (IHr (T1 ++ T2) D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
     { apply Permutation_Type_cons_inv with (a , A).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     split with ((a :: a1), b1,c1,a2,b2,c2, T' , D').
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   - intros r T D A B Hneq Hperm; simpl in *.
-    case (in_Type_app_or (vec r A) D (a , A)).
-    { apply Permutation_Type_in_Type with ((a , A) :: vec r' A ++ T); try perm_Type_solve.
+    case (in_inf_app_or (vec r A) D (a , A)).
+    { apply Permutation_Type_in_inf with ((a , A) :: vec r' A ++ T); try Permutation_Type_solve.
       left; reflexivity. }
     + intros Hin.
       assert { r' & Permutation_Type r (a :: r')}.
@@ -271,40 +272,40 @@ Proof.
           + inversion Heq; split with r; simpl; reflexivity.
           + specialize (IHr Hin) as [r' Hperm].
             split with (a0 :: r').
-            perm_Type_solve. }
+            Permutation_Type_solve. }
       destruct X as [vr Hperm'].
       destruct (IHr' vr T D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
       { apply Permutation_Type_cons_inv with (a , A).
         change ((a , A) :: vec vr A ++ D) with (vec (a :: vr) A ++ D).
         etransitivity ; [ apply Hperm | ].
-        apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+        apply Permutation_Type_app; [ apply vec_perm | ]; Permutation_Type_solve. }
       split with (a1, a :: b1, c1, a2, b2, c2, T', D').
-      repeat split; simpl; try perm_Type_solve.
+      repeat split; simpl; try Permutation_Type_solve.
     + intros Hin.
-      apply in_Type_split in Hin as [[D1 D2] HeqD]; subst.
+      apply in_inf_split in Hin as [[D1 D2] HeqD]; subst.
       destruct (IHr' r T (D1 ++ D2) A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
       { apply Permutation_Type_cons_inv with (a,  A).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       split with (a1, b1, a :: c1 , a2, b2, c2, T', D').
-      simpl; repeat split; try perm_Type_solve.
+      simpl; repeat split; try Permutation_Type_solve.
   - intros r' r T D A B Hneq Hperm; simpl in *.
-    assert (In_Type (a , B) T).
-    { case (in_Type_app_or (vec r' A) T (a , B)); try (intro H; assumption).
-      { apply Permutation_Type_in_Type with ((a, B) :: vec s B ++ vec r A ++ D); try perm_Type_solve.
+    assert (In_inf (a , B) T).
+    { case (in_inf_app_or (vec r' A) T (a , B)); try (intro H; assumption).
+      { apply Permutation_Type_in_inf with ((a, B) :: vec s B ++ vec r A ++ D); try Permutation_Type_solve.
         left; reflexivity. }
       intro H; exfalso; clear - H Hneq.
       induction r'; simpl in H; inversion H.
       + inversion H0; subst; now apply Hneq.
       + apply IHr'; try assumption. }
-    apply in_Type_split in X as [[T1 T2] Heq]; subst.
+    apply in_inf_split in X as [[T1 T2] Heq]; subst.
     destruct (IHs r' r (T1 ++ T2) D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
     { apply Permutation_Type_cons_inv with (a , B).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     split with (a1, b1,c1,a :: a2,b2,c2, T' , D').
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   - intros s r' r T D A B Hneq Hperm; simpl in *.
-    case (in_Type_app_or (vec s B) (vec r A ++ D) (a , B)).
-    { apply Permutation_Type_in_Type with ((a, B) :: vec s' B ++ vec r' A ++ T); try perm_Type_solve.
+    case (in_inf_app_or (vec s B) (vec r A ++ D) (a , B)).
+    { apply Permutation_Type_in_inf with ((a, B) :: vec s' B ++ vec r' A ++ T); try Permutation_Type_solve.
       left; reflexivity. }
     + intros Hin.
       assert { s' & Permutation_Type s (a :: s')}.
@@ -316,28 +317,28 @@ Proof.
           + inversion Heq; split with s; simpl; reflexivity.
           + specialize (IHs Hin) as [s' Hperm].
             split with (a0 :: s').
-            perm_Type_solve. }
+            Permutation_Type_solve. }
       destruct X as [vs Hperm'].
       destruct (IHs' vs r' r T D A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
       { apply Permutation_Type_cons_inv with (a , B).
         change ((a , B) :: vec vs B ++ vec r A ++  D) with (vec (a :: vs) B ++ vec r A ++ D).
         etransitivity ; [ apply Hperm | ].
-        apply Permutation_Type_app; [ apply vec_perm | ]; perm_Type_solve. }
+        apply Permutation_Type_app; [ apply vec_perm | ]; Permutation_Type_solve. }
       split with (a1, b1, c1, a2, a::b2, c2, T', D').
-      repeat split; simpl; try perm_Type_solve.
+      repeat split; simpl; try Permutation_Type_solve.
     + intros H.
-      assert (In_Type (a , B) D) as Hin; [ | clear H].
-      { case (in_Type_app_or (vec r A) D (a , B)); [ apply H | | ]; try (intros H0; assumption).
+      assert (In_inf (a , B) D) as Hin; [ | clear H].
+      { case (in_inf_app_or (vec r A) D (a , B)); [ apply H | | ]; try (intros H0; assumption).
         intro H0; exfalso; clear - H0 Hneq.
         induction r; simpl in H0; inversion H0.
         - inversion H; subst; now apply Hneq.
         - apply IHr; try assumption. }
-      apply in_Type_split in Hin as [[D1 D2] HeqD]; subst.
+      apply in_inf_split in Hin as [[D1 D2] HeqD]; subst.
       destruct (IHs' s r' r T (D1 ++ D2) A B Hneq) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]].
       { apply Permutation_Type_cons_inv with (a,  B).
-        perm_Type_solve. }
+        Permutation_Type_solve. }
       split with (a1, b1, c1 , a2, b2, a :: c2, T', D').
-      simpl; repeat split; try perm_Type_solve.
+      simpl; repeat split; try Permutation_Type_solve.
 Qed.
 
 Lemma perm_decomp_vec_neq_2_2 : forall T1 T2 r s r' s' A B C D,
@@ -356,22 +357,22 @@ Proof.
   induction s'; [ intros s ; induction s ; [ intros r' ; induction r' ; [ intros r; induction r | ] | ] | ].
   - intros T1 T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4 Hperm.
     split with (T1, T2).
-    simpl in *; repeat split; perm_Type_solve.
+    simpl in *; repeat split; Permutation_Type_solve.
   - intros T1 T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4 Hperm.
     simpl in *.
-    destruct (in_Type_split (a , B) T2) as [[D1 D2] Heq].
-    { apply Permutation_Type_in_Type with ((a, B) :: vec r B ++ T1); try perm_Type_solve.
+    destruct (in_inf_split (a , B) T2) as [[D1 D2] Heq].
+    { apply Permutation_Type_in_inf with ((a, B) :: vec r B ++ T1); try Permutation_Type_solve.
       left; reflexivity. }
     subst.
     destruct (IHr T1 (D1 ++ D2) A B C D Hneq1 Hneq2 Hneq3 Hneq4) as [[T' D'] [H1' [H2' H3']]].
     { apply Permutation_Type_cons_inv with (a , B).
-      perm_Type_solve. }
+      Permutation_Type_solve. }
     split with (T', D').
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   - intros r T1 T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4 Hperm.
     simpl in *.
-    destruct (in_Type_split (a , D) T1) as [[T1' T2'] Heq].
-    { case (in_Type_app_or (vec r B) T1 (a , D)) ; [ apply Permutation_Type_in_Type with ((a, D) :: vec r' D ++ T2); [ perm_Type_solve | left; reflexivity ] | | auto ].
+    destruct (in_inf_split (a , D) T1) as [[T1' T2'] Heq].
+    { case (in_inf_app_or (vec r B) T1 (a , D)) ; [ apply Permutation_Type_in_inf with ((a, D) :: vec r' D ++ T2); [ Permutation_Type_solve | left; reflexivity ] | | auto ].
       intros H; clear - H Hneq4.
       exfalso.
       induction r; simpl in H; inversion H.
@@ -380,13 +381,13 @@ Proof.
       - apply IHr; apply X. }
     subst.
     destruct (IHr' r (T1' ++ T2') T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , D); perm_Type_solve. }
+    { apply Permutation_Type_cons_inv with (a , D); Permutation_Type_solve. }
     split with (T', D').
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   - intros r' r T1 T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4 Hperm.
     simpl in *.
-    destruct (in_Type_split (a , A) T2) as [[D1 D2] Heq].
-    { case (in_Type_app_or (vec r' D) T2 (a , A)) ; [ apply Permutation_Type_in_Type with ((a, A) :: vec s A ++ vec r B ++ T1); [ perm_Type_solve | left; reflexivity ] | | auto ].
+    destruct (in_inf_split (a , A) T2) as [[D1 D2] Heq].
+    { case (in_inf_app_or (vec r' D) T2 (a , A)) ; [ apply Permutation_Type_in_inf with ((a, A) :: vec s A ++ vec r B ++ T1); [ Permutation_Type_solve | left; reflexivity ] | | auto ].
       intros H; clear - H Hneq2.
       exfalso.
       induction r'; simpl in H; inversion H.
@@ -395,20 +396,20 @@ Proof.
       - apply IHr'; apply X. }
     subst.
     destruct (IHs r' r T1 (D1 ++ D2) A B C D Hneq1 Hneq2 Hneq3 Hneq4) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , A); perm_Type_solve. }
+    { apply Permutation_Type_cons_inv with (a , A); Permutation_Type_solve. }
     split with (T', D').
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
   - intros s r' r T1 T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4 Hperm.
     simpl in *.
-    destruct (in_Type_split (a , C) T1) as [[T1' T2'] Heq].
-    { case (in_Type_app_or (vec s A) (vec r B ++ T1) (a , C)) ; [ apply Permutation_Type_in_Type with ((a, C) :: vec s' C ++ vec r' D ++ T2); [ perm_Type_solve | left; reflexivity ] | | ].
+    destruct (in_inf_split (a , C) T1) as [[T1' T2'] Heq].
+    { case (in_inf_app_or (vec s A) (vec r B ++ T1) (a , C)) ; [ apply Permutation_Type_in_inf with ((a, C) :: vec s' C ++ vec r' D ++ T2); [ Permutation_Type_solve | left; reflexivity ] | | ].
       - intros H; clear - H Hneq1.
         exfalso.
         induction s; simpl in H; inversion H.
         + inversion H0.
           apply Hneq1; apply H3.
         + apply IHs; apply X.
-      - intro H0 ;case (in_Type_app_or (vec r B) T1 (a , C)) ; [ apply H0 | | auto ].
+      - intro H0 ;case (in_inf_app_or (vec r B) T1 (a , C)) ; [ apply H0 | | auto ].
         intros H; clear - H Hneq3.
         exfalso.
         induction r; simpl in H; inversion H.
@@ -416,7 +417,7 @@ Proof.
         + apply IHr; apply X. }
     subst.
     destruct (IHs' s r' r (T1' ++ T2') T2 A B C D Hneq1 Hneq2 Hneq3 Hneq4) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , C); perm_Type_solve. }
+    { apply Permutation_Type_cons_inv with (a , C); Permutation_Type_solve. }
     split with (T', D').
-    repeat split; try perm_Type_solve.
+    repeat split; try Permutation_Type_solve.
 Qed.

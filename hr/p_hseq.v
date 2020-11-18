@@ -6,14 +6,14 @@ Require Import RL.hr.semantic.
 Require Import RL.hr.hseq.
 
 Require Import CMorphisms.
-Require Import List_more.
-Require Import Bool_more.
-Require Import List_Type_more.
-Require Import Permutation_Type_more.
-Require Import Permutation_Type_solve.
 Require Import Lra.
 Require Import Lia.
-Require Import wf_prod.
+
+Require Import OLlibs.List_more.
+Require Import OLlibs.List_Type.
+Require Import OLlibs.Permutation_Type_more.
+Require Import OLlibs.Permutation_Type_solve.
+Require Import OLlibs.wf_prod.
 
 Local Open Scope R_scope.
 
@@ -28,7 +28,7 @@ Ltac sem_is_pos_decomp val a :=
                                                 
 Definition p_sequent : Set := list (FOL_R_term * term).
 
-Definition p_seq_is_atomic (T : p_sequent) := Forall_Type (fun x => match x with (a , A) => is_atom A end) T.
+Definition p_seq_is_atomic (T : p_sequent) := Forall_inf (fun x => match x with (a , A) => is_atom A end) T.
 
 Fixpoint eval_p_sequent (val : nat -> R) (T : p_sequent) : sequent :=
   match T with
@@ -50,7 +50,7 @@ Definition Permutation_Type_p_seq val (T1 T2 : p_sequent) := Permutation_Type (e
 
 Definition p_hypersequent : Set := list p_sequent.
 
-Definition p_hseq_is_atomic G := Forall_Type p_seq_is_atomic G.
+Definition p_hseq_is_atomic G := Forall_inf p_seq_is_atomic G.
 
 Definition Permutation_Type_p_hseq val (G1 G2 : p_hypersequent) := Permutation_Type (map (eval_p_sequent val) G1) (map (eval_p_sequent val) G2).
 
@@ -166,10 +166,10 @@ Fixpoint p_sum_weight_covar n G :=
 
 (** ** well defined hypersequent with regard to a valuation (i.e. all the weights of the hypersequent are strictly positive with this valuation) *)
 Definition p_seq_well_defined (val : nat -> R) (T : p_sequent) :=
-  Forall_Type (fun x => (0 <? FOL_R_term_sem val (fst x)) = true) T.
+  Forall_inf (fun x => (0 <? FOL_R_term_sem val (fst x)) = true) T.
 
 Definition p_hseq_well_defined (val : nat -> R) G : Type :=
-  Forall_Type (p_seq_well_defined val) G.
+  Forall_inf (p_seq_well_defined val) G.
 
 (** * Properties *)
 (** ** vec *)
@@ -530,7 +530,7 @@ Proof.
   sem_is_pos_decomp val r; intros e He;
     [ | exfalso; clear - H e; apply R_blt_lt in H; apply R_blt_lt in e; lra
       | exfalso; clear - H e; apply R_blt_lt in H; lra].
-  replace H with e by apply UIP_bool.
+  replace H with e by (apply Eqdep_dec.UIP_dec; apply Bool.bool_dec).
   reflexivity.
 Qed.
 
@@ -800,8 +800,8 @@ Qed.
 
 Lemma copy_p_seq_atomic : forall n T, seq_is_atomic T -> seq_is_atomic (copy_p_seq n T).
 Proof.
-  induction n; intros T Hat; simpl; [ apply Forall_Type_nil | ].
-  apply Forall_Type_app; auto.
+  induction n; intros T Hat; simpl; [ apply Forall_inf_nil | ].
+  apply Forall_inf_app; auto.
   apply IHn; assumption.
 Qed.
 
@@ -813,7 +813,7 @@ Proof.
   intros T1 T2 Hat1.
   induction Hat1; intros Hat2.
   - apply Hat2.
-  - simpl; apply Forall_Type_cons; try assumption.
+  - simpl; apply Forall_inf_cons; try assumption.
     apply IHHat1.
     apply Hat2.
 Qed.
@@ -824,10 +824,10 @@ Lemma seq_atomic_perm : forall T1 T2,
     seq_is_atomic T2.
 Proof.
   intros T1 T2 Hperm; induction Hperm; intro Hat.
-  - apply Forall_Type_nil.
-  - inversion Hat; subst; apply Forall_Type_cons; [ | apply IHHperm]; assumption.
+  - apply Forall_inf_nil.
+  - inversion Hat; subst; apply Forall_inf_cons; [ | apply IHHperm]; assumption.
   - inversion Hat; inversion X0; subst.
-    apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption.
+    apply Forall_inf_cons ; [ | apply Forall_inf_cons ]; assumption.
   - apply IHHperm2; apply IHHperm1; apply Hat.
 Qed.
 
@@ -837,10 +837,10 @@ Lemma hseq_atomic_perm : forall G H,
     hseq_is_atomic H.
 Proof.
   intros G H Hperm; induction Hperm; intro Hat.
-  - apply Forall_Type_nil.
-  - inversion Hat; subst; apply Forall_Type_cons; [ | apply IHHperm]; assumption.
+  - apply Forall_inf_nil.
+  - inversion Hat; subst; apply Forall_inf_cons; [ | apply IHHperm]; assumption.
   - inversion Hat; inversion X0; subst.
-    apply Forall_Type_cons ; [ | apply Forall_Type_cons ]; assumption.
+    apply Forall_inf_cons ; [ | apply Forall_inf_cons ]; assumption.
   - apply IHHperm2; apply IHHperm1; apply Hat.
 Qed.
 
@@ -850,7 +850,7 @@ Lemma seq_atomic_app_inv_l : forall T1 T2,
 Proof.
   intros T1; induction T1; intros T2 Hat; try now constructor.
   simpl in Hat; inversion Hat; subst.
-  apply Forall_Type_cons; try assumption.
+  apply Forall_inf_cons; try assumption.
   apply IHT1 with T2; apply X0.
 Qed.
 
@@ -1221,19 +1221,19 @@ Lemma p_seq_non_atomic_perm :
                  Permutation_Type T (A :: D) &
                  ~ (is_atom (snd A)) }.
 Proof.
-  induction T; intros Hnat; [exfalso; apply Hnat; apply Forall_Type_nil | ].
+  induction T; intros Hnat; [exfalso; apply Hnat; apply Forall_inf_nil | ].
   destruct a as [a A].
   destruct A.
   - destruct IHT as [[A D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (A, ((a, var n) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
-    { intros Hat; apply Hnat; apply Forall_Type_cons; auto.
+    { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
     split with (A, ((a, covar n) :: D)); auto.
-    perm_Type_solve.
+    Permutation_Type_solve.
   - split with ((a, zero), T); auto.
   - split with ((a, A1 +S A2), T); auto.
   - split with ((a, r *S A), T); auto.
@@ -1246,11 +1246,11 @@ Lemma p_seq_atomic_seq_atomic : forall val T,
     seq_is_atomic (eval_p_sequent val T).
 Proof.
   intros val T; induction T; intros Hall.
-  - apply Forall_Type_nil.
+  - apply Forall_inf_nil.
   - destruct a as [a A].
     simpl in Hall |- *.
     inversion Hall; subst.
-    sem_is_pos_decomp val a; intros; simpl; try apply Forall_Type_cons; try apply IHT; auto.
+    sem_is_pos_decomp val a; intros; simpl; try apply Forall_inf_cons; try apply IHT; auto.
     destruct A; inversion X; auto.
 Qed.
 
@@ -1258,8 +1258,8 @@ Lemma p_hseq_atomic_hseq_atomic : forall val G,
     p_hseq_is_atomic G ->
     hseq_is_atomic (map (eval_p_sequent val) G).
 Proof.
-  intros val; induction G; intros Hat; try apply Forall_Type_nil.
-  simpl; inversion Hat; subst; apply Forall_Type_cons; [ apply p_seq_atomic_seq_atomic | apply IHG]; auto.
+  intros val; induction G; intros Hat; try apply Forall_inf_nil.
+  simpl; inversion Hat; subst; apply Forall_inf_cons; [ apply p_seq_atomic_seq_atomic | apply IHG]; auto.
 Qed.
 
 (** Complexity related theorem *)
@@ -1318,7 +1318,7 @@ Lemma complexity_p_hseq_perm_fst : forall G,
       destruct IHG as [[T H] Hperm Heq].
       { intros H; inversion H. }
       split with (T, (a :: H)).
-      * transitivity (a :: T :: H); perm_Type_solve.
+      * transitivity (a :: T :: H); Permutation_Type_solve.
       * rewrite (complexity_p_hseq_perm _ _ Hperm).
         rewrite (complexity_p_hseq_perm _ _ Hperm) in Heq.
         rewrite Heq; reflexivity.
@@ -1362,9 +1362,9 @@ Lemma p_seq_is_atomic_complexity_0_inv :
     HR_complexity_p_seq T = 0%nat ->
     p_seq_is_atomic T.
 Proof.
-  induction T; intros Heq; [ apply Forall_Type_nil |] .
+  induction T; intros Heq; [ apply Forall_inf_nil |] .
   destruct a as [a A]; simpl in *.
-  apply Forall_Type_cons ; [ apply is_atom_complexity_0_inv  | apply IHT]; lia.
+  apply Forall_inf_cons ; [ apply is_atom_complexity_0_inv  | apply IHT]; lia.
 Qed.
 
 Lemma p_hseq_is_atomic_complexity_0 :
@@ -1384,10 +1384,10 @@ Lemma p_hseq_is_atomic_complexity_0_inv :
     fst (HR_complexity_p_hseq G) = 0%nat ->
     p_hseq_is_atomic G.
 Proof.
-  induction G; intros Heq; [ apply Forall_Type_nil | ].
+  induction G; intros Heq; [ apply Forall_inf_nil | ].
   simpl in *.
   case_eq (HR_complexity_p_seq a =? fst (HR_complexity_p_hseq G)); intros H; rewrite H in Heq; simpl in Heq ; [ apply Nat.eqb_eq in H | apply Nat.eqb_neq in H ].
-  { apply Forall_Type_cons; [ apply p_seq_is_atomic_complexity_0_inv | apply IHG ]; lia. }
+  { apply Forall_inf_cons; [ apply p_seq_is_atomic_complexity_0_inv | apply IHG ]; lia. }
   exfalso.
   case_eq (HR_complexity_p_seq a <? fst (HR_complexity_p_hseq G))%nat; intros H2; rewrite H2 in Heq; [apply Nat.ltb_lt in H2 | apply Nat.ltb_nlt in H2]; simpl in *; lia.
 Qed.
@@ -1736,7 +1736,7 @@ Proof.
   - apply IHHperm; auto.
   - inversion X; auto.
   - inversion X; subst.
-    apply Forall_Type_cons; auto.
+    apply Forall_inf_cons; auto.
 Qed.
 
 Lemma p_hseq_well_defined_perm : forall val G H,
@@ -1749,7 +1749,7 @@ Proof.
   - apply IHHperm; auto.
   - inversion X0; auto.
   - inversion X0; subst.
-    apply Forall_Type_cons; auto.
+    apply Forall_inf_cons; auto.
 Qed.
 
 (** ** to_p_hypersequent *)
@@ -1757,16 +1757,16 @@ Qed.
 Lemma to_p_sequent_well_defined : forall val T,
     p_seq_well_defined val (to_p_sequent T).
 Proof.
-  intros val; induction T; [ apply Forall_Type_nil | ].
+  intros val; induction T; [ apply Forall_inf_nil | ].
   destruct a as [[a Ha] A]; simpl.
-  apply Forall_Type_cons; assumption.
+  apply Forall_inf_cons; assumption.
 Qed.
 
 Lemma to_p_hypersequent_well_defined : forall val G,
     p_hseq_well_defined val (to_p_hypersequent G).
 Proof.
-  intros val; induction G; [ apply Forall_Type_nil | ].
-  apply Forall_Type_cons; [ apply to_p_sequent_well_defined | assumption ].
+  intros val; induction G; [ apply Forall_inf_nil | ].
+  apply Forall_inf_cons; [ apply to_p_sequent_well_defined | assumption ].
 Qed.
 
 Lemma eval_p_sequent_to_p_sequent : forall val T,
@@ -1778,7 +1778,7 @@ Proof.
     rewrite ? He;
     [ | exfalso; clear - e Ha; simpl in *; apply R_blt_lt in Ha; apply R_blt_lt in e; nra
       | exfalso; clear - e Ha; simpl in *; apply R_blt_lt in Ha; nra].
-  replace e with Ha by (apply UIP_bool).
+  replace e with Ha by (apply Eqdep_dec.UIP_dec; apply Bool.bool_dec).
   rewrite IHT; reflexivity.
 Qed.
 
