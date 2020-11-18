@@ -13,11 +13,10 @@ VFILES_DOC = $(wildcard */*.v)
 	$(COQDOC) $<
 
 
-doc: $(VFILES_HR:.v=.glob) $(VFILES_HMR:.v=.glob)
-	cd $(UTILDIR) && $(MAKE)
-	cd $(HRDIR) && $(MAKE) doc
-	cd $(HMRDIR) && $(MAKE) doc
-	$(COQDOC) -toc *.v */*.v
+doc: util_doc pre_hr_doc pre_hmr_doc
+
+util_doc : 
+	cd $(UTILDIR) && $(MAKE) doc
 
 clean:
 	rm -f *.vo* */*.vo*
@@ -46,6 +45,12 @@ pre_hr:
 
 pre_hmr:
 	cd $(HMRDIR) && $(MAKE)
+
+pre_hr_doc:
+	cd $(HRDIR) && $(MAKE) doc
+
+pre_hmr_doc:
+	cd $(HMRDIR) && $(MAKE) doc
 
 hr: pre_hr $(VFILES_HR:.v=.vo)
 hmr: pre_hmr $(VFILES_HMR:.v=.vo)
