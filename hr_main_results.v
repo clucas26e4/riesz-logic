@@ -1,5 +1,5 @@
 (** * Summary of the main results as in Section 3.1 *)
-Require Import Rpos.
+Require Import RL.Utilities.Rpos.
 Require Import RL.hr.Rterm.
 Require Import RL.hr.term.
 Require Import RL.hr.Rsemantic.
