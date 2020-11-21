@@ -7,10 +7,10 @@ Require Import CMorphisms.
 Require Import Bool.
 
 Require Import Lra.
-Require Import RL.ollibs.List_Type.
-Require Import RL.ollibs.Permutation_Type.
-Require Import RL.ollibs.Permutation_Type_more.
-Require Import RL.ollibs.Permutation_Type_solve.
+Require Import RL.OLlibs.List_Type.
+Require Import RL.OLlibs.Permutation_Type.
+Require Import RL.OLlibs.Permutation_Type_more.
+Require Import RL.OLlibs.Permutation_Type_solve.
 
 Definition Allperm := (Forall2_inf (Permutation_Type (A:=Rpos * term))).
     

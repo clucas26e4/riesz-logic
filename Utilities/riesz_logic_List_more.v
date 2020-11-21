@@ -1,9 +1,9 @@
 Require Import PeanoNat.
 Require Import Lia.
-Require Import RL.ollibs.List_Type.
-Require Import RL.ollibs.List_more.
-Require Import RL.ollibs.Permutation_Type.
-Require Import RL.ollibs.Permutation_Type_solve.
+Require Import RL.OLlibs.List_Type.
+Require Import RL.OLlibs.List_more.
+Require Import RL.OLlibs.Permutation_Type.
+Require Import RL.OLlibs.Permutation_Type_solve.
 
 Lemma Exists_inf_split A : forall P (l : list A),
     Exists_inf P l ->

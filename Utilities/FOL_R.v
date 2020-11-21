@@ -9,9 +9,9 @@ Require Import Lra.
 Require Import FunctionalExtensionality.
 Require Import Lia.
 
-Require Import RL.ollibs.Permutation_Type.
-Require Import RL.ollibs.List_Type.
-Require Import RL.ollibs.List_more.
+Require Import RL.OLlibs.Permutation_Type.
+Require Import RL.OLlibs.List_Type.
+Require Import RL.OLlibs.List_more.
 
 Local Open Scope R_scope.
 (* begin hide *)

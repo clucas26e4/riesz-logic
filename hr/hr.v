@@ -8,9 +8,9 @@ Require Import CMorphisms.
 Require Import List.
 Require Import Lra.
 
-Require Import RL.ollibs.Permutation_Type.
-Require Import RL.ollibs.Permutation_Type_more.
-Require Import RL.ollibs.Permutation_Type_solve.
+Require Import RL.OLlibs.Permutation_Type.
+Require Import RL.OLlibs.Permutation_Type_more.
+Require Import RL.OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 

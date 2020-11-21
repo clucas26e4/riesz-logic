@@ -10,11 +10,11 @@ Require Import RL.hmr.tech_lemmas.
 Require Import CMorphisms.
 Require Import Lra.
 
-Require Import RL.ollibs.List_more.
-Require Import RL.ollibs.List_Type.
-Require Import RL.ollibs.Permutation_Type.
-Require Import RL.ollibs.Permutation_Type_more.
-Require Import RL.ollibs.Permutation_Type_solve.
+Require Import RL.OLlibs.List_more.
+Require Import RL.OLlibs.List_Type.
+Require Import RL.OLlibs.Permutation_Type.
+Require Import RL.OLlibs.Permutation_Type_more.
+Require Import RL.OLlibs.Permutation_Type_solve.
 
 (** * Generalized version of the invertibilty of the logical rules *)
 (** L is a list of pair of a vector r_i and a sequent T_i.

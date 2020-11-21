@@ -7,8 +7,8 @@ Require Import RL.hr.hr.
 Require Import List.
 Require Import Lra.
 
-Require Import RL.ollibs.Permutation_Type_more.
-Require Import RL.ollibs.Permutation_Type_solve.
+Require Import RL.OLlibs.Permutation_Type_more.
+Require Import RL.OLlibs.Permutation_Type_solve.
 
 Ltac HR_to_app_step :=
   match goal with

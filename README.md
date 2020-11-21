@@ -19,7 +19,7 @@ This command generates a .html file for each Coq file, that only have definition
 ### The structure of the depository
 There are four folders in the depository:
 
-* ollibs - contains the library [OLlibs](https://github.com/olaure01/ollibs), some add-ons for the Coq Standard Library.
+* ollibs - contains a subset of the library [OLlibs](https://github.com/olaure01/ollibs), a collection of add-ons for the Coq Standard Library.
 * Utilities - contains files not connected to Riesz Logic (e.g. a file defining positive real numbers and lemmas about them).
 * hr - contains all the files related to the system HR.
 * hmr - contains all the files related to the system HMR.

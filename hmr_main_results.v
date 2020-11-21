@@ -19,7 +19,7 @@ Require Import Reals.
 Require Import Lra.
 Require Import Lia.
 
-Require Import RL.ollibs.List_more.
+Require Import RL.OLlibs.List_more.
 
 (** Theorem 4.3 *)
 Lemma HMR_soundness P : forall G,
