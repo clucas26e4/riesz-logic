@@ -65,4 +65,4 @@ The files in hr and hmr are quite similar (because the structure of Section 3 an
 
 ---
 
-Many thanks to Olivier Laurent, the main contributor to [OLlibs](https://github.com/olaure01/ollibs) that was very helpful for this project.
+Many thanks to Olivier Laurent, the main contributor of [OLlibs](https://github.com/olaure01/ollibs) that was very helpful for this project.
