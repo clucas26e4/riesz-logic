@@ -8,21 +8,18 @@ Working with `Coq 8.12.0`
 If you have any trouble or question, please contact `christophe.lucas@ens-lyon.fr` or `matteo.mio@ens-lyon.fr`.
 
 ### How to compile
-The [OLlibs](https://github.com/olaure01/ollibs) must be installed. The [Opam](https://coq.inria.fr/opam-using.html)-based installation procedure to install the library is:
-
-	$ opam repo add coq-released https://coq.inria.fr/opam/released
-	$ opam install coq-ollibs
-
 To compile all the coq files and generate the documentation, type the following instruction in a terminal at the root of the project (where the file hr\_main\_results.v is).
 
-	$ make doc
+	$ ./configure
+	$ make html
 
 This command generates a .html file for each Coq file, that only have definitions, statements and comments useful for the reader. It also generates a file "toc.html" where all the sections in the files are gathered together as well as a quick explanation of what the reader will find in the files.
 
 
 ### The structure of the depository
-There are three folders in the depository:
+There are four folders in the depository:
 
+* ollibs - contains the library [OLlibs](https://github.com/olaure01/ollibs), some add-ons for the Coq Standard Library.
 * Utilities - contains files not connected to Riesz Logic (e.g. a file defining positive real numbers and lemmas about them).
 * hr - contains all the files related to the system HR.
 * hmr - contains all the files related to the system HMR.
@@ -65,3 +62,7 @@ The files in hr and hmr are quite similar (because the structure of Section 3 an
 * `riesz_logic_List_more.v` : additionnal lemmas for lists.
 * `FOL_R.v` : definition of First Order Logic over real numbers.
 * `lt_nat_tuples.v` : definition of a well-founded order on N², N³ and N⁴, used to ensure terminations (notably to prove decidability).
+
+---
+
+Many thanks to Olivier Laurent, the main contributor to [OLlibs](https://github.com/olaure01/ollibs) that was very helpful for this project.
