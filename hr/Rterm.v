@@ -2,7 +2,7 @@
 Require Import Reals.
 
 (** ** Term *)
-Require Import OLlibs.List_more.
+Require Import RL.ollibs.List_more.
 
 Inductive Rterm : Type :=
 | R_var : nat -> Rterm

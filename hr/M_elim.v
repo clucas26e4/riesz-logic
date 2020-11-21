@@ -9,11 +9,11 @@ Require Import RL.hr.tech_lemmas.
 Require Import CMorphisms.
 Require Import Lra.
 
-Require Import OLlibs.List_Type.
-Require Import OLlibs.List_more.
-Require Import OLlibs.Permutation_Type.
-Require Import OLlibs.Permutation_Type_more.
-Require Import OLlibs.Permutation_Type_solve.
+Require Import RL.ollibs.List_Type.
+Require Import RL.ollibs.List_more.
+Require Import RL.ollibs.Permutation_Type.
+Require Import RL.ollibs.Permutation_Type_more.
+Require Import RL.ollibs.Permutation_Type_solve.
 
 (** Proof of Lemma 3.40 *)
 Lemma hrr_mul_vec : forall L,

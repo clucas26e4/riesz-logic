@@ -2,7 +2,7 @@
 Require Import Rpos.
 
 (** ** Term *)
-Require Import OLlibs.List_more.
+Require Import RL.ollibs.List_more.
 
 Inductive term : Type :=
 | var : nat -> term

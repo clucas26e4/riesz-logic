@@ -6,10 +6,10 @@ Require Import RL.hmr.hmr.
 Require Import CMorphisms.
 Require Import Lra.
 
-Require Import OLlibs.List_more.
-Require Import OLlibs.List_Type.
-Require Import OLlibs.Permutation_Type_more.
-Require Import OLlibs.Permutation_Type_solve.
+Require Import RL.ollibs.List_more.
+Require Import RL.ollibs.List_Type.
+Require Import RL.ollibs.Permutation_Type_more.
+Require Import RL.ollibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
 (** * Definition of hmr *)

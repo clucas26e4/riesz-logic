@@ -6,8 +6,8 @@ Require Import RL.hmr.hmr.
 Require Import List.
 Require Import Lra.
 
-Require Import OLlibs.Permutation_Type_more.
-Require Import OLlibs.Permutation_Type_solve.
+Require Import RL.ollibs.Permutation_Type_more.
+Require Import RL.ollibs.Permutation_Type_solve.
 
 Ltac HMR_to_app_step :=
   match goal with

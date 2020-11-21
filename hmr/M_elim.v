@@ -10,11 +10,11 @@ Require Import RL.hmr.preproof.
 Require Import CMorphisms.
 Require Import Lra.
 
-Require Import OLlibs.List_more.
-Require Import OLlibs.List_Type.
-Require Import OLlibs.Permutation_Type.
-Require Import OLlibs.Permutation_Type_more.
-Require Import OLlibs.Permutation_Type_solve.
+Require Import RL.ollibs.List_more.
+Require Import RL.ollibs.List_Type.
+Require Import RL.ollibs.Permutation_Type.
+Require Import RL.ollibs.Permutation_Type_more.
+Require Import RL.ollibs.Permutation_Type_solve.
 
 (** Proof of Lemma 4.35 *)
 Lemma hmrr_mul_vec : forall L (pi : HMR_T (map (fun x => snd x) L)),

@@ -10,9 +10,9 @@ Require Import RL.hmr.can_elim.
 
 Require Import List.
 
-Require Import OLlibs.Permutation_Type.
-Require Import OLlibs.Permutation_Type_more.
-Require Import OLlibs.Permutation_Type_solve.
+Require Import RL.ollibs.Permutation_Type.
+Require Import RL.ollibs.Permutation_Type_more.
+Require Import RL.ollibs.Permutation_Type_solve.
 
 (** F is a Riesz space term. *)
 Definition F := (((plus_pos One One) *S var 0) +S ((plus_pos One One) *S covar 1)) \/S (var 1 +S covar 0).
