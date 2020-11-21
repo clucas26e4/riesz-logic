@@ -15,9 +15,6 @@ VFILES_DOC = $(wildcard */*.v)
 
 doc: util_doc pre_hr_doc pre_hmr_doc
 
-util_doc : 
-	cd $(UTILDIR) && $(MAKE) doc
-
 clean:
 	rm -f *.vo* */*.vo*
 	rm -f .*.aux */.*.aux
@@ -51,6 +48,9 @@ pre_hr_doc:
 
 pre_hmr_doc:
 	cd $(HMRDIR) && $(MAKE) doc
+
+util_doc : 
+	cd $(UTILDIR) && $(MAKE) doc
 
 hr: pre_hr $(VFILES_HR:.v=.vo)
 hmr: pre_hmr $(VFILES_HMR:.v=.vo)
