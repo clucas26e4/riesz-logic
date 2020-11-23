@@ -1,7 +1,7 @@
 (** * Implementation of Section 3.5 *)
-Require Import QArithSternBrocot.sqrt2.
-Require Import Rpos.
-Require Import riesz_logic_List_more.
+Require Import RL.QArithSternBrocot.sqrt2.
+Require Import RL.Utilities.Rpos.
+Require Import RL.Utilities.riesz_logic_List_more.
 Require Import RL.hr.term.
 Require Import RL.hr.hseq.
 Require Import RL.hr.hr.
