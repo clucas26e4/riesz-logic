@@ -24,12 +24,12 @@ Local Open Scope R_scope.
     L is the list (((r_i, s_i), (r'_i, s'_i)), T_i) *)
 Lemma hrr_atomic_can_elim_gen : forall L n,
     Forall_inf (fun x => sum_vec (fst (fst (fst x))) - sum_vec (snd (fst (fst x))) = sum_vec (fst (snd (fst x))) - sum_vec (snd (snd (fst x)))) L ->
-    HR_T (map (fun x => (vec (fst (fst (fst x))) (covar n) ++ vec (snd (fst (fst x))) (var n) ++ snd x)) L) ->
-    HR_T (map (fun x => (vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x)) L).
+    HR_T (map (fun x => (vec (fst (fst (fst x))) (HR_covar n) ++ vec (snd (fst (fst x))) (HR_var n) ++ snd x)) L) ->
+    HR_T (map (fun x => (vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x)) L).
 Proof.
   intros L n H.
-  remember (map (fun x => (vec (fst (fst (fst x))) (covar n) ++ vec (snd (fst (fst x))) (var n) ++ snd x)) L) as G.
-  assert (Allperm G (map (fun x => (vec (fst (fst (fst x))) (covar n) ++ vec (snd (fst (fst x))) (var n) ++ snd x)) L)) by (rewrite <- HeqG; clear; induction G; try now constructor).
+  remember (map (fun x => (vec (fst (fst (fst x))) (HR_covar n) ++ vec (snd (fst (fst x))) (HR_var n) ++ snd x)) L) as G.
+  assert (Allperm G (map (fun x => (vec (fst (fst (fst x))) (HR_covar n) ++ vec (snd (fst (fst x))) (HR_var n) ++ snd x)) L)) by (rewrite <- HeqG; clear; induction G; try now constructor).
   clear HeqG.
   intro pi; revert L H X; induction pi; intros L Hsum Hperm.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
@@ -47,13 +47,13 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     apply hrr_C; try assumption.
-    change ((vec (fst (snd (fst p))) (covar n) ++ vec (snd (snd (fst p))) (var n) ++ snd p)
-              :: (vec (fst (snd (fst p))) (covar n) ++ vec (snd (snd (fst p))) (var n) ++ snd p)
+    change ((vec (fst (snd (fst p))) (HR_covar n) ++ vec (snd (snd (fst p))) (HR_var n) ++ snd p)
+              :: (vec (fst (snd (fst p))) (HR_covar n) ++ vec (snd (snd (fst p))) (HR_var n) ++ snd p)
               :: map
-              (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x)
+              (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x)
               L)
       with
-        (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x)
+        (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x)
            (p :: p :: L)).
     apply IHpi.
     + inversion Hsum.
@@ -66,9 +66,9 @@ Proof.
       simpl in *;
       remember ((((p1 ++ p1'), (p2 ++ p2')) , ((p3 ++ p3') , (p4 ++ p4'))), (p5 ++ p5')) as p'';
       apply hrr_S;
-      (apply hrr_ex_seq with (vec (fst (snd (fst p''))) (covar n) ++ vec (snd (snd (fst p''))) (var n) ++snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
-      change ((vec (fst (snd (fst p''))) (covar n) ++ vec (snd (snd (fst p''))) (var n) ++snd p'') :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) (L))
-        with (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) (p'' :: L));
+      (apply hrr_ex_seq with (vec (fst (snd (fst p''))) (HR_covar n) ++ vec (snd (snd (fst p''))) (HR_var n) ++snd p'') ; [ rewrite Heqp''; simpl; rewrite ? vec_app; Permutation_Type_solve | ]);
+      change ((vec (fst (snd (fst p''))) (HR_covar n) ++ vec (snd (snd (fst p''))) (HR_var n) ++snd p'') :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) (L))
+        with (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) (p'' :: L));
       (apply IHpi ;
        [ subst;
            inversion Hsum; inversion X3;
@@ -84,13 +84,13 @@ Proof.
     simpl.
     apply hrr_T with r; try assumption.
     destruct p as ([[r1 r2] [s1 s2]] , T'); simpl in *.
-    apply hrr_ex_seq with (vec (mul_vec r s1) (covar n) ++ vec (mul_vec r s2) (var n) ++ seq_mul r T').
+    apply hrr_ex_seq with (vec (mul_vec r s1) (HR_covar n) ++ vec (mul_vec r s2) (HR_var n) ++ seq_mul r T').
     { rewrite <- ? seq_mul_vec_mul_vec.
       rewrite ? seq_mul_app.
       reflexivity. }
-    change ((vec (mul_vec r s1) (covar n) ++ vec (mul_vec r s2) (var n) ++ seq_mul r T') :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+    change ((vec (mul_vec r s1) (HR_covar n) ++ vec (mul_vec r s2) (HR_var n) ++ seq_mul r T') :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
       with
-        (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((((mul_vec r r1, mul_vec r r2) , (mul_vec r s1 , mul_vec r s2)), seq_mul r T') :: L)).
+        (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((((mul_vec r r1, mul_vec r r2) , (mul_vec r s1 , mul_vec r s2)), seq_mul r T') :: L)).
     apply IHpi.
     + subst; inversion Hsum; subst; simpl in *.
       apply Forall_inf_cons ; try assumption; simpl.
@@ -104,18 +104,18 @@ Proof.
     case_eq (n =? n0); [intros Heqn; apply Nat.eqb_eq in Heqn | intros Hneqn; apply Nat.eqb_neq in Hneqn].
     + subst.
       destruct p as [[[s1 r1] [s1' r1']] T1]; simpl in *.
-      destruct (perm_decomp_vec_eq_2 T T1 r1 s1 r s (var n0) (covar n0)) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]]; [ now auto | apply X | ].
-      apply hrr_ex_seq with (vec (c2 ++ s1') (covar n0) ++ vec (c1 ++ r1') (var n0) ++ T').
+      destruct (perm_decomp_vec_eq_2 T T1 r1 s1 r s (HR_var n0) (HR_covar n0)) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]]; [ now auto | apply X | ].
+      apply hrr_ex_seq with (vec (c2 ++ s1') (HR_covar n0) ++ vec (c1 ++ r1') (HR_var n0) ++ T').
       { rewrite ? vec_app.
-        transitivity (vec s1' (covar n0) ++ vec r1' (var n0) ++ (vec c2 (covar n0) ++ vec c1 (var n0) ++ T')); try Permutation_Type_solve. }
-      change ((vec (c2 ++ s1') (covar n0) ++ vec (c1 ++ r1') (var n0) ++ T')
+        transitivity (vec s1' (HR_covar n0) ++ vec r1' (HR_var n0) ++ (vec c2 (HR_covar n0) ++ vec c1 (HR_var n0) ++ T')); try Permutation_Type_solve. }
+      change ((vec (c2 ++ s1') (HR_covar n0) ++ vec (c1 ++ r1') (HR_var n0) ++ T')
                 :: map
                 (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) =>
-                   vec (fst (snd (fst x))) (covar n0) ++ vec (snd (snd (fst x))) (var n0) ++ snd x)
+                   vec (fst (snd (fst x))) (HR_covar n0) ++ vec (snd (snd (fst x))) (HR_var n0) ++ snd x)
                 L)
         with
           (map (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) =>
-                   vec (fst (snd (fst x))) (covar n0) ++ vec (snd (snd (fst x))) (var n0) ++ snd x)
+                   vec (fst (snd (fst x))) (HR_covar n0) ++ vec (snd (snd (fst x))) (HR_var n0) ++ snd x)
                ((((a2,a1),(c2 ++ s1', c1 ++ r1')), T')::L)).
       apply IHpi.
       * inversion Hsum; simpl in*.
@@ -135,18 +135,18 @@ Proof.
     + destruct p as [[[s1 r1] [s1' r1']] T1]; simpl in *.
       subst.
       destruct (perm_decomp_vec_neq_2 T T1 r s r1 s1 n0 n (not_eq_sym Hneqn) X) as [[T' D'] [H1' [H2' H3']]].
-      apply hrr_ex_seq with (vec s (covar n0) ++ vec r (var n0) ++ vec s1' (covar n) ++ vec r1' (var n) ++ T').
+      apply hrr_ex_seq with (vec s (HR_covar n0) ++ vec r (HR_var n0) ++ vec s1' (HR_covar n) ++ vec r1' (HR_var n) ++ T').
       { Permutation_Type_solve. }
       apply hrr_ID; try assumption.
-      change ((vec s1' (covar n) ++ vec r1' (var n) ++ T')
+      change ((vec s1' (HR_covar n) ++ vec r1' (HR_var n) ++ T')
                 :: map
                 (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) =>
-                   vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x)
+                   vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x)
                 L)
         with
           (map
              (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) =>
-                vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x)
+                vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x)
              ((((s1,r1),(s1',r1')),T')::L)).
       apply IHpi.
       * inversion Hsum.
@@ -157,11 +157,11 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> covar n) as Hnc by now auto.
-    assert (zero <> var n) as Hnv by now auto.
+    assert (HR_zero <> HR_covar n) as Hnc by now auto.
+    assert (HR_zero <> HR_var n) as Hnv by now auto.
     apply Permutation_Type_sym in X.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r zero ++ vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc.
       repeat (try apply Permutation_Type_app; try reflexivity).
@@ -169,9 +169,9 @@ Proof.
       etransitivity ; [ | symmetry; apply H1'].
       apply Permutation_Type_app; Permutation_Type_solve. }
     apply hrr_Z; try assumption.
-    change ((vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+    change ((vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
       with
-        (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((r1, Db) :: L)).
+        (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((r1, Db) :: L)).
     apply IHpi.
     + inversion Hsum.
       apply Forall_inf_cons; simpl in *; try assumption.
@@ -181,20 +181,20 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> covar n) as Hnc by now auto.
-    assert (A +S B <> var n) as Hnv by now auto.
+    assert (A +S B <> HR_covar n) as Hnc by now auto.
+    assert (A +S B <> HR_var n) as Hnv by now auto.
     apply Permutation_Type_sym in X.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r (A +S B) ++ vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ Db).
+    apply hrr_ex_seq with (vec r (A +S B) ++ vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ Db).
     { etransitivity ; [ apply Permutation_Type_app_comm | ]; rewrite <- ? app_assoc; repeat (try apply Permutation_Type_app; try reflexivity).
       etransitivity ; [ | symmetry; apply H1' ].
       etransitivity ; [ apply Permutation_Type_app_comm | ].
       Permutation_Type_solve. }
     apply hrr_plus; try assumption.
-    apply hrr_ex_seq with (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r A ++ vec r B ++ Db); [ Permutation_Type_solve | ].
-    change ((vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r A ++ vec r B ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+    apply hrr_ex_seq with (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r A ++ vec r B ++ Db); [ Permutation_Type_solve | ].
+    change ((vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r A ++ vec r B ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
       with
-        (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((r1, vec r A ++ vec r B ++ Db) :: L)).
+        (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((r1, vec r A ++ vec r B ++ Db) :: L)).
     apply IHpi.
     + inversion Hsum.
       apply Forall_inf_cons; simpl in *; try assumption.
@@ -204,21 +204,21 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (r0 *S A <> covar n) as Hnc by now auto.
-    assert (r0 *S A <> var n) as Hnv by now auto.
+    assert (r0 *S A <> HR_covar n) as Hnc by now auto.
+    assert (r0 *S A <> HR_var n) as Hnv by now auto.
     apply Permutation_Type_sym in X.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r (r0 *S A) ++ vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ Db).
+    apply hrr_ex_seq with (vec r (r0 *S A) ++ vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ Db).
     { etransitivity ; [ apply Permutation_Type_app_comm | ]; rewrite <- ? app_assoc; repeat (try apply Permutation_Type_app; try reflexivity).
       etransitivity ; [ | symmetry; apply H1' ].
       etransitivity ; [ apply Permutation_Type_app_comm | ].
       Permutation_Type_solve. }
     apply hrr_mul; try assumption.
-    apply hrr_ex_seq with (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec (mul_vec r0 r) A ++ Db).
+    apply hrr_ex_seq with (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec (mul_vec r0 r) A ++ Db).
     { Permutation_Type_solve. }
-    change ((vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec (mul_vec r0 r) A ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+    change ((vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec (mul_vec r0 r) A ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
       with
-        (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((r1, vec (mul_vec r0 r) A ++ Db) :: L)).
+        (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((r1, vec (mul_vec r0 r) A ++ Db) :: L)).
     apply IHpi.
     + inversion Hsum.
       apply Forall_inf_cons; simpl in *; try assumption.
@@ -228,25 +228,25 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> covar n) as Hnc by now auto.
-    assert (A \/S B <> var n) as Hnv by now auto.
+    assert (A \/S B <> HR_covar n) as Hnc by now auto.
+    assert (A \/S B <> HR_var n) as Hnv by now auto.
     apply Permutation_Type_sym in X.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r (A \/S B) ++ vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ Db).
+    apply hrr_ex_seq with (vec r (A \/S B) ++ vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ Db).
     { etransitivity ; [ apply Permutation_Type_app_comm | ]; rewrite <- ? app_assoc; repeat (try apply Permutation_Type_app; try reflexivity).
       etransitivity ; [ | symmetry; apply H1' ].
       etransitivity ; [ apply Permutation_Type_app_comm | ].
       Permutation_Type_solve. }
     apply hrr_max; try assumption.
     eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-    apply hrr_ex_seq with (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r A ++ Db).
+    apply hrr_ex_seq with (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r A ++ Db).
     { Permutation_Type_solve. }
     eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
-    apply hrr_ex_seq with (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r B ++  Db).
+    apply hrr_ex_seq with (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r B ++  Db).
     { Permutation_Type_solve. }
-    change ((vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r B ++ Db) :: (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r A ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+    change ((vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r B ++ Db) :: (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r A ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
       with
-        (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((r1, vec r B ++ Db) :: (r1, vec r A ++ Db) :: L)).
+        (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((r1, vec r B ++ Db) :: (r1, vec r A ++ Db) :: L)).
     apply IHpi.
     + inversion Hsum.
       repeat (try apply Forall_inf_cons); simpl in *; try assumption.
@@ -255,31 +255,31 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> covar n) as Hnc by now auto.
-    assert (A /\S B <> var n) as Hnv by now auto.
+    assert (A /\S B <> HR_covar n) as Hnc by now auto.
+    assert (A /\S B <> HR_var n) as Hnv by now auto.
     apply Permutation_Type_sym in X.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r (A /\S B) ++ vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ Db).
+    apply hrr_ex_seq with (vec r (A /\S B) ++ vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ Db).
     { etransitivity ; [ apply Permutation_Type_app_comm | ]; rewrite <- ? app_assoc; repeat (try apply Permutation_Type_app; try reflexivity).
       etransitivity ; [ | symmetry; apply H1' ].
       etransitivity ; [ apply Permutation_Type_app_comm | ].
       Permutation_Type_solve. }
     apply hrr_min; try assumption.
-    + apply hrr_ex_seq with (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r A ++ Db).
+    + apply hrr_ex_seq with (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r A ++ Db).
       { Permutation_Type_solve. }
-      change ((vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r A ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+      change ((vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r A ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
         with
-          (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((r1, vec r A ++ Db) :: L)).
+          (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((r1, vec r A ++ Db) :: L)).
       apply IHpi1.
       * inversion Hsum.
         repeat (try apply Forall_inf_cons); simpl in *; try assumption.
       * simpl.
         apply Forall2_inf_cons; [ | assumption]; Permutation_Type_solve.
-    + apply hrr_ex_seq with (vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r B ++ Db).
+    + apply hrr_ex_seq with (vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r B ++ Db).
       { Permutation_Type_solve. }
-      change ((vec (fst (snd r1)) (covar n) ++ vec (snd (snd r1)) (var n) ++ vec r B ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L)
+      change ((vec (fst (snd r1)) (HR_covar n) ++ vec (snd (snd r1)) (HR_var n) ++ vec r B ++ Db) :: map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L)
         with
-          (map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ((r1, vec r B ++ Db) :: L)).
+          (map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ((r1, vec r B ++ Db) :: L)).
       apply IHpi2.
       * inversion Hsum.
         repeat (try apply Forall_inf_cons); simpl in *; try assumption.
@@ -307,13 +307,13 @@ Qed.
 (** Proof of Lemma 3.41 *)
 Lemma hrr_atomic_can_elim : forall G T n r s,
     sum_vec r = sum_vec s ->
-    HR_T ((vec s (covar n) ++ vec r (var n) ++ T) :: G) ->
+    HR_T ((vec s (HR_covar n) ++ vec r (HR_var n) ++ T) :: G) ->
     HR_T (T :: G).
 Proof.
   intros G T n r s Heq pi.
   assert ({ L & prod
-                  ( G = map (fun x  => vec (fst (fst (fst x))) (covar n) ++ vec (snd (fst (fst x))) (var n) ++ snd x) L)
-                  (( G =  map (fun x  => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L) *
+                  ( G = map (fun x  => vec (fst (fst (fst x))) (HR_covar n) ++ vec (snd (fst (fst x))) (HR_var n) ++ snd x) L)
+                  (( G =  map (fun x  => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L) *
                    (Forall_inf
                       (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) => sum_vec (fst (fst (fst x))) - sum_vec (snd (fst (fst x))) = sum_vec (fst (snd (fst x))) - sum_vec (snd (snd (fst x))))  L))}) as [L [H1 [H2 H3]]].
   { clear - G ; induction G.
@@ -325,8 +325,8 @@ Proof.
       apply Forall_inf_cons; try assumption.
       simpl; nra. }
   rewrite H2.
-  change (T :: map (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) L) with
-      (map (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) => vec (fst (snd (fst x))) (covar n) ++ vec (snd (snd (fst x))) (var n) ++ snd x) ( (((s , r) , (nil, nil)) , T) :: L)).
+  change (T :: map (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) L) with
+      (map (fun x : list Rpos * list Rpos * (list Rpos * list Rpos) * list (Rpos * term) => vec (fst (snd (fst x))) (HR_covar n) ++ vec (snd (snd (fst x))) (HR_var n) ++ snd x) ( (((s , r) , (nil, nil)) , T) :: L)).
   apply hrr_atomic_can_elim_gen.
   - simpl; apply Forall_inf_cons; try assumption; simpl; nra.
   - simpl; rewrite <- H1.

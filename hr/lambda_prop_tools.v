@@ -342,7 +342,7 @@ Proof.
       apply IHn with (length D).
       * lia.
       * reflexivity.
-      * apply seq_atomic_perm with _ (vec s (covar n0) ++ vec r (var n0) ++ D) in Hat; try assumption.
+      * apply seq_atomic_perm with _ (vec s (HR_covar n0) ++ vec r (HR_var n0) ++ D) in Hat; try assumption.
         apply seq_atomic_app_inv_r in Hat.
         apply seq_atomic_app_inv_r in Hat.
         apply Hat.
@@ -352,8 +352,8 @@ Proof.
         simpl in H; rewrite (sum_weight_seq_var_perm _ _ _ Hperm) in H; rewrite (sum_weight_seq_covar_perm _ _ _ Hperm) in H.
         rewrite ? sum_weight_seq_var_app in H; rewrite ? sum_weight_seq_covar_app in H.
         simpl.
-        rewrite (sum_weight_seq_covar_vec_neq _ (var n0)) in H; [ | now auto].
-        rewrite (sum_weight_seq_var_vec_neq _ (covar n0)) in H; [ | now auto].
+        rewrite (sum_weight_seq_covar_vec_neq _ (HR_var n0)) in H; [ | now auto].
+        rewrite (sum_weight_seq_var_vec_neq _ (HR_covar n0)) in H; [ | now auto].
         case_eq (n0 =? n1); intros H01.
         -- apply Nat.eqb_eq in H01; subst.
            rewrite sum_weight_seq_covar_vec_covar_eq in H; rewrite sum_weight_seq_var_vec_var_eq in H.

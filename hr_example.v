@@ -15,10 +15,10 @@ Require Import RL.OLlibs.Permutation_Type_more.
 Require Import RL.OLlibs.Permutation_Type_solve.
 
 (** F is a Riesz space term. *)
-Definition F := (((plus_pos One One) *S var 0) +S ((plus_pos One One) *S covar 1)) \/S (var 1 +S covar 0).
+Definition F := (((plus_pos One One) *S HR_var 0) +S ((plus_pos One One) *S HR_covar 1)) \/S (HR_var 1 +S HR_covar 0).
 
 (** A proof that F is positive using equational reasonning. The proof uses some lemmas defined in soundness, but the derived tree is actually quite big. *)
-Lemma F_is_pos : zero <== F.
+Lemma F_is_pos : HR_zero <== F.
 Proof.
   unfold F.
   rewrite <- mul_distri_term.
@@ -55,7 +55,7 @@ Proof.
   apply hrr_S.
   rewrite ? seq_mul_app.
   rewrite ? seq_mul_vec_mul_vec.
-  apply hrr_ex_seq with (vec (time_pos (plus_pos One One) One :: nil) (covar 0) ++ vec (time_pos (plus_pos One One) One :: nil) (var 0) ++ vec (time_pos (plus_pos One One) One :: nil) (covar 1) ++ vec (time_pos (plus_pos One One) One :: nil) (var 1) ++ nil).
+  apply hrr_ex_seq with (vec (time_pos (plus_pos One One) One :: nil) (HR_covar 0) ++ vec (time_pos (plus_pos One One) One :: nil) (HR_var 0) ++ vec (time_pos (plus_pos One One) One :: nil) (HR_covar 1) ++ vec (time_pos (plus_pos One One) One :: nil) (HR_var 1) ++ nil).
   { simpl.
     Permutation_Type_solve. }
   apply hrr_ID ; [ reflexivity | ].
@@ -64,7 +64,7 @@ Proof.
 Qed.
   
 (** We can use the soundness of HR to have a proof that F is positive. *)
-Lemma F_is_pos_from_soundness : zero <== F.
+Lemma F_is_pos_from_soundness : HR_zero <== F.
 Proof.
   apply leq_cong_r with (sem_hseq (((One, F) :: nil) :: nil)).
   { simpl.

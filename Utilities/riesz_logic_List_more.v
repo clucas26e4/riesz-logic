@@ -88,25 +88,13 @@ Proof.
   apply IHn ; lia.
 Qed.
 
-Lemma In_inf_rev A : forall (l : list A) a,
-    In_inf a l ->
-    In_inf a (rev l).
-Proof.
-  induction l; intros a' Hin; inversion Hin; subst.
-  - simpl.
-    apply in_inf_or_app.
-    right; left; auto.
-  - simpl.
-    apply in_inf_or_app; left; apply IHl; auto.
-Qed.
-
-Lemma In_inf_rev_inv A : forall (l : list A) a,
+Lemma in_inf_rev_inv A : forall (l : list A) a,
     In_inf a (rev l) ->
     In_inf a l.
 Proof.
   intros l a Hin.
   rewrite <- rev_involutive.
-  apply In_inf_rev.
+  apply in_inf_rev.
   apply Hin.
 Qed.
 

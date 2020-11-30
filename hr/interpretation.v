@@ -14,7 +14,7 @@ Local Open Scope R_scope.
 (** ** Interpretation of a sequent *)
 Fixpoint sem_seq (T1 : sequent) :=
   match T1 with
-  | nil => zero
+  | nil => HR_zero
   | ((r , A) :: T1) => (r *S A) +S (sem_seq T1)
   end.
 
@@ -79,7 +79,7 @@ Qed.
 (** ** Interpretation of a hypersequent *)
 Fixpoint sem_hseq G :=
   match G with
-  | nil => zero (* should not happen *)
+  | nil => HR_zero (* should not happen *)
   | T1 :: nil => sem_seq T1
   | T1 :: G => (sem_seq T1) \/S (sem_hseq G)
   end.

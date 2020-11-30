@@ -101,7 +101,7 @@ Proof.
     destruct (IHpi ((r1, T) :: L) eq_refl) as [pi' Hpi'].
     esplit.
     Unshelve.
-    2:{ apply hmrr_ex_seq with (vec (vec_mul_vec r1 s) (covar n) ++ vec (vec_mul_vec r1 r) (var n) ++ seq_mul_vec r1 T).
+    2:{ apply hmrr_ex_seq with (vec (vec_mul_vec r1 s) (HMR_covar n) ++ vec (vec_mul_vec r1 r) (HMR_var n) ++ seq_mul_vec r1 T).
         { etransitivity ; [ | symmetry ; apply seq_mul_vec_app_r].
           etransitivity ; [ | symmetry; apply Permutation_Type_app; try apply seq_mul_vec_app_r; reflexivity ].
           apply Permutation_Type_app ; [ | apply Permutation_Type_app]; try rewrite seq_mul_vec_vec_mul_vec; reflexivity. }
@@ -200,7 +200,7 @@ Proof.
     esplit.
     Unshelve.
     2:{ simpl.
-        apply hmrr_ex_seq with (vec (vec_mul_vec r1 s) coone ++ vec (vec_mul_vec r1 r) one ++ seq_mul_vec r1 T).
+        apply hmrr_ex_seq with (vec (vec_mul_vec r1 s) HMR_coone ++ vec (vec_mul_vec r1 r) HMR_one ++ seq_mul_vec r1 T).
         { rewrite <- ? seq_mul_vec_vec_mul_vec.
           etransitivity ; [ | etransitivity ; [ apply Permutation_Type_app; [ reflexivity |  symmetry; apply seq_mul_vec_app_r ]| symmetry; apply seq_mul_vec_app_r ]].
           reflexivity. }
@@ -211,11 +211,11 @@ Proof.
         apply pi'. }
     apply Hpi'.
   - destruct L; [ | destruct L];  try destruct p as [r1 T1]; inversion HeqG; subst.
-    destruct (IHpi ((r1, vec s coone ++ vec r one ++ T) :: nil) eq_refl) as [pi' Hpi'].
+    destruct (IHpi ((r1, vec s HMR_coone ++ vec r HMR_one ++ T) :: nil) eq_refl) as [pi' Hpi'].
     esplit.
     Unshelve.
     2:{ simpl.
-        apply hmrr_ex_seq with (vec (vec_mul_vec r1 s) coone ++ vec (vec_mul_vec r1 r) one ++ seq_diamond (seq_mul_vec r1 T)).
+        apply hmrr_ex_seq with (vec (vec_mul_vec r1 s) HMR_coone ++ vec (vec_mul_vec r1 r) HMR_one ++ seq_diamond (seq_mul_vec r1 T)).
         { rewrite <- ? seq_mul_vec_vec_mul_vec.
           etransitivity ; [ | etransitivity ; [ apply Permutation_Type_app; [ reflexivity |  symmetry; apply seq_mul_vec_app_r ]| symmetry; apply seq_mul_vec_app_r ]].
           rewrite seq_diamond_seq_mul_vec.
@@ -252,9 +252,9 @@ Qed.
 Definition good_leaf_step_1 H D n :=
   fun G => {' (T', r , s ,t) : _ &
                                prod
-                                 (G =  (vec t coone ++ vec s one ++ seq_mul_vec r D ++ seq_diamond T') :: H)
+                                 (G =  (vec t HMR_coone ++ vec s HMR_one ++ seq_mul_vec r D ++ seq_diamond T') :: H)
                                  (((sum_vec t <= sum_vec s)%R) *
-                                  ({ pi : HMR_T ((vec t coone ++ vec s one ++ T') :: nil) & modal_depth_proof pi < n}))}.
+                                  ({ pi : HMR_T ((vec t HMR_coone ++ vec s HMR_one ++ T') :: nil) & modal_depth_proof pi < n}))}.
 
 Lemma good_leaf_le : forall H D n1 n2 G,
     n1 <= n2 ->
@@ -338,13 +338,13 @@ Proof.
     destruct (IHpi ((r1, T) :: L) eq_refl) as [pi' Hpi'].
     esplit.
     Unshelve.
-    2:{ apply prehmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_ID; try assumption]. }
+    2:{ apply prehmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_ID; try assumption]. }
     apply Hpi'.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     destruct (IHpi ((r1, T) :: L) eq_refl) as [pi' Hpi'].
     esplit.
     Unshelve.
-    2:{ apply prehmrr_ex_seq with (vec r zero ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_Z; apply pi']. }
+    2:{ apply prehmrr_ex_seq with (vec r HMR_zero ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_Z; apply pi']. }
     apply Hpi'.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
     destruct (IHpi ((r1, vec r A ++ vec r B ++ T) :: L) eq_refl) as [pi' Hpi'].
@@ -395,10 +395,10 @@ Proof.
     destruct (IHpi ((r1, T) :: L) eq_refl) as [pi' Hpi'].
     esplit.
     Unshelve.
-    2:{ apply prehmrr_ex_seq with (vec s coone ++ vec r one ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_one; try assumption]. }
+    2:{ apply prehmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ T ++ seq_mul_vec r1 D) ; [ rewrite <- ? app_assoc; reflexivity | apply prehmrr_one; try assumption]. }
     apply Hpi'.
   - destruct L ; [ | destruct L]; try destruct p as [r1 T1]; inversion HeqG; subst; simpl.
-    assert ({pi' : preHMR ((vec s coone ++ vec r one ++ seq_mul_vec r1 D ++ seq_diamond T) :: H) &
+    assert ({pi' : preHMR ((vec s HMR_coone ++ vec r HMR_one ++ seq_mul_vec r1 D ++ seq_diamond T) :: H) &
                    Forall_inf (good_leaf_step_1 H D (S (modal_depth_proof pi))) (leaves pi')}) as [pi' Hpi'].
     { split with (prehmrr_leaf _).
       apply Forall_inf_cons ; [ | apply Forall_inf_nil].
@@ -457,7 +457,7 @@ Proof.
   intros G Hin.
   destruct (Forall_inf_forall Hpi1' _ Hin) as [[[[T1 r] s] t] [HeqG [Hle [piG Hind]]]].
   subst.
-  apply hmrr_ex_seq with (seq_mul_vec r D ++ seq_mul_vec (One :: nil) (vec t coone ++ vec s one ++ seq_diamond T1)).
+  apply hmrr_ex_seq with (seq_mul_vec r D ++ seq_mul_vec (One :: nil) (vec t HMR_coone ++ vec s HMR_one ++ seq_diamond T1)).
   { simpl; rewrite seq_mul_One; Permutation_Type_solve. }
   assert (HMR_T (seq_mul_vec r D :: H)) as pi2'.
   { assert {L & prod
@@ -479,7 +479,7 @@ Proof.
     apply pi2. }
   assert {L' & prod
                  (H = map (fun x => snd x) L')
-                 (H = map (fun x => snd x ++ seq_mul_vec (fst x) (vec t coone ++ vec s one ++ seq_diamond T1)) L')} as [L' [Heq1 Heq2]].
+                 (H = map (fun x => snd x ++ seq_mul_vec (fst x) (vec t HMR_coone ++ vec s HMR_one ++ seq_diamond T1)) L')} as [L' [Heq1 Heq2]].
   { clear; induction H.
     - split with nil; split; reflexivity.
     - destruct IHlist as [L [H1 H2]].
@@ -487,14 +487,14 @@ Proof.
       simpl; split ; [ rewrite H1; reflexivity |  rewrite H2].
       rewrite app_nil_r; reflexivity. }
   rewrite Heq2; rewrite Heq1 in pi2'.
-  destruct (hmrr_M_step_1 ((One::nil, seq_mul_vec r D) :: L') nil (vec t coone ++ vec s one ++ seq_diamond T1) pi2' (hmrr_diamond _ _ _ _ Hle piG)) as [pi' Hleaves].
+  destruct (hmrr_M_step_1 ((One::nil, seq_mul_vec r D) :: L') nil (vec t HMR_coone ++ vec s HMR_one ++ seq_diamond T1) pi2' (hmrr_diamond _ _ _ _ Hle piG)) as [pi' Hleaves].
   rewrite <- app_nil_r.
   apply finish_preproof with pi'.
   apply forall_Forall_inf.
   intros G' Hin'.
   destruct (Forall_inf_forall Hleaves _ Hin') as [[[[D1 r'] s'] t'] [HeqG' [Hle' [piG' Hind']]]].
   subst.
-  apply hmrr_ex_seq with (vec (t' ++ vec_mul_vec r' t) coone ++ vec (s' ++ vec_mul_vec r' s) one ++ seq_diamond (seq_mul_vec r' T1 ++ D1)).
+  apply hmrr_ex_seq with (vec (t' ++ vec_mul_vec r' t) HMR_coone ++ vec (s' ++ vec_mul_vec r' s) HMR_one ++ seq_diamond (seq_mul_vec r' T1 ++ D1)).
   { rewrite ? vec_app.
     rewrite ? seq_diamond_app.
     rewrite <- ? seq_mul_vec_vec_mul_vec.
@@ -511,7 +511,7 @@ Proof.
     rewrite ? sum_vec_vec_mul_vec.
     assert ((0 <= sum_vec r')%R) by apply sum_vec_le_0.
     nra. }
-  apply hmrr_ex_seq with (seq_mul_vec r' (vec t coone ++ vec s one ++ T1) ++ seq_mul_vec (One :: nil) (vec t' coone ++ vec s' one ++ D1)).
+  apply hmrr_ex_seq with (seq_mul_vec r' (vec t HMR_coone ++ vec s HMR_one ++ T1) ++ seq_mul_vec (One :: nil) (vec t' HMR_coone ++ vec s' HMR_one ++ D1)).
   { simpl; rewrite seq_mul_One.
     rewrite app_nil_r.
     etransitivity.
@@ -521,15 +521,15 @@ Proof.
     rewrite ? vec_app.
     rewrite <- ? seq_mul_vec_vec_mul_vec.
     Permutation_Type_solve. }
-  change  ((seq_mul_vec r' (vec t coone ++ vec s one ++ T1) ++ seq_mul_vec (One :: nil) (vec t' coone ++ vec s' one ++ D1)) :: nil)
+  change  ((seq_mul_vec r' (vec t HMR_coone ++ vec s HMR_one ++ T1) ++ seq_mul_vec (One :: nil) (vec t' HMR_coone ++ vec s' HMR_one ++ D1)) :: nil)
     with
-      (map (fun x => snd x ++ seq_mul_vec (fst x) (vec t' coone ++ vec s' one ++ D1)) ((One :: nil, seq_mul_vec r' (vec t coone ++ vec s one ++ T1)) :: nil)).
-  assert { pi'' :  HMR_T (map (fun x : list Rpos * sequent => snd x) ((One :: nil,seq_mul_vec r' (vec t coone ++ vec s one ++ T1)) :: nil)) & modal_depth_proof pi'' < modal_depth_proof pi1} as [pi'' Hdiam''].
+      (map (fun x => snd x ++ seq_mul_vec (fst x) (vec t' HMR_coone ++ vec s' HMR_one ++ D1)) ((One :: nil, seq_mul_vec r' (vec t HMR_coone ++ vec s HMR_one ++ T1)) :: nil)).
+  assert { pi'' :  HMR_T (map (fun x : list Rpos * sequent => snd x) ((One :: nil,seq_mul_vec r' (vec t HMR_coone ++ vec s HMR_one ++ T1)) :: nil)) & modal_depth_proof pi'' < modal_depth_proof pi1} as [pi'' Hdiam''].
   { change (map (fun x : list Rpos * sequent => snd x)
-                ((One :: nil, seq_mul_vec r' (vec t coone ++ vec s one ++ T1)) :: nil))
-      with (map (fun x => seq_mul_vec (fst x) (snd x)) ((r' ,vec t coone ++ vec s one ++ T1) :: nil)).
-    change ((vec t coone ++ vec s one ++ T1) :: nil) with (map (fun x => snd x) ((r' ,vec t coone ++ vec s one ++ T1) :: nil)) in piG.
-    destruct (hmrr_mul_vec ((r', vec t coone ++ vec s one ++ T1) :: nil) piG) as [pi'' Hdiam''].
+                ((One :: nil, seq_mul_vec r' (vec t HMR_coone ++ vec s HMR_one ++ T1)) :: nil))
+      with (map (fun x => seq_mul_vec (fst x) (snd x)) ((r' ,vec t HMR_coone ++ vec s HMR_one ++ T1) :: nil)).
+    change ((vec t HMR_coone ++ vec s HMR_one ++ T1) :: nil) with (map (fun x => snd x) ((r' ,vec t HMR_coone ++ vec s HMR_one ++ T1) :: nil)) in piG.
+    destruct (hmrr_mul_vec ((r', vec t HMR_coone ++ vec s HMR_one ++ T1) :: nil) piG) as [pi'' Hdiam''].
     split with pi''.
     apply Nat.le_lt_trans with (modal_depth_proof piG); assumption. }
   rewrite <- app_nil_r.

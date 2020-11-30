@@ -27,8 +27,8 @@ Lemma HR_soundness P : forall G,
     R_zero <R= toRterm (sem_hseq G).
 Proof.
   intros G pi.
-  change (R_zero /\R (toRterm (sem_hseq G))) with (toRterm (zero /\S sem_hseq G)).
-  change (R_zero) with (toRterm zero).
+  change (R_zero /\R (toRterm (sem_hseq G))) with (toRterm (HR_zero /\S sem_hseq G)).
+  change (R_zero) with (toRterm HR_zero).
   apply semantic_to_Rsemantic.
   apply hr_sound with P.
   apply pi.
@@ -46,7 +46,7 @@ Proof.
   - simpl.
     rewrite NNF_toRterm.
     reflexivity.
-  - change zero with (NNF (R_zero)).
+  - change HR_zero with (NNF (R_zero)).
     apply Rsemantic_to_semantic.
     apply H.
 Qed.
@@ -57,7 +57,7 @@ Proof.
   apply hrr_plus_inv.
 Qed.
 
-Lemma HR_Z_inv : forall G T r, HR_T_M ((vec r zero ++ T) :: G) -> HR_T_M (T :: G).
+Lemma HR_Z_inv : forall G T r, HR_T_M ((vec r HR_zero ++ T) :: G) -> HR_T_M (T :: G).
 Proof.
   apply hrr_Z_inv.
 Qed.
@@ -97,7 +97,7 @@ Qed.
 (** Theorem 3.15 *)
 (** Proposition 3.16 *)
 Lemma HR_without_T_CAN_not_complete :
-  { G : _ & zero <== sem_hseq G & (HR_M G -> False) }.
+  { G : _ & HR_zero <== sem_hseq G & (HR_M G -> False) }.
 Proof.
   apply HR_M_not_complete.
 Qed.

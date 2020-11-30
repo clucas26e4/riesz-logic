@@ -79,7 +79,7 @@ Proof.
     reflexivity.
   - destruct L; try destruct p as [r1 T1]; inversion HeqG; subst.    
     simpl.
-    apply hrr_ex_seq with (vec (vec_mul_vec r1 s) (covar n) ++ vec (vec_mul_vec r1 r) (var n) ++ seq_mul_vec r1 T).
+    apply hrr_ex_seq with (vec (vec_mul_vec r1 s) (HR_covar n) ++ vec (vec_mul_vec r1 r) (HR_var n) ++ seq_mul_vec r1 T).
     { etransitivity ; [ | symmetry ; apply seq_mul_vec_app_r].
       etransitivity ; [ | symmetry; apply Permutation_Type_app; try apply seq_mul_vec_app_r; reflexivity ].
       apply Permutation_Type_app ; [ | apply Permutation_Type_app]; try rewrite seq_mul_vec_vec_mul_vec; reflexivity. }

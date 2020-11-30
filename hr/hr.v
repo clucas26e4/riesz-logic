@@ -98,8 +98,8 @@ Inductive HR P : hypersequent -> Type :=
 | hrr_S : forall G T1 T2, HR P ((T1 ++ T2) :: G) -> HR P (T1 :: T2 :: G)
 | hrr_M {f : hr_M P = true} : forall G T1 T2, HR P (T1 :: G) -> HR P (T2 :: G) -> HR P ((T1 ++ T2) :: G)
 | hrr_T {f : hr_T P = true} : forall G T r, HR P (seq_mul r T :: G) -> HR P (T :: G)
-| hrr_ID : forall G T n r s, sum_vec r = sum_vec s -> HR P (T :: G) -> HR P ((vec s (covar n) ++ vec r (var n) ++ T) :: G)
-| hrr_Z : forall G T r, HR P (T :: G) -> HR P ((vec r zero ++ T) :: G)
+| hrr_ID : forall G T n r s, sum_vec r = sum_vec s -> HR P (T :: G) -> HR P ((vec s (HR_covar n) ++ vec r (HR_var n) ++ T) :: G)
+| hrr_Z : forall G T r, HR P (T :: G) -> HR P ((vec r HR_zero ++ T) :: G)
 
 | hrr_plus : forall G T A B r, HR P ((vec r A ++ vec r B ++ T) :: G) -> HR P ((vec r (A +S B) ++ T) :: G)
 | hrr_mul : forall G T A r0 r, HR P ((vec (mul_vec r0 r) A ++ T) :: G) -> HR P ((vec r (r0 *S A) ++ T) :: G)

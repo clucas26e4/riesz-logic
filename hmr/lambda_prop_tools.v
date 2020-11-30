@@ -296,7 +296,7 @@ Lemma only_diamond_seq_decomp :
     {' (r , s, D) : _ & prod
                        (Permutation_Type
                           (only_diamond_seq T)
-                          (vec s coone ++ vec r one ++ D))
+                          (vec s HMR_coone ++ vec r HMR_one ++ D))
                        (sum_vec r - sum_vec s = sum_weight_seq_one T - sum_weight_seq_coone T)}.
 Proof.
   induction T; [split with (nil, nil, nil); split; try reflexivity; lra | ].
@@ -315,7 +315,7 @@ Lemma only_diamond_seq_decomp_no_diamond :
     {' (r , s) : _ & prod
                        (Permutation_Type
                           (only_diamond_seq T)
-                          (vec s coone ++ vec r one))
+                          (vec s HMR_coone ++ vec r HMR_one))
                        (sum_vec r - sum_vec s = sum_weight_seq_one T - sum_weight_seq_coone T)}.
 Proof.
   induction T; intros Hnd; [split with (nil, nil); split; try reflexivity; lra | ].
@@ -334,7 +334,7 @@ Lemma concat_with_coeff_mul_only_diamond_decomp :
     {' (r , s, T) : _ & prod
                        (Permutation_Type
                           (only_diamond_seq (concat_with_coeff_mul G L))
-                          (vec s coone ++ vec r one ++ T))
+                          (vec s HMR_coone ++ vec r HMR_one ++ T))
                        (sum_vec r - sum_vec s = sum_weight_with_coeff_one G L) }.
 Proof.
   induction G; intros [ | o L]; simpl; try (split with ((nil, nil), nil); split; try reflexivity; lra).
@@ -359,7 +359,7 @@ Lemma concat_with_coeff_mul_only_diamond_decomp_no_diamond :
     {' (r , s) : _ & prod
                        (Permutation_Type
                           (only_diamond_seq (concat_with_coeff_mul G L))
-                          (vec s coone ++ vec r one))
+                          (vec s HMR_coone ++ vec r HMR_one))
                        (sum_vec r - sum_vec s = sum_weight_with_coeff_one G L) }.
 Proof.
   induction G; intros [ | o L] Hnd; simpl; try (split with (nil, nil); split; try reflexivity; lra).
@@ -651,7 +651,7 @@ Proof.
       apply IHn with (length D).
       * lia.
       * reflexivity.
-      * apply seq_basic_perm with _ (vec s (covar n0) ++ vec r (var n0) ++ D) in Hat; try assumption.
+      * apply seq_basic_perm with _ (vec s (HMR_covar n0) ++ vec r (HMR_var n0) ++ D) in Hat; try assumption.
         apply seq_basic_app_inv_r in Hat.
         apply seq_basic_app_inv_r in Hat.
         apply Hat.
@@ -661,8 +661,8 @@ Proof.
         simpl in Hsum; rewrite (sum_weight_seq_var_perm _ _ _ Hperm) in Hsum; rewrite (sum_weight_seq_covar_perm _ _ _ Hperm) in Hsum.
         rewrite ? sum_weight_seq_var_app in Hsum; rewrite ? sum_weight_seq_covar_app in Hsum.
         simpl.
-        rewrite (sum_weight_seq_covar_vec_neq _ (var n0)) in Hsum; [ | now auto].
-        rewrite (sum_weight_seq_var_vec_neq _ (covar n0)) in Hsum; [ | now auto].
+        rewrite (sum_weight_seq_covar_vec_neq _ (HMR_var n0)) in Hsum; [ | now auto].
+        rewrite (sum_weight_seq_var_vec_neq _ (HMR_covar n0)) in Hsum; [ | now auto].
         case_eq (n0 =? n1); intros H01.
         -- apply Nat.eqb_eq in H01; subst.
            rewrite sum_weight_seq_covar_vec_covar_eq in Hsum; rewrite sum_weight_seq_var_vec_var_eq in Hsum.
@@ -681,11 +681,11 @@ Proof.
       * simpl; simpl in Hstep.
         eapply hmrr_ex_seq; [ | apply Hstep].
         rewrite 2 app_nil_r.
-        replace (only_diamond_seq D) with (only_diamond_seq (vec s (covar n0) ++ vec r (var n0) ++ D)) by (rewrite ? only_diamond_seq_app; rewrite only_diamond_seq_vec_covar; now rewrite only_diamond_seq_vec_var).
+        replace (only_diamond_seq D) with (only_diamond_seq (vec s (HMR_covar n0) ++ vec r (HMR_var n0) ++ D)) by (rewrite ? only_diamond_seq_app; rewrite only_diamond_seq_vec_covar; now rewrite only_diamond_seq_vec_var).
         apply only_diamond_seq_perm; apply Hperm.
     + simpl in Hstep; rewrite app_nil_r in Hstep.
       destruct (seq_basic_no_atom T Hat Hnil) as [[[r s] D] Hperm].
-      apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond D); [ apply Permutation_Type_sym; apply Hperm | ].
+      apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond D); [ apply Permutation_Type_sym; apply Hperm | ].
       apply hmrr_diamond.
       { simpl in Hone.
         rewrite (sum_weight_seq_coone_perm _ _ Hperm) in Hone; rewrite (sum_weight_seq_one_perm _ _ Hperm) in Hone.
@@ -695,7 +695,7 @@ Proof.
         rewrite sum_weight_seq_coone_vec_neq in Hone; [ | now auto].
         rewrite sum_weight_seq_one_seq_diamond in Hone; rewrite sum_weight_seq_coone_seq_diamond in Hone.
         nra. }
-      replace (vec s coone ++ vec r one ++ D) with (only_diamond_seq (vec s coone ++ vec r one ++ seq_diamond D)) by (rewrite ? only_diamond_seq_app; rewrite only_diamond_seq_vec_coone; rewrite only_diamond_seq_vec_one; now rewrite only_diamond_seq_only_diamond).
+      replace (vec s HMR_coone ++ vec r HMR_one ++ D) with (only_diamond_seq (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond D)) by (rewrite ? only_diamond_seq_app; rewrite only_diamond_seq_vec_coone; rewrite only_diamond_seq_vec_one; now rewrite only_diamond_seq_only_diamond).
       eapply hmrr_ex_seq ; [ | apply Hstep].
       apply only_diamond_seq_perm; apply Hperm.
   - intros HatT HatH Hsum Hone Hstep.

@@ -47,10 +47,10 @@ Fixpoint HR_complexity_hseq G :=
 (** ** Max variable appearing in a hypersequent *)
 Fixpoint max_var_term A :=
   match A with
-  | var n => n
-  | covar n => n
-  | zero => 0%nat
-  | A +S B => Nat.max (max_var_term A) (max_var_term B)
+  | HR_var n => n
+  | HR_covar n => n
+  | HR_zero => 0%nat
+  | A +S B => max (max_var_term A) (max_var_term B)
   | r *S A => max_var_term A
   | A /\S B => Nat.max (max_var_term A) (max_var_term B)
   | A \/S B => Nat.max (max_var_term A) (max_var_term B)
@@ -130,14 +130,14 @@ Fixpoint seq_mul_vec vr T :=
 Fixpoint sum_weight_seq_var n (T : sequent) :=
   match T with
   | nil => 0
-  | ((r , var n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_var n T else sum_weight_seq_var n T
+  | ((r , HR_var n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_var n T else sum_weight_seq_var n T
   | ( _ :: T) => sum_weight_seq_var n T
   end.
 (** sum_weight_seq_covar n T return the sum of the weights of the formula (covar n) that appears in the sequent T. *)
 Fixpoint sum_weight_seq_covar n (T : sequent) :=
   match T with
   | nil => 0
-  | ((r , covar n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_covar n T else sum_weight_seq_covar n T
+  | ((r , HR_covar n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_covar n T else sum_weight_seq_covar n T
   | ( _ :: T) => sum_weight_seq_covar n T
   end.
 (** sum_weight_var n G return the sum of the weights of the formula (var n) that appears in the hypersequent G. *)
@@ -408,10 +408,10 @@ Qed.
 
 Lemma perm_decomp_vec_neq_2 : forall T D r s r' s' n1 n2,
     n1 <> n2 ->
-    Permutation_Type (vec s (covar n1) ++ vec r (var n1) ++ T) (vec s' (covar n2) ++ vec r' (var n2) ++ D) ->
+    Permutation_Type (vec s (HR_covar n1) ++ vec r (HR_var n1) ++ T) (vec s' (HR_covar n2) ++ vec r' (HR_var n2) ++ D) ->
     {' (T', D') : _ &
-                          prod (Permutation_Type T (vec s' (covar n2) ++ vec r' (var n2) ++ T'))
-                               ((Permutation_Type D (vec s (covar n1) ++ vec r (var n1) ++ D')) *
+                          prod (Permutation_Type T (vec s' (HR_covar n2) ++ vec r' (HR_var n2) ++ T'))
+                               ((Permutation_Type D (vec s (HR_covar n1) ++ vec r (HR_var n1) ++ D')) *
                                 (Permutation_Type T' D'))}.
 Proof.
   intros T D r s r' s'.
@@ -422,19 +422,19 @@ Proof.
     simpl in *; repeat split; Permutation_Type_solve.
   - intros T D n1 n2 Hneq Hperm.
     simpl in *.
-    destruct (in_inf_split (a , var n1) D) as [[D1 D2] Heq].
-    { apply Permutation_Type_in_inf with ((a, var n1) :: vec r (var n1) ++ T); try Permutation_Type_solve.
+    destruct (in_inf_split (a , HR_var n1) D) as [[D1 D2] Heq].
+    { apply Permutation_Type_in_inf with ((a, HR_var n1) :: vec r (HR_var n1) ++ T); try Permutation_Type_solve.
       left; reflexivity. }
     subst.
     destruct (IHr T (D1 ++ D2) n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , var n1).
+    { apply Permutation_Type_cons_inv with (a , HR_var n1).
       Permutation_Type_solve. }
     split with (T', D').
     repeat split; try Permutation_Type_solve.
   - intros r T D n1 n2 Hneq Hperm.
     simpl in *.
-    destruct (in_inf_split (a , var n2) T) as [[T1 T2] Heq].
-    { case (in_inf_app_or (vec r (var n1)) T (a , var n2)) ; [ apply Permutation_Type_in_inf with ((a, var n2) :: vec r' (var n2) ++ D); [ Permutation_Type_solve | left; reflexivity ] | | auto ].
+    destruct (in_inf_split (a , HR_var n2) T) as [[T1 T2] Heq].
+    { case (in_inf_app_or (vec r (HR_var n1)) T (a , HR_var n2)) ; [ apply Permutation_Type_in_inf with ((a, HR_var n2) :: vec r' (HR_var n2) ++ D); [ Permutation_Type_solve | left; reflexivity ] | | auto ].
       intros H; clear - H Hneq.
       exfalso.
       induction r; simpl in H; inversion H.
@@ -443,13 +443,13 @@ Proof.
       - apply IHr; apply X. }
     subst.
     destruct (IHr' r (T1 ++ T2) D n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , var n2); Permutation_Type_solve. }
+    { apply Permutation_Type_cons_inv with (a , HR_var n2); Permutation_Type_solve. }
     split with (T', D').
     repeat split; try Permutation_Type_solve.
   - intros r' r T D n1 n2 Hneq Hperm.
     simpl in *.
-    destruct (in_inf_split (a , covar n1) D) as [[D1 D2] Heq].
-    { case (in_inf_app_or (vec r' (var n2)) D (a , covar n1)) ; [ apply Permutation_Type_in_inf with ((a, covar n1) :: vec s (covar n1) ++ vec r (var n1) ++ T); [ Permutation_Type_solve | left; reflexivity ] | | auto ].
+    destruct (in_inf_split (a , HR_covar n1) D) as [[D1 D2] Heq].
+    { case (in_inf_app_or (vec r' (HR_var n2)) D (a , HR_covar n1)) ; [ apply Permutation_Type_in_inf with ((a, HR_covar n1) :: vec s (HR_covar n1) ++ vec r (HR_var n1) ++ T); [ Permutation_Type_solve | left; reflexivity ] | | auto ].
       intros H; clear - H Hneq.
       exfalso.
       induction r'; simpl in H; inversion H.
@@ -457,20 +457,20 @@ Proof.
       - apply IHr'; apply X. }
     subst.
     destruct (IHs r' r T (D1 ++ D2) n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , covar n1); Permutation_Type_solve. }
+    { apply Permutation_Type_cons_inv with (a , HR_covar n1); Permutation_Type_solve. }
     split with (T', D').
     repeat split; try Permutation_Type_solve.
   - intros s r' r T D n1 n2 Hneq Hperm.
     simpl in *.
-    destruct (in_inf_split (a , covar n2) T) as [[T1 T2] Heq].
-    { case (in_inf_app_or (vec s (covar n1)) (vec r (var n1) ++ T) (a , covar n2)) ; [ apply Permutation_Type_in_inf with ((a, covar n2) :: vec s' (covar n2) ++ vec r' (var n2) ++ D); [ Permutation_Type_solve | left; reflexivity ] | | ].
+    destruct (in_inf_split (a , HR_covar n2) T) as [[T1 T2] Heq].
+    { case (in_inf_app_or (vec s (HR_covar n1)) (vec r (HR_var n1) ++ T) (a , HR_covar n2)) ; [ apply Permutation_Type_in_inf with ((a, HR_covar n2) :: vec s' (HR_covar n2) ++ vec r' (HR_var n2) ++ D); [ Permutation_Type_solve | left; reflexivity ] | | ].
       - intros H; clear - H Hneq.
         exfalso.
         induction s; simpl in H; inversion H.
         + inversion H0.
           apply Hneq; apply H3.
         + apply IHs; apply X.
-      - intro H0 ;case (in_inf_app_or (vec r (var n1)) T (a , covar n2)) ; [ apply H0 | | auto ].
+      - intro H0 ;case (in_inf_app_or (vec r (HR_var n1)) T (a , HR_covar n2)) ; [ apply H0 | | auto ].
         intros H; clear - H Hneq.
         exfalso.
         induction r; simpl in H; inversion H.
@@ -478,7 +478,7 @@ Proof.
         + apply IHr; apply X. }
     subst.
     destruct (IHs' s r' r (T1 ++ T2) D n1 n2 Hneq) as [[T' D'] [H1' [H2' H3']]].
-    { apply Permutation_Type_cons_inv with (a , covar n2); Permutation_Type_solve. }
+    { apply Permutation_Type_cons_inv with (a , HR_covar n2); Permutation_Type_solve. }
     split with (T', D').
     repeat split; try Permutation_Type_solve.
 Qed.
@@ -753,7 +753,7 @@ Proof.
   intros T r Hat; induction Hat; try destruct x; simpl; try now constructor.
 Qed.
 
-(** ** sum_weight_seq_(co)var *)
+(** ** sum_weight_seq_(co)_var *)
 
 Lemma sum_weight_seq_var_lt_max_var : forall n T1,
     (max_var_seq T1 < n)%nat ->
@@ -838,19 +838,19 @@ Proof.
 Qed.
 
 Lemma sum_weight_seq_var_vec_var_eq : forall n r,
-    sum_weight_seq_var n (vec r (var n)) = sum_vec r.
+    sum_weight_seq_var n (vec r (HR_var n)) = sum_vec r.
 Proof.
   intros n; induction r; simpl; try (rewrite Nat.eqb_refl; rewrite IHr); reflexivity.
 Qed.
 
 Lemma sum_weight_seq_covar_vec_covar_eq : forall n r,
-    sum_weight_seq_covar n (vec r (covar n)) = sum_vec r.
+    sum_weight_seq_covar n (vec r (HR_covar n)) = sum_vec r.
 Proof.
   intros n; induction r; simpl; try (rewrite Nat.eqb_refl; rewrite IHr); nra.
 Qed.
 
 Lemma sum_weight_seq_var_vec_neq : forall n A r,
-    var n <> A ->
+    HR_var n <> A ->
     sum_weight_seq_var n (vec r A) = 0.
 Proof.
   intros n A; induction r; intros Hneq; simpl; try reflexivity.
@@ -858,7 +858,7 @@ Proof.
 Qed.
 
 Lemma sum_weight_seq_covar_vec_neq : forall n A r,
-    covar n <> A ->
+    HR_covar n <> A ->
     sum_weight_seq_covar n (vec r A) = 0.
 Proof.
   intros n A; induction r; intros Hneq; simpl; try reflexivity.
@@ -920,7 +920,7 @@ Lemma seq_decomp_atomic :
     {' (r,s,D) : _ &
                     prod (sum_vec r = sum_weight_seq_var n T)
                          ((sum_vec s = sum_weight_seq_covar n T) *
-                          (Permutation_Type T (vec s (covar n) ++ vec r (var n) ++ D))) }.
+                          (Permutation_Type T (vec s (HR_covar n) ++ vec r (HR_var n) ++ D))) }.
 Proof.
   induction T; intros n.
   - split with (nil, nil, nil).
@@ -937,7 +937,7 @@ Proof.
         -- apply Hs.
         -- simpl; apply Nat.eqb_eq in Heq; subst.
            Permutation_Type_solve.
-      * split with (r , s , (a, var n0) :: D).
+      * split with (r , s , (a, HR_var n0) :: D).
         repeat split.
         -- simpl; rewrite Hr.
            rewrite Heq; reflexivity.
@@ -951,7 +951,7 @@ Proof.
            rewrite Heq; reflexivity.
         -- simpl; apply Nat.eqb_eq in Heq; subst.
            Permutation_Type_solve.
-      * split with (r , s , (a, covar n0) :: D).
+      * split with (r , s , (a, HR_covar n0) :: D).
         repeat split.
         -- apply Hr.
         -- simpl; rewrite Hs.
@@ -965,7 +965,7 @@ Lemma seq_atomic_decomp_decr :
     {' (n, r,s,D) : _ &
                     prod (sum_vec r = sum_weight_seq_var n T)
                          ((sum_vec s = sum_weight_seq_covar n T) *
-                          (Permutation_Type T (vec s (covar n) ++ vec r (var n) ++ D)) *
+                          (Permutation_Type T (vec s (HR_covar n) ++ vec r (HR_var n) ++ D)) *
                           ((length D < length T)%nat)) } + { T = nil }.
 Proof.
   destruct T; intros Hat.
@@ -1015,14 +1015,14 @@ Proof.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, var n) :: D)); auto.
+    split with (A, ((a, HR_var n) :: D)); auto.
     Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, covar n) :: D)); auto.
+    split with (A, ((a, HR_covar n) :: D)); auto.
     Permutation_Type_solve.
-  - split with ((a, zero), T); auto.
+  - split with ((a, HR_zero), T); auto.
   - split with ((a, A1 +S A2), T); auto.
   - split with ((a, r *S A), T); auto.
   - split with ((a, A1 \/S A2), T); auto.
@@ -1161,19 +1161,19 @@ Qed.
 
 Lemma hrr_Z_decrease_complexity : forall G T r,
     r <> nil ->
-    HR_complexity_seq (vec r zero ++ T) = fst (HR_complexity_hseq ((vec r zero ++ T) :: G)) ->
-    HR_complexity_hseq (T :: G) <2 HR_complexity_hseq ((vec r zero ++ T) :: G).
+    HR_complexity_seq (vec r HR_zero ++ T) = fst (HR_complexity_hseq ((vec r HR_zero ++ T) :: G)) ->
+    HR_complexity_hseq (T :: G) <2 HR_complexity_hseq ((vec r HR_zero ++ T) :: G).
 Proof.
   intros G T r Hnnil Heq.
   simpl.
-  case_eq (HR_complexity_seq T =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r zero ++ T) =? fst (HR_complexity_hseq G)); intros H2.
+  case_eq (HR_complexity_seq T =? fst (HR_complexity_hseq G)); intros H1; case_eq (HR_complexity_seq (vec r HR_zero ++ T) =? fst (HR_complexity_hseq G)); intros H2.
   - exfalso.
     destruct r; [ apply Hnnil; reflexivity | ].
     apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
     simpl in H2.
     rewrite complexity_seq_app in H2.
     lia.
-  - case_eq (HR_complexity_seq (vec r zero ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
+  - case_eq (HR_complexity_seq (vec r HR_zero ++ T) <? fst (HR_complexity_hseq G))%nat; intros H3.
     + exfalso.
       apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
       destruct r; [ apply Hnnil; reflexivity | ].
@@ -1191,7 +1191,7 @@ Proof.
       simpl in H2; lia.
   - simpl in Heq; rewrite H2 in Heq.
     case_eq (HR_complexity_seq T <? fst (HR_complexity_hseq G))%nat; intros H3;
-      case_eq (HR_complexity_seq (vec r zero ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+      case_eq (HR_complexity_seq (vec r HR_zero ++ T) <? fst (HR_complexity_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
     + exfalso.
       apply Nat.eqb_neq in H2; apply H2; apply Heq.
     + apply fst_lt2.

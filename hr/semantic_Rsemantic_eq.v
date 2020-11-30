@@ -17,68 +17,68 @@ Local Open Scope R_scope.
 Fixpoint NNF (A : Rterm) : term.
   destruct A as [x | | A B |  r A | A B | A B].
   (* A = var x *)
-  - now apply (var x).
+  - now apply (HR_var x).
   (* A = zero *)
-  - now apply zero.
+  - now apply HR_zero.
   (* A = A + B *)
-  - now apply (plus (NNF A) (NNF B)).
+  - now apply ((NNF A) +S (NNF B)).
   (* A = r * A *)
   - case_eq (0 <? r) ; intros Hr.
     (* 0 < r *)
-    + now apply (mul (existT _ r Hr) (NNF A)).
+    + now apply ((existT _ r Hr) *S (NNF A)).
     + case_eq (0 <? -r) ; intros Hr'.
       (* r < 0 *)
-      * now apply (mul (existT _ (-r) Hr') (-S (NNF A))).
+      * now apply ((existT _ (-r) Hr') *S (-S (NNF A))).
       (* r = 0 *)
-      * now apply zero.
+      * now apply HR_zero.
   (* A = A \/ B *)
-  - now apply (max (NNF A) (NNF B)).
+  - now apply ((NNF A) \/S (NNF B)).
   (* A = A /\ B *)
-  - now apply (min (NNF A) (NNF B)).
+  - now apply ((NNF A) /\S (NNF B)).
 Defined.
 
 (** Function that takes a context and returns the NNF of the context *)
 Fixpoint CNNF (C : Rcontext) : context.
   destruct C as [ | A | x | | C1 C2 | C1 C2 | C1 C2 | r C ].
-  - now apply hole.
-  - now apply (TC (NNF A)).
-  - now apply (varC x).
-  - now apply zeroC.
-  - now apply (minC (CNNF C1) (CNNF C2)).
-  - now apply (maxC (CNNF C1) (CNNF C2)).
-  - now apply (plusC (CNNF C1) (CNNF C2)).
+  - now apply HR_hole.
+  - now apply (HR_TC (NNF A)).
+  - now apply (HR_varC x).
+  - now apply HR_zeroC.
+  - now apply (HR_minC (CNNF C1) (CNNF C2)).
+  - now apply (HR_maxC (CNNF C1) (CNNF C2)).
+  - now apply (HR_plusC (CNNF C1) (CNNF C2)).
   - case_eq (0 <? r) ; intros Hr.
-    + now apply (mulC (existT _ r Hr) (CNNF C)).
+    + now apply (HR_mulC (existT _ r Hr) (CNNF C)).
     + case_eq (0 <? -r) ; intros Hr'.
-      * now apply (mulC (existT _ (-r) Hr') (minusC (CNNF C))).
-      * now apply zeroC.
+      * now apply (HR_mulC (existT _ (-r) Hr') (minusC (CNNF C))).
+      * now apply HR_zeroC.
 Defined.
 
 (** The embedding of terms in NNF into regular terms *)
 Fixpoint toRterm A :=
   match A with
-  | var x =>  R_var x
-  | covar x => -R (R_var x)
-  | zero => R_zero
-  | plus A B => R_plus (toRterm A) (toRterm B)
-  | mul (existT _ r _) A => R_mul r (toRterm A)
-  | max A B => R_max (toRterm A) (toRterm B)
-  | min A B => R_min (toRterm A) (toRterm B)
+  | HR_var x =>  R_var x
+  | HR_covar x => -R (R_var x)
+  | HR_zero => R_zero
+  | HR_plus A B => R_plus (toRterm A) (toRterm B)
+  | HR_mul (existT _ r _) A => R_mul r (toRterm A)
+  | HR_max A B => R_max (toRterm A) (toRterm B)
+  | HR_min A B => R_min (toRterm A) (toRterm B)
   end.
 
 (** The embedding of context in NNF into regular context *)
 Fixpoint toRcontext C :=
   match C with
-  | hole => R_hole
-  | cohole => R_mulC (-1) R_hole
-  | varC x => R_varC x
-  | covarC x => R_mulC (-1) (R_varC x)
-  | TC A => R_TC (toRterm A)
-  | zeroC => R_zeroC
-  | plusC C1 C2 => R_plusC (toRcontext C1) (toRcontext C2)
-  | mulC (existT _ r _) C => R_mulC r (toRcontext C)
-  | maxC C1 C2 => R_maxC (toRcontext C1) (toRcontext C2)
-  | minC C1 C2 => R_minC (toRcontext C1) (toRcontext C2)
+  | HR_hole => R_hole
+  | HR_cohole => R_mulC (-1) R_hole
+  | HR_varC x => R_varC x
+  | HR_covarC x => R_mulC (-1) (R_varC x)
+  | HR_TC A => R_TC (toRterm A)
+  | HR_zeroC => R_zeroC
+  | HR_plusC C1 C2 => R_plusC (toRcontext C1) (toRcontext C2)
+  | HR_mulC (existT _ r _) C => R_mulC r (toRcontext C)
+  | HR_maxC C1 C2 => R_maxC (toRcontext C1) (toRcontext C2)
+  | HR_minC C1 C2 => R_minC (toRcontext C1) (toRcontext C2)
   end.
 
 (** * Soundness of the translation, i.e. NNF (toRterm A) = A and toRterm (NNF A) = A  *)
@@ -271,13 +271,13 @@ Qed.
       
 Fixpoint subs_gen (A : term) (v : nat -> term) : term :=
   match A with
-  | zero => zero
-  | var n => v n
-  | covar n => -S (v n)
-  | plus A B => plus (subs_gen A v) (subs_gen B v)
-  | mul r A => mul r (subs_gen A v)
-  | max A B => max (subs_gen A v) (subs_gen B v)
-  | min A B => min (subs_gen A v) (subs_gen B v)
+  | HR_zero => HR_zero
+  | HR_var n => v n
+  | HR_covar n => -S (v n)
+  | HR_plus A B => HR_plus (subs_gen A v) (subs_gen B v)
+  | HR_mul r A => HR_mul r (subs_gen A v)
+  | HR_max A B => HR_max (subs_gen A v) (subs_gen B v)
+  | HR_min A B => HR_min (subs_gen A v) (subs_gen B v)
   end.
 
 Lemma eq_subs_gen_minus : forall A v, subs_gen (-S A) v === -S (subs_gen A v).
@@ -305,7 +305,7 @@ Proof with auto with MGA_solver.
   - rewrite eq_subs_gen_minus...
 Qed.
 
-Lemma subs_to_gen : forall A n t, subs A n t = subs_gen A (fun x => if n =? x then t else var x).
+Lemma subs_to_gen : forall A n t, subs A n t = subs_gen A (fun x => if n =? x then t else HR_var x).
 Proof.
   induction A ; intros n' t; simpl; try (rewrite IHA1; rewrite IHA2); try rewrite IHA; try reflexivity.
   case (n' =? n); reflexivity.

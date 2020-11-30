@@ -24,12 +24,12 @@ Require Import RL.OLlibs.Permutation_Type_solve.
     (map (fun x => (vec (fst x) zero ++ snd x)) L) is thus the hypersequent (|- \vec{r_0}.0, T_0 | ... | |- \vec{r_n}.0, T_n) *)
 
 Lemma hrr_Z_inv_gen P : forall L,
-    HR P (map (fun x => (vec (fst x) zero ++ snd x)) L) ->
+    HR P (map (fun x => (vec (fst x) HR_zero ++ snd x)) L) ->
     HR P (map (fun x => (snd x)) L).
 Proof.
   intros L.
-  remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L) as G.
-  assert (Allperm G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L)) by (rewrite <- HeqG; clear; induction G; simpl; try now constructor).
+  remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) HR_zero ++ snd x) L) as G.
+  assert (Allperm G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) HR_zero ++ snd x) L)) by (rewrite <- HeqG; clear; induction G; simpl; try now constructor).
   clear HeqG.
   intro pi; revert L X; induction pi; intros L Hperm.
   - destruct L; [ | destruct L]; try now inversion Hperm.
@@ -95,10 +95,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> (covar n)) as Hnc by now auto.
-    assert (zero <> (var n)) as Hnv by now auto.
+    assert (HR_zero <> (HR_covar n)) as Hnc by now auto.
+    assert (HR_zero <> (HR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     change (Db :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
@@ -112,7 +112,7 @@ Proof.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     destruct (perm_decomp_vec_eq _ _ _ _ _ X) as [ [[[[a1 b1] c1] T'] D'] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec c1 zero ++ T').
+    apply hrr_ex_seq with (vec c1 HR_zero ++ T').
     { Permutation_Type_solve. }
     apply hrr_Z.
     change (T' :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
@@ -124,7 +124,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> A +S B) as Hneq by now auto.
+    assert (HR_zero <> A +S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hrr_ex_seq with (vec r (A +S B) ++ Db).
     { Permutation_Type_solve. }
@@ -139,7 +139,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> r0 *S A) as Hneq by now auto.
+    assert (HR_zero <> r0 *S A) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hrr_ex_seq with (vec r (r0 *S A) ++ Db).
     { Permutation_Type_solve. }
@@ -156,7 +156,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> A \/S B) as Hneq by now auto.
+    assert (HR_zero <> A \/S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hrr_ex_seq with (vec r (A \/S B) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
@@ -178,7 +178,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> A /\S B) as Hneq by now auto.
+    assert (HR_zero <> A /\S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hrr_ex_seq with (vec r (A /\S B) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
@@ -306,10 +306,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> (covar n)) as Hnc by now auto.
-    assert (A +S B <> (var n)) as Hnv by now auto.
+    assert (A +S B <> (HR_covar n)) as Hnc by now auto.
+    assert (A +S B <> (HR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ vec r1 B ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ vec r1 A ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     change ((vec r1 A ++ vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
@@ -322,9 +322,9 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> zero) as Hneq by now auto.
+    assert (A +S B <> HR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r zero ++ vec r1 A ++ vec r1 B ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec r1 A ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -549,10 +549,10 @@ Proof with try assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (a *S A <> (covar n)) as Hnc by now auto.
-    assert (a *S A <> (var n)) as Hnv by now auto.
+    assert (a *S A <> (HR_covar n)) as Hnc by now auto.
+    assert (a *S A <> (HR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec (mul_vec a r1) A  ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ vec (mul_vec a r1) A  ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     change ((vec (mul_vec a r1) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
@@ -565,9 +565,9 @@ Proof with try assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (a *S A <> zero) as Hneq by now auto.
+    assert (a *S A <> HR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r zero ++ vec (mul_vec a r1) A ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec (mul_vec a r1) A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -884,15 +884,15 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> (covar n)) as Hnc by now auto.
-    assert (A \/S B <> (var n)) as Hnv by now auto.
+    assert (A \/S B <> (HR_covar n)) as Hnc by now auto.
+    assert (A \/S B <> (HR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     eapply hrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 B ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     eapply hrr_ex_hseq; [ |  apply (IHpi ((r1 , Db) :: L))].
@@ -904,14 +904,14 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> zero) as Hneq by now auto.
+    assert (A \/S B <> HR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r zero ++ vec r1 A ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hrr_Z; try assumption.
     eapply hrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
-    apply hrr_ex_seq with (vec r zero ++ vec r1 B ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hrr_Z; try assumption.
     eapply hrr_ex_hseq; [ |  apply (IHpi ((r1 , Db) :: L))].
@@ -1214,10 +1214,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> (covar n)) as Hnc by now auto.
-    assert (A /\S B <> (var n)) as Hnv by now auto.
+    assert (A /\S B <> (HR_covar n)) as Hnc by now auto.
+    assert (A /\S B <> (HR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     change ((vec r1 A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
@@ -1230,9 +1230,9 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> zero) as Hneq by now auto.
+    assert (A /\S B <> HR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r zero ++ vec r1 A ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec r1 A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -1487,10 +1487,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> (covar n)) as Hnc by now auto.
-    assert (A /\S B <> (var n)) as Hnv by now auto.
+    assert (A /\S B <> (HR_covar n)) as Hnc by now auto.
+    assert (A /\S B <> (HR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_ID_case _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 B ++ Db).
+    apply hrr_ex_seq with (vec s (HR_covar n) ++ vec r (HR_var n) ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hrr_ID; try assumption.
     change ((vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
@@ -1503,9 +1503,9 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> zero) as Hneq by now auto.
+    assert (A /\S B <> HR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hrr_ex_seq with (vec r zero ++ vec r1 B ++ Db).
+    apply hrr_ex_seq with (vec r HR_zero ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -1682,11 +1682,11 @@ Proof.
 Qed.
 
 (** ** The regular logical rules are invertibles, those lemmas are instances of the previous ones *)
-Lemma hrr_Z_inv : forall G T r,  HR_T_M ((vec r zero ++ T) :: G) -> HR_T_M (T :: G).
+Lemma hrr_Z_inv : forall G T r,  HR_T_M ((vec r HR_zero ++ T) :: G) -> HR_T_M (T :: G).
 Proof.
   intros G.
   assert ({ L & prod
-                  ( G = map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L)
+                  ( G = map (fun x : list Rpos * list (Rpos * term) => vec (fst x) HR_zero ++ snd x) L)
                   ( G =  map (fun x : list Rpos * list (Rpos * term) =>  snd x) L) }) as [L [H1 H2]].
   { induction G.
     - split with nil; split;reflexivity.

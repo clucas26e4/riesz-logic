@@ -48,13 +48,13 @@ Proof.
 Qed.
 
 Lemma perm_decomp_vec_ID_case : forall T D n r s t A,
-    A <> covar n ->
-    A <> var n ->
-    Permutation_Type (vec s (covar n) ++ vec t (var n) ++ T) (vec r A ++ D) ->
+    A <> HR_covar n ->
+    A <> HR_var n ->
+    Permutation_Type (vec s (HR_covar n) ++ vec t (HR_var n) ++ T) (vec r A ++ D) ->
     {' (Ta, Tb, Da, Db) : _ &
                           prod (Permutation_Type T (Ta ++ Tb))
                                ((Permutation_Type D (Da ++ Db)) *
-                                (Permutation_Type (vec s (covar n) ++ vec t (var n)) Da) *
+                                (Permutation_Type (vec s (HR_covar n) ++ vec t (HR_var n)) Da) *
                                 (Permutation_Type (vec r A) Ta) *
                                 (Permutation_Type Tb Db)) }.
 Proof.
@@ -63,9 +63,9 @@ Proof.
   - split with (vec r A , D, nil, D).
     repeat split; try assumption; try reflexivity.
   - simpl in *.
-    assert (In_inf (a, var n) D) as HinD.
-    { destruct (in_inf_app_or (vec r A) D (a , var n)).
-      + apply Permutation_Type_in_inf with ((a, var n) :: vec t (var n) ++ T); try assumption.
+    assert (In_inf (a, HR_var n) D) as HinD.
+    { destruct (in_inf_app_or (vec r A) D (a , HR_var n)).
+      + apply Permutation_Type_in_inf with ((a, HR_var n) :: vec t (HR_var n) ++ T); try assumption.
         left; reflexivity.
       + exfalso.
         clear - i Hnv.
@@ -77,15 +77,15 @@ Proof.
     destruct (Add_inf_inv _ _ HinD) as [D' Hadd].
     apply Permutation_Type_Add_inf in Hadd.
     destruct (IHt D' r) as [ [[[Ta Tb] Da ] Db] [H1 [[[H2 H3] H4] H5]]].
-    { apply Permutation_Type_cons_inv with (a, var n).
+    { apply Permutation_Type_cons_inv with (a, HR_var n).
       etransitivity; [ apply Hperm | ].
       Permutation_Type_solve. }
-    split with (Ta, Tb, ((a, var n):: Da), Db).
+    split with (Ta, Tb, ((a, HR_var n):: Da), Db).
     repeat split; try assumption; try reflexivity; try Permutation_Type_solve.
   - simpl in *.
-    assert (In_inf (a, covar n) D) as HinD.
-    { destruct (in_inf_app_or (vec r A) D (a , covar n)).
-      + apply Permutation_Type_in_inf with ((a, covar n) :: vec s (covar n) ++ vec t (var n) ++ T); try assumption.
+    assert (In_inf (a, HR_covar n) D) as HinD.
+    { destruct (in_inf_app_or (vec r A) D (a , HR_covar n)).
+      + apply Permutation_Type_in_inf with ((a, HR_covar n) :: vec s (HR_covar n) ++ vec t (HR_var n) ++ T); try assumption.
         left; reflexivity.
       + exfalso.
         clear - i Hnc.
@@ -97,9 +97,9 @@ Proof.
     destruct (Add_inf_inv _ _ HinD) as [D' Hadd].
     apply Permutation_Type_Add_inf in Hadd.
     destruct (IHs D' r) as [ [[[Ta Tb] Da ] Db] [H1 [[[H2 H3] H4] H5]]].
-    { apply Permutation_Type_cons_inv with (a, covar n).
+    { apply Permutation_Type_cons_inv with (a, HR_covar n).
       Permutation_Type_solve. }
-    split with (Ta, Tb, ((a, covar n):: Da), Db).
+    split with (Ta, Tb, ((a, HR_covar n):: Da), Db).
     repeat split; try assumption; try reflexivity; try Permutation_Type_solve.
 Qed.
 

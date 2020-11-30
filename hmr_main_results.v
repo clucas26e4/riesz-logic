@@ -27,8 +27,8 @@ Lemma HMR_soundness P : forall G,
     R_zero <R= toRterm (sem_hseq G).
 Proof.
   intros G pi.
-  change (R_zero /\R (toRterm (sem_hseq G))) with (toRterm (zero /\S sem_hseq G)).
-  change (R_zero) with (toRterm zero).
+  change (R_zero /\R (toRterm (sem_hseq G))) with (toRterm (HMR_zero /\S sem_hseq G)).
+  change (R_zero) with (toRterm HMR_zero).
   apply semantic_to_Rsemantic.
   apply hmr_sound with P.
   apply pi.
@@ -46,7 +46,7 @@ Proof.
   - simpl.
     rewrite NNF_toRterm.
     reflexivity.
-  - change zero with (NNF (R_zero)).
+  - change HMR_zero with (NNF (R_zero)).
     apply Rsemantic_to_semantic.
     apply H.
 Qed.
@@ -57,7 +57,7 @@ Proof.
   apply hmrr_plus_inv.
 Qed.
 
-Lemma HMR_Z_inv : forall G T r, HMR_T_M ((vec r zero ++ T) :: G) -> HMR_T_M (T :: G).
+Lemma HMR_Z_inv : forall G T r, HMR_T_M ((vec r HMR_zero ++ T) :: G) -> HMR_T_M (T :: G).
 Proof.
   apply hmrr_Z_inv.
 Qed.

@@ -107,7 +107,7 @@ Proof.
     rewrite ? mul_vec_sum_vec; nra.
   - destruct L; inversion Hperm; inversion Hsum; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T); [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T); [ Permutation_Type_solve | ].
     apply hmrr_ID; try assumption.
     change ((vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T)
               :: map
@@ -119,7 +119,7 @@ Proof.
     apply IHpi; try assumption; simpl; try constructor; try assumption; try reflexivity.
   - destruct L; inversion Hperm; inversion Hsum; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
-    apply hmrr_ex_seq with (vec r zero ++ vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T); [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T); [ Permutation_Type_solve | ].
     apply hmrr_Z.
     change ((vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T)
               :: map
@@ -195,7 +195,7 @@ Proof.
       apply IHpi2; try assumption; simpl; try constructor; try assumption; try reflexivity.
   - destruct L; inversion Hperm; inversion Hsum; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T); [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T); [ Permutation_Type_solve | ].
     apply hmrr_one; try assumption.       
     change ((vec s1 (<S> (-S A)) ++ vec r1 (<S> A) ++ T)
               :: map
@@ -207,12 +207,12 @@ Proof.
     apply IHpi; try assumption; simpl; try constructor; try assumption; try reflexivity.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0.
     destruct p as [[s' r'] T']; simpl in *; subst.
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond (vec s' (-S A) ++ vec r' A ++ T)).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond (vec s' (-S A) ++ vec r' A ++ T)).
     { rewrite ? seq_diamond_app.
       rewrite ? vec_diamond.
       Permutation_Type_solve. }
     apply hmrr_diamond; try assumption.
-    apply hmrr_ex_seq with (vec s' (-S A) ++ vec r' A ++ (vec s coone ++ vec r one ++ T)) ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s' (-S A) ++ vec r' A ++ (vec s HMR_coone ++ vec r HMR_one ++ T)) ; [ Permutation_Type_solve | ].
     apply IH; try assumption.
     inversion Hsum; simpl in *; nra.
   - destruct L; inversion Hperm; inversion Hsum; subst.
@@ -255,9 +255,9 @@ Qed.
 Lemma hmrr_ID_gen P : forall G T A r s, sum_vec r = sum_vec s -> HMR P (T :: G) -> HMR P ((vec s (-S A) ++ vec r A ++ T) :: G).
 Proof.
   intros G T A; revert G T.
-  induction A;intros G T r0 s Heq pi; unfold minus; fold minus.
+  induction A;intros G T r0 s Heq pi; unfold HMR_minus; fold HMR_minus.
   - apply hmrr_ID; assumption.
-  - apply hmrr_ex_seq with (vec r0 (covar n) ++ vec s (var n) ++ T); [ Permutation_Type_solve | ].
+  - apply hmrr_ex_seq with (vec r0 (HMR_covar n) ++ vec s (HMR_var n) ++ T); [ Permutation_Type_solve | ].
     apply hmrr_ID; try symmetry; assumption.
   - apply hmrr_Z; apply hmrr_Z; apply pi.
   - apply hmrr_plus.
@@ -304,7 +304,7 @@ Proof.
       eapply hmrr_ex_seq; [ | apply IHA2; [ apply Heq | apply pi] ].
       Permutation_Type_solve.
   - apply hmrr_one; try nra; try assumption.
-  - apply hmrr_ex_seq with (vec r0 coone ++ vec s one ++ T) ; [ Permutation_Type_solve | ].
+  - apply hmrr_ex_seq with (vec r0 HMR_coone ++ vec s HMR_one ++ T) ; [ Permutation_Type_solve | ].
     apply hmrr_one; try nra; try assumption.
   - assert ({ L & prod
                   ( G = map (fun x => snd x) L)
@@ -373,10 +373,10 @@ Proof.
   apply hmrr_ID_gen; [ reflexivity | apply hmrr_INIT ].
 Qed.
 
-Lemma hmrr_Z_can_inv P : forall G T r, HMR P ((vec r zero ++ T) :: G) -> HMR (hmr_frag_add_CAN P) (T :: G).
+Lemma hmrr_Z_can_inv P : forall G T r, HMR P ((vec r HMR_zero ++ T) :: G) -> HMR (hmr_frag_add_CAN P) (T :: G).
 Proof.
   intros G T r pi.
-  apply hmrr_can with zero r r; try reflexivity.
+  apply hmrr_can with HMR_zero r r; try reflexivity.
   apply hmrr_Z.
   apply HMR_le_frag with P; try assumption.
   apply add_CAN_le_frag.
@@ -392,7 +392,7 @@ Proof.
       apply le_hmr_frag_trans with (hmr_frag_add_M P); [ apply add_M_le_frag | apply add_CAN_le_frag]. }
   apply hmrr_ex_hseq with (G ++ ((vec r (-S (r0 *S A)) ++ vec (mul_vec r0 r) A) :: nil)); [ Permutation_Type_solve | ].
   apply hmrr_W_gen.
-  unfold minus; fold minus.
+  unfold HMR_minus; fold HMR_minus.
   apply hmrr_mul.
   replace (vec (mul_vec r0 r) (-S A) ++ vec (mul_vec r0 r) A) with (vec (mul_vec r0 r) (-S A) ++ vec (mul_vec r0 r) A ++ nil) by (now rewrite app_nil_r).
   apply hmrr_ID_gen ; [ reflexivity | ].

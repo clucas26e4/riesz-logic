@@ -21,7 +21,7 @@ Proof.
   intros G T A; revert G T.
   induction A;intros G T r0 s Heq pi; unfold minus; fold minus.
   - apply hrr_ID; assumption.
-  - apply hrr_ex_seq with (vec r0 (covar n) ++ vec s (var n) ++ T); [ Permutation_Type_solve | ].
+  - apply hrr_ex_seq with (vec r0 (HR_covar n) ++ vec s (HR_var n) ++ T); [ Permutation_Type_solve | ].
     apply hrr_ID; try symmetry; assumption.
   - apply hrr_Z; apply hrr_Z; apply pi.
   - apply hrr_plus.
@@ -106,10 +106,10 @@ Proof.
   apply hrr_ID_gen; [ reflexivity | apply hrr_INIT ].
 Qed.
 
-Lemma hrr_Z_can_inv P : forall G T r, HR P ((vec r zero ++ T) :: G) -> HR (hr_frag_add_CAN P) (T :: G).
+Lemma hrr_Z_can_inv P : forall G T r, HR P ((vec r HR_zero ++ T) :: G) -> HR (hr_frag_add_CAN P) (T :: G).
 Proof.
   intros G T r pi.
-  apply hrr_can with zero r r; try reflexivity.
+  apply hrr_can with HR_zero r r; try reflexivity.
   apply hrr_Z.
   apply HR_le_frag with P; try assumption.
   apply add_CAN_le_frag.
@@ -125,10 +125,10 @@ Proof.
       apply le_hr_frag_trans with (hr_frag_add_M P); [ apply add_M_le_frag | apply add_CAN_le_frag]. }
   apply hrr_ex_hseq with (G ++ ((vec r (-S (r0 *S A)) ++ vec (mul_vec r0 r) A) :: nil)); [ Permutation_Type_solve | ].
   apply hrr_W_gen.
-  unfold minus; fold minus.
+  unfold HR_minus; fold HR_minus.
   apply hrr_mul.
   replace (vec (mul_vec r0 r) (-S A) ++ vec (mul_vec r0 r) A) with (vec (mul_vec r0 r) (-S A) ++ vec (mul_vec r0 r) A ++ nil) by (now rewrite app_nil_r).
-  apply hrr_ID_gen ; [ reflexivity | ].
+  apply hrr_ID_gen; [ reflexivity | ].
   apply hrr_INIT.
 Qed.
 

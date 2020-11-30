@@ -44,19 +44,19 @@ Proof with try assumption; try reflexivity.
         apply hrr_ID_gen...
         apply hrr_INIT.
       * simpl.
-        change ((r, covar n) :: (r, var n) :: nil) with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil).
+        change ((r, HR_covar n) :: (r, HR_var n) :: nil) with ((vec (r :: nil) (HR_covar n)) ++ (vec (r :: nil) (HR_var n)) ++ nil).
         apply hrr_ID...
         apply hrr_INIT.
       * simpl.
-        apply hrr_ex_seq with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil) ; [Permutation_Type_solve | ].
+        apply hrr_ex_seq with ((vec (r :: nil) (HR_covar n)) ++ (vec (r :: nil) (HR_var n)) ++ nil) ; [Permutation_Type_solve | ].
         apply hrr_ID...
         apply hrr_INIT.
       * simpl.
-        change ((r, zero) :: (r, zero) :: nil) with ((vec (r:: r:: nil) zero) ++ nil).
+        change ((r, HR_zero) :: (r, HR_zero) :: nil) with ((vec (r:: r:: nil) HR_zero) ++ nil).
         apply hrr_Z.
         apply hrr_INIT.
       * unfold evalContext; fold evalContext.
-        unfold minus; fold minus.
+        unfold HR_minus; fold HR_minus.
         apply hrr_ex_seq with ((vec (r :: nil) (evalContext c1 t1 /\S evalContext c2 t1)) ++ (vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ nil) ; [ Permutation_Type_solve | ].
         apply hrr_min.
         -- apply hrr_ex_seq with  ((vec (r :: nil) (-S evalContext c1 t2 \/S -S evalContext c2 t2)) ++ (vec (r :: nil) (evalContext c1 t1)) ++ nil); [ Permutation_Type_solve | ].
@@ -70,7 +70,7 @@ Proof with try assumption; try reflexivity.
            eapply hrr_ex_seq ; [ | apply IHc2].
            Permutation_Type_solve.
       * unfold evalContext; fold evalContext.
-        unfold minus; fold minus.
+        unfold HR_minus; fold HR_minus.
         change ((r, -S evalContext c1 t2 /\S -S evalContext c2 t2)
                   :: (r, evalContext c1 t1 \/S evalContext c2 t1) :: nil) with
             ((vec (r ::nil) (-S evalContext c1 t2 /\S -S evalContext c2 t2)) ++ (vec (r ::nil) (evalContext c1 t1 \/S evalContext c2 t1)) ++ nil).
@@ -86,7 +86,7 @@ Proof with try assumption; try reflexivity.
            apply hrr_W.
            eapply hrr_ex_seq ; [ | apply IHc2].
            Permutation_Type_solve.
-      * unfold evalContext; fold evalContext; unfold minus; fold minus.
+      * unfold evalContext; fold evalContext; unfold HR_minus; fold HR_minus.
         change ((r, (-S evalContext c1 t2) -S (evalContext c2 t2))
                   :: (r, evalContext c1 t1 +S evalContext c2 t1) :: nil)
           with ((vec (r :: nil) ((-S evalContext c1 t2) -S (evalContext c2 t2))) ++ (vec (r :: nil) (evalContext c1 t1 +S evalContext c2 t1)) ++ nil).
@@ -97,7 +97,7 @@ Proof with try assumption; try reflexivity.
         apply hrr_plus.
         apply hrr_ex_seq with (((r, -S evalContext c1 t2) :: (r, evalContext c1 t1) :: nil) ++ ((r, -S evalContext c2 t2) :: (r, evalContext c2 t1) :: nil)) ; [ Permutation_Type_solve | ].
         apply hrr_M; try reflexivity; [ apply IHc1 | apply IHc2].
-      * unfold evalContext; fold evalContext; unfold minus; fold minus.
+      * unfold evalContext; fold evalContext; unfold HR_minus; fold HR_minus.
         change ((r, r0 *S (-S evalContext c t2)) :: (r, r0 *S evalContext c t1) :: nil) with ((vec (r :: nil) (r0 *S (-S evalContext c t2))) ++ (vec (r :: nil) (r0 *S evalContext c t1)) ++ nil).
         apply hrr_mul.
         apply hrr_ex_seq with (vec (r :: nil) (r0 *S evalContext c t1) ++ vec (mul_vec r0 (r :: nil)) (-S evalContext c t2) ++  nil) ; [ Permutation_Type_solve | ].
@@ -109,12 +109,12 @@ Proof with try assumption; try reflexivity.
     + replace (((r, -S subs t2 n t) :: (r, subs t1 n t) :: nil) :: nil) with (subs_hseq (((r, -S t2) :: (r, t1) :: nil) :: nil) n t) by now rewrite <-eq_subs_minus.
       apply subs_proof.
       apply completeness_1; apply Heq.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can. do_HR_logical.
       apply hrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) (t3)) ++ nil); [ Permutation_Type_solve | ].
       do 3 (apply hrr_ID_gen; try reflexivity).
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ nil); [ Permutation_Type_solve | ].
       do 2 (apply hrr_ID_gen; try reflexivity).
@@ -123,12 +123,12 @@ Proof with try assumption; try reflexivity.
       pattern t at 1; rewrite <- minus_minus.
       apply hrr_ID_gen...
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       pattern t at 1; rewrite <-(minus_minus t).
       rewrite<- ? app_assoc; apply hrr_ID_gen...
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       unfold mul_vec.
       apply hrr_ex_seq with ((vec ((time_pos (minus_pos Hlt) r) ::(time_pos b r) :: nil) (-S t)) ++ (vec ((time_pos a r) :: nil) t) ++ nil); [ Permutation_Type_solve | ].
@@ -139,28 +139,28 @@ Proof with try assumption; try reflexivity.
       apply hrr_ex_seq with ((vec (r :: nil) (One *S (-S (-S t)))) ++ (vec (r :: nil) (-S t)) ++ nil); [ Permutation_Type_solve | ].
       apply hrr_mul.
       apply hrr_ID_gen; [ destruct r; simpl; nra | apply hrr_INIT].
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       pattern t at 1; rewrite <- minus_minus.
       apply hrr_ID_gen ; [ | apply hrr_INIT].
       destruct r; destruct x; destruct y; simpl.
       nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ex_seq with ((vec (mul_vec x (r :: nil)) (-S t1)) ++ (vec (mul_vec x (r :: nil)) ( t1)) ++ (vec (mul_vec x (r :: nil)) (-S t2))++ (vec (mul_vec x (r :: nil)) (t2)) ++ nil) ; [ Permutation_Type_solve | ].
       do 2 (apply hrr_ID_gen; try reflexivity).
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       unfold mul_vec.
       apply hrr_ex_seq with ((vec ((time_pos x r) :: (time_pos y r) :: nil) (-S t)) ++ (vec (time_pos (plus_pos x y) r :: nil) t) ++ nil) ; [ Permutation_Type_solve | ].
       apply hrr_ID_gen; [ | apply hrr_INIT].
       destruct r; destruct x; destruct y; unfold plus_pos; simpl; nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ID_gen ; [ | apply hrr_INIT].
       simpl; nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W; apply hrr_W.
         pattern t1 at 1; rewrite <- (minus_minus).
@@ -174,7 +174,7 @@ Proof with try assumption; try reflexivity.
         pattern t3 at 1; rewrite <- minus_minus.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ]; apply hrr_W.
         pattern t2 at 1; rewrite <- minus_minus.
@@ -193,7 +193,7 @@ Proof with try assumption; try reflexivity.
         pattern t1 at 1; rewrite <- minus_minus.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W; eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ]; apply hrr_W.
         apply hrr_ID_gen...
@@ -204,7 +204,7 @@ Proof with try assumption; try reflexivity.
       * apply hrr_W; apply hrr_W.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ]; apply hrr_W.
         apply hrr_ID_gen...
@@ -212,7 +212,7 @@ Proof with try assumption; try reflexivity.
       * apply hrr_W.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * pattern t1 at 1; rewrite <- minus_minus.
         apply hrr_ID_gen...
@@ -221,7 +221,7 @@ Proof with try assumption; try reflexivity.
         pattern t1 at 1; rewrite <- minus_minus.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W.
         rewrite <- app_assoc.
@@ -237,7 +237,7 @@ Proof with try assumption; try reflexivity.
         rewrite <-app_assoc; apply hrr_ID_gen...
         pattern t3 at 1; rewrite<- minus_minus; apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_INIT.
       * simpl.
@@ -264,20 +264,20 @@ Proof with try assumption; try reflexivity.
         apply hrr_ID...
         apply hrr_INIT.
       * simpl.
-        apply hrr_ex_seq with ((vec (r :: nil) (covar n)) ++ (vec (r :: nil) (var n)) ++ nil) ; [Permutation_Type_solve | ].
+        apply hrr_ex_seq with ((vec (r :: nil) (HR_covar n)) ++ (vec (r :: nil) (HR_var n)) ++ nil) ; [Permutation_Type_solve | ].
         apply hrr_ID...
         apply hrr_INIT.
       * simpl.
         unfold HR_M_can; do_HR_logical.
         apply hrr_INIT.
       * unfold evalContext; fold evalContext.
-        unfold minus; fold minus.
+        unfold HR_minus; fold HR_minus.
         unfold HR_M_can; do_HR_logical.
         -- apply hrr_W.
            apply IHc1.
         -- eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ]; apply hrr_W; apply IHc2.
       * unfold evalContext; fold evalContext.
-        unfold minus; fold minus.
+        unfold HR_minus; fold HR_minus.
         unfold HR_M_can; do_HR_logical.
         -- apply hrr_W.
            simpl; eapply hrr_ex_seq ; [ apply Permutation_Type_swap | ].
@@ -294,26 +294,26 @@ Proof with try assumption; try reflexivity.
     + replace (((r, -S subs t1 n t) :: (r, subs t2 n t) :: nil) :: nil) with (subs_hseq (((r, -S t1) :: (r, t2) :: nil) :: nil) n t) by now rewrite <-eq_subs_minus.
       apply subs_proof.
       apply completeness_2; apply Heq.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) (t3)) ++ nil); [ Permutation_Type_solve | ].
       do 3 (apply hrr_ID_gen; try reflexivity).
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) (t1)) ++ (vec (r :: nil) (-S t2)) ++ (vec (r :: nil) (t2)) ++ nil); [ Permutation_Type_solve | ].
       do 2 (apply hrr_ID_gen; try reflexivity).
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ID_gen...
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       rewrite minus_minus.
       rewrite<- ? app_assoc; apply hrr_ID_gen...
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       unfold mul_vec.
       rewrite minus_minus.
@@ -321,31 +321,31 @@ Proof with try assumption; try reflexivity.
       apply hrr_ID_gen ; [ | apply hrr_INIT ].
       destruct r; destruct a; destruct b; unfold minus_pos.
       simpl; nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ID_gen; [ | apply hrr_INIT].
       destruct r; simpl; nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ID_gen ; [ | apply hrr_INIT].
       destruct r; destruct x; destruct y; simpl.
       nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ex_seq with ((vec (mul_vec x (r :: nil)) (-S t1)) ++ (vec (mul_vec x (r :: nil)) ( t1)) ++ (vec (mul_vec x (r :: nil)) (-S t2))++ (vec (mul_vec x (r :: nil)) (t2)) ++ nil) ; [ Permutation_Type_solve | ].
       do 2 (apply hrr_ID_gen; try reflexivity).
       apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       unfold mul_vec.
       apply hrr_ex_seq with ((vec (time_pos (plus_pos x y) r :: nil) (-S t)) ++ (vec (time_pos x r :: time_pos y r :: nil) t) ++ nil) ; [ Permutation_Type_solve | ].
       apply hrr_ID_gen; [ | apply hrr_INIT].
       destruct r; destruct x; destruct y; unfold plus_pos; simpl; nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       apply hrr_ID_gen ; [ | apply hrr_INIT].
       simpl; nra.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W; eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ]; apply hrr_W.
         pattern t1 at 1; rewrite <- (minus_minus).
@@ -359,7 +359,7 @@ Proof with try assumption; try reflexivity.
         pattern t3 at 1; rewrite <- (minus_minus).
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ]; apply hrr_W.
         pattern t1 at 1; rewrite <- minus_minus.
@@ -369,14 +369,14 @@ Proof with try assumption; try reflexivity.
         pattern t2 at 1; rewrite <- minus_minus.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_ID_gen...
         apply hrr_INIT.
       * apply hrr_W.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W; apply hrr_W.
         apply hrr_ID_gen...
@@ -387,7 +387,7 @@ Proof with try assumption; try reflexivity.
       * eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ]; apply hrr_W; eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ]; apply hrr_W.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * eapply hrr_ex_hseq; [ apply Permutation_Type_swap | ]; apply hrr_W.
         apply hrr_ID_gen...
@@ -395,7 +395,7 @@ Proof with try assumption; try reflexivity.
       * apply hrr_W.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W.
         apply hrr_ID_gen...
@@ -403,7 +403,7 @@ Proof with try assumption; try reflexivity.
       * apply hrr_W.
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       * apply hrr_W; apply hrr_W.
         apply hrr_ex_seq with ((vec (r :: nil) (-S t1)) ++ (vec (r :: nil) t1) ++ (vec (r :: nil) (-S t3)) ++ (vec (r :: nil) t3) ++ nil); [ Permutation_Type_solve | ].
@@ -416,7 +416,7 @@ Proof with try assumption; try reflexivity.
         apply hrr_ID_gen...
         apply hrr_ID_gen...
         apply hrr_INIT.
-    + unfold minus; fold minus.
+    + unfold HR_minus; fold HR_minus.
       unfold HR_M_can; do_HR_logical.
       simpl.
       eapply hrr_ex_hseq ; [ apply Permutation_Type_swap | ].
@@ -476,7 +476,7 @@ Qed.
 (** Proof of the completeness of the system of HR - hr_complete return a T free proof of G *)
 Lemma hr_complete : forall G,
     G <> nil ->
-    zero <== sem_hseq G ->
+    HR_zero <== sem_hseq G ->
     HR_M_can G.
 Proof with try assumption.
   intros G Hnnil Hleq.
@@ -484,7 +484,7 @@ Proof with try assumption.
   replace G with (G ++ nil) by now rewrite app_nil_r.
   apply (@HR_sem_hseq hr_frag_M_can)...
   change ((One , sem_hseq G) :: nil) with ((vec (One :: nil) (sem_hseq G)) ++ nil).
-  apply (@hrr_min_can_inv_r hr_frag_M_can) with zero.
+  apply (@hrr_min_can_inv_r hr_frag_M_can) with HR_zero.
   apply (@hrr_Z_can_inv hr_frag_M_can) with (One :: nil)...
 Qed.
 
@@ -792,15 +792,15 @@ Proof.
     apply pi.
 Qed.
 
-Lemma HR_M_not_complete : { G : _ & zero <== sem_hseq G & (HR_M G -> False) }.
+Lemma HR_M_not_complete : { G : _ & HR_zero <== sem_hseq G & (HR_M G -> False) }.
 Proof.
   assert (0 <? sqrt 2 = true) as H by (apply R_blt_lt; apply Rlt_sqrt2_0).
   set (sq2 := (existT (fun x => 0 <? x = true) (sqrt 2) H)).
-  split with (((One, var 0) :: nil) :: ((sq2, covar 0) :: nil):: nil).
+  split with (((One, HR_var 0) :: nil) :: ((sq2, HR_covar 0) :: nil):: nil).
   - apply hr_sound with hr_frag_full.
     apply hrr_T with sq2; try reflexivity.
     apply hrr_S.
-    apply hrr_ex_seq with (vec (sq2 :: nil) (covar 0) ++ vec (time_pos sq2 One :: nil) (var 0) ++ nil).
+    apply hrr_ex_seq with (vec (sq2 :: nil) (HR_covar 0) ++ vec (time_pos sq2 One :: nil) (HR_var 0) ++ nil).
     + unfold seq_mul.
       replace (time_pos sq2 One) with sq2 by (unfold sq2; unfold One; apply Rpos_eq; simpl; nra).
       simpl.

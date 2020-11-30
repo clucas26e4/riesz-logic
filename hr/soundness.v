@@ -15,7 +15,7 @@ Local Open Scope R_scope.
 
 (** ** all rules are sound *)
 
-Lemma W_sound : forall G T, G <> nil ->  zero <== (sem_hseq G) -> zero <== sem_hseq (T :: G).
+Lemma W_sound : forall G T, G <> nil ->  HR_zero <== (sem_hseq G) -> HR_zero <== sem_hseq (T :: G).
 Proof with try assumption.
   intros G T notEmpty Hleq.
   destruct G; [ now exfalso | ].
@@ -36,7 +36,7 @@ Proof with try assumption.
     now auto with MGA_solver.
 Qed.
 
-Lemma S_sound : forall G T1 T2, zero <== sem_hseq ((T1 ++ T2) :: G) -> zero <== sem_hseq (T1 :: T2 :: G).
+Lemma S_sound : forall G T1 T2, HR_zero <== sem_hseq ((T1 ++ T2) :: G) -> HR_zero <== sem_hseq (T1 :: T2 :: G).
 Proof with try assumption.
   intros G T1 T2 Hleq.
   destruct G.
@@ -76,13 +76,13 @@ Proof with try assumption.
     + apply leq_min; now auto with MGA_solver.
 Qed.
 
-Lemma M_sound : forall G T1 T2, zero <== sem_hseq (T1 :: G) -> zero <== sem_hseq (T2 :: G) ->
-                                zero <== sem_hseq ((T1 ++ T2) :: G).
+Lemma M_sound : forall G T1 T2, HR_zero <== sem_hseq (T1 :: G) -> HR_zero <== sem_hseq (T2 :: G) ->
+                                HR_zero <== sem_hseq ((T1 ++ T2) :: G).
 Proof with try assumption.
   intros [ | T3 G ] T1 T2 Hleq1 Hleq2.
   - simpl in *.
     rewrite sem_seq_plus.
-    rewrite <-(neutral_plus zero).
+    rewrite <-(neutral_plus HR_zero).
     apply leq_plus_cong...
   - unfold sem_hseq in *; fold (sem_hseq (T3 :: G)) in *; fold (sem_hseq (T3 :: G)) in *; fold (sem_hseq (T3 :: G)).
     rewrite sem_seq_plus.
@@ -97,7 +97,7 @@ Proof with try assumption.
           apply min_leq. }            
       eapply leq_trans.
       * apply plus_pos_min; apply zero_leq_neg.
-      * rewrite <- (neutral_plus zero) at 5.
+      * rewrite <- (neutral_plus HR_zero) at 5.
         apply leq_plus_cong; (rewrite cond_min_neg_eq_zero ; [ apply leq_refl | ])...
     + apply leq_min.
       * rewrite commu_max.
@@ -107,8 +107,8 @@ Proof with try assumption.
 Qed.
 
 Lemma T_sound :  forall G T r,
-    zero <== sem_hseq (seq_mul r T :: G) ->
-    zero <== sem_hseq (T :: G).
+    HR_zero <== sem_hseq (seq_mul r T :: G) ->
+    HR_zero <== sem_hseq (T :: G).
 Proof with try assumption.
   intros [ | T2 G] T [r Hpos]; 
     remember (existT (fun r : R => (0 <? r)%R = true) r Hpos) as t; intros Hleq.
@@ -181,7 +181,7 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r zero ++ T) :: G).
+Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r HR_zero ++ T) :: G).
 Proof.
   intros [ | T2 G] T [ | r0 r].
   - reflexivity.
@@ -294,7 +294,7 @@ Lemma min_sound : forall G T A  B r, sem_hseq ((vec r A ++ T) :: G) /\S sem_hseq
 Qed.    
 
 (** ** HR is sound *)
-Lemma hr_sound b : forall G, HR b G -> zero <== sem_hseq G.
+Lemma hr_sound b : forall G, HR b G -> HR_zero <== sem_hseq G.
 Proof with try assumption.
   intros G pi.
   induction pi.
@@ -304,7 +304,7 @@ Proof with try assumption.
   - now apply S_sound.
   - now apply M_sound.
   - now apply T_sound with r.
-  - change (covar n) with (-S (var n)); now rewrite <-ext_ID_sound.
+  - change (HR_covar n) with (-S (HR_var n)); now rewrite <-ext_ID_sound.
   - now rewrite <-Z_sound.
   - now rewrite <-plus_sound.
   - now rewrite <-mul_sound.

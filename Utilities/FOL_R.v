@@ -1,4 +1,4 @@
-(** First order logic for the signature (R, +, ., <=, =) where . is an external multiplication by a real scalar *)
+(** Existential fragment of first order logic for the signature (R, +, ., <=, =) where . is an external multiplication by a real scalar *)
 
 Require Import riesz_logic_List_more.
 
@@ -211,14 +211,17 @@ Qed.
 
 Inductive FOL_R_pred : Type :=
 | FOL_R_eq : FOL_R_term -> FOL_R_term -> FOL_R_pred
+| FOL_R_neq : FOL_R_term -> FOL_R_term -> FOL_R_pred
 | FOL_R_le : FOL_R_term -> FOL_R_term -> FOL_R_pred.
 
 Notation "f1 =R f2" := (FOL_R_eq f1 f2) (at level 50).
+Notation "f1 <>R f2" := (FOL_R_neq f1 f2) (at level 50).
 Notation "f1 <=R f2" := (FOL_R_le f1 f2) (at level 50).                                            
 
 Definition FOL_R_pred_sem (v : nat -> R) p :=
   match p with
   | FOL_R_eq t1 t2 => (FOL_R_term_sem v t1) = (FOL_R_term_sem v t2)
+  | FOL_R_neq t1 t2 => (FOL_R_term_sem v t1) <> (FOL_R_term_sem v t2)
   | FOL_R_le t1 t2 => (FOL_R_term_sem v t1) <= (FOL_R_term_sem v t2)
   end.
 
@@ -226,12 +229,9 @@ Inductive FOL_R_formula : Type :=
 | FOL_R_true : FOL_R_formula
 | FOL_R_false : FOL_R_formula
 | FOL_R_atoms : FOL_R_pred -> FOL_R_formula
-| FOL_R_neg : FOL_R_formula -> FOL_R_formula
 | FOL_R_and : FOL_R_formula -> FOL_R_formula -> FOL_R_formula
 | FOL_R_or : FOL_R_formula -> FOL_R_formula -> FOL_R_formula
-| FOL_R_impl : FOL_R_formula -> FOL_R_formula -> FOL_R_formula
-| FOL_R_exists : nat -> FOL_R_formula -> FOL_R_formula
-| FOL_R_forall : nat -> FOL_R_formula -> FOL_R_formula.
+| FOL_R_exists : nat -> FOL_R_formula -> FOL_R_formula.
 
 Fixpoint exists_vec (v : list nat) (f : FOL_R_formula) :=
   match v with
@@ -241,19 +241,15 @@ Fixpoint exists_vec (v : list nat) (f : FOL_R_formula) :=
 
 Notation "f1 /\R f2" := (FOL_R_and f1 f2) (at level 40, left associativity).
 Notation "f1 \/R f2" := (FOL_R_or f1 f2) (at level 45, left associativity).
-Notation "f1 =>R f2" := (FOL_R_impl f1 f2) (at level 45, left associativity).
 
 Fixpoint FOL_R_formula_sem (v : nat -> R) f : Type :=
   match f with
   | FOL_R_true => True
   | FOL_R_false => False
   | FOL_R_atoms p => FOL_R_pred_sem v p
-  | FOL_R_neg f => (FOL_R_formula_sem v f) -> False
   | FOL_R_and f1 f2 => prod (FOL_R_formula_sem v f1) (FOL_R_formula_sem v f2)
   | FOL_R_or f1 f2 => sum (FOL_R_formula_sem v f1) (FOL_R_formula_sem v f2)
-  | FOL_R_impl f1 f2 => (FOL_R_formula_sem v f1) -> (FOL_R_formula_sem v f2)
   | FOL_R_exists n f => { r & FOL_R_formula_sem (upd_val v n r) f}
-  | FOL_R_forall n f => forall r, FOL_R_formula_sem (upd_val v n r) f
   end.
 
 Lemma cond_FOL_R_exists_vec_formula_sem : forall v f val,

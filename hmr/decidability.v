@@ -1460,7 +1460,7 @@ Qed.
 
 Fixpoint p_seq_fst_non_basic_term (T : p_sequent) : (FOL_R_term * term) :=
   match T with
-  | nil => (FOL_R_cst 0, var 0)
+  | nil => (FOL_R_cst 0, HMR_var 0)
   | (a, A) :: T => if (0 <? HMR_complexity_term A)%nat
                    then (a , A)
                    else (p_seq_fst_non_basic_term T)
@@ -1689,7 +1689,7 @@ Definition apply_logical_rule_on_p_hypersequent G : (p_hypersequent + (p_hyperse
                                | A1 /\S A2 => inr ((((a, A1) :: T) :: G) , (((a, A2) :: T) :: G))
                                | A1 \/S A2 => inl (((a, A2) :: T) :: ( (a, A1) :: T) :: G)
                                | r0 *S A => inl (((FOL_R_cst (projT1 r0) *R a, A) :: T) :: G)
-                               | zero => inl (T :: G)
+                               | HMR_zero => inl (T :: G)
                                | _ => inl (((a, A) :: T) :: G)
                                end
               end
@@ -1833,8 +1833,8 @@ Proof.
       try (exfalso; clear - e H2;
            try (apply R_blt_lt in e); apply R_blt_lt in H2; simpl in *; lra).
     revert pi;set (r := (existT (fun x : R => (0 <? x) = true) (FOL_R_term_sem val a) e)); intros pi.
-    change ((r, zero) :: eval_p_sequent val l) with
-        (hseq.vec (r :: nil) zero ++ eval_p_sequent val l).
+    change ((r, HMR_zero) :: eval_p_sequent val l) with
+        (hseq.vec (r :: nil) HMR_zero ++ eval_p_sequent val l).
     apply hmrr_Z.
     apply pi.
   - inversion Hwd; inversion X; subst.
@@ -1987,7 +1987,7 @@ Proof.
     2:{ intros Hnb.
         apply p_hseq_is_basic_complexity_0 in Hnb; lia. }
     rewrite <- HeqH.
-    change ((a, zero) :: l) with (vec (a :: nil) zero ++ l).
+    change ((a, HMR_zero) :: l) with (vec (a :: nil) HMR_zero ++ l).
     apply hmrr_Z_decrease_modal_complexity ; [ intros H'; inversion H' | ].
     simpl vec; simpl app.
     rewrite HeqH.
@@ -2195,7 +2195,9 @@ Qed.
 Fixpoint FOL_R_all_zero k (v : list nat) :=
   match v with
   | nil => FOL_R_true
-  | n :: v => FOL_R_and (FOL_R_atoms (FOL_R_eq (FOL_R_var (k + n)) (FOL_R_cst 0))) (FOL_R_all_zero k v)
+  | n :: v => FOL_R_and
+                (FOL_R_atoms ((FOL_R_var (k + n)) =R (FOL_R_cst 0)))
+                (FOL_R_all_zero k v)
   end.
 
 Lemma cond_FOL_R_all_zero_formula_sem : forall k v val,
@@ -2226,7 +2228,10 @@ Qed.
 Fixpoint FOL_R_all_gtz k (v : list nat ) :=
   match v with
   | nil => FOL_R_true
-  | n :: v => FOL_R_and (FOL_R_and (FOL_R_neg (FOL_R_atoms (FOL_R_eq (FOL_R_var (k + n)) (FOL_R_cst 0)))) (FOL_R_atoms (FOL_R_le (FOL_R_cst 0) (FOL_R_var (k + n))))) (FOL_R_all_gtz k v)
+  | n :: v => FOL_R_and (FOL_R_and
+                           (FOL_R_atoms ((FOL_R_var (k + n)) <>R (FOL_R_cst 0)))
+                           (FOL_R_atoms ((FOL_R_cst 0) <=R(FOL_R_var (k + n)))))
+                        (FOL_R_all_gtz k v)
   end.
 
 Lemma cond_FOL_R_all_gtz_formula_sem : forall k v val,
@@ -2257,8 +2262,10 @@ Qed.
 (** return the conjunction /\(\sum_i^m \beta_{(max_var_weight G) + i} \sum\vec R_{i,j} = \sum_i^m \beta_{(max_var_weight G) + i} \sum\vec S_{i,j} *)
 Fixpoint FOL_R_all_atoms_eq G k :=
   match k with
-  | 0%nat => FOL_R_atoms (FOL_R_eq (p_sum_weight_var_with_coeff 0%nat G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) (p_sum_weight_covar_with_coeff 0%nat G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))))
-  | S k => FOL_R_and (FOL_R_atoms (FOL_R_eq (p_sum_weight_var_with_coeff (S k) G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) (p_sum_weight_covar_with_coeff (S k) G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))))) (FOL_R_all_atoms_eq G k)
+  | 0%nat => FOL_R_atoms ((p_sum_weight_var_with_coeff 0%nat G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) =R(p_sum_weight_covar_with_coeff 0%nat G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))))
+  | S k => FOL_R_and
+             (FOL_R_atoms ((p_sum_weight_var_with_coeff (S k) G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) =R (p_sum_weight_covar_with_coeff (S k) G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G))))))
+             (FOL_R_all_atoms_eq G k)
   end.
 
 
@@ -2299,7 +2306,7 @@ Proof.
 Qed.
 
 (** return the formula (\sum_i^m \beta_{(max_var_weight G) + i} \sum\vec R_{i,j} = \sum_i^m \beta_{(max_var_weight G) + i} \sum\vec S_{i,j} *)
-Definition FOL_R_coone_le_one G := FOL_R_atoms (FOL_R_le (p_sum_weight_coone_with_coeff G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) (p_sum_weight_one_with_coeff G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G))))).
+Definition FOL_R_coone_le_one G := FOL_R_atoms ((p_sum_weight_coone_with_coeff G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G)))) <=R (p_sum_weight_one_with_coeff G (map FOL_R_var (seq (S (max_var_weight_p_hseq G)) (length G))))).
 
 (** return the formula corresponding to \phi_{G,v} *)
 Definition FOL_R_phi G v :=
@@ -2328,8 +2335,7 @@ with HMR_dec_formula_aux (G : p_hypersequent) (x: nat) (Heqx : snd (fst (modal_c
                                                  _
                                                  _
                                                  _
-                                                 _)))).
-         simpl; lia.
+                                                 (Nat.lt_succ_diag_r _))))).
        * refine (FOL_R_or
                    (exists_vec (seq (S (max_var_weight_p_hseq G)) (length G))
                                (FOL_R_and (FOL_R_phi G v)
@@ -2352,8 +2358,7 @@ with HMR_dec_formula_aux (G : p_hypersequent) (x: nat) (Heqx : snd (fst (modal_c
                                                  _
                                                  _
                                                  _
-                                                 _)))).
-         simpl; lia.
+                                                 (Nat.lt_succ_diag_r _))))).
   - destruct acc as [acc].
     destruct x.
     + refine (FOL_R_basic_case_aux G (map (@rev nat) (make_subsets (length G)))
@@ -2364,9 +2369,7 @@ with HMR_dec_formula_aux (G : p_hypersequent) (x: nat) (Heqx : snd (fst (modal_c
                                            _
                                            _
                                            _
-                                           _))).
-      rewrite map_length.
-      lia.
+                                           (eq_rect _ (fun x => (x < S (length (make_subsets (length G))))%nat) (Nat.lt_succ_diag_r _) _ (eq_sym (map_length _ _)))))).
     + destruct p.
       * refine (HMR_dec_formula_aux p
                                 _
@@ -3226,7 +3229,7 @@ Proof.
            rewrite (map_nth (fun x => eval_to_oRpos (upd_val_vec val (seq (S (max_var_weight_p_hseq G)) (length G)) vr) (FOL_R_var x))).
            apply cond_FOL_R_all_gtz_formula_sem_inv with _ _ _ n in Hf2.
            2:{ rewrite <- Heq.
-               apply In_inf_rev.
+               apply in_inf_rev.
                left; auto. }
            unfold eval_to_oRpos.
            simpl.
@@ -3341,7 +3344,7 @@ Proof.
         { assert (H := max_diamond_eval_p_hseq val G).
           lia. }
         rewrite concat_with_coeff_mul_only_diamond.
-        apply hmrr_ex_seq with (hseq.vec s coone ++ hseq.vec r one ++ nil); [ Permutation_Type_solve | ].
+        apply hmrr_ex_seq with (hseq.vec s HMR_coone ++ hseq.vec r HMR_one ++ nil); [ Permutation_Type_solve | ].
         apply hmrr_one ; [ | apply hmrr_INIT].
         replace (map
                      (fun x : nat =>
@@ -3412,7 +3415,7 @@ Proof.
            rewrite map_nth.
            apply cond_FOL_R_all_gtz_formula_sem_inv with _ _ _ n0 in Hf2.
            2:{ rewrite <- Heq.
-               apply In_inf_rev.
+               apply in_inf_rev.
                left; auto. }
            unfold R_to_oRpos.
            rewrite seq_length in Hlen; rewrite Hlen in Hf2.
@@ -3531,7 +3534,7 @@ Proof.
           { apply in_inf_map_inv in Hinvx as [vx' Heq' Hinvx'].
             apply cond_is_in_make_subsets_inv in Hinvx' as [[_ H1] _].
             rewrite <- Heq' in Hin3.
-            apply In_inf_rev_inv in Hin3.
+            apply in_inf_rev_inv in Hin3.
             apply In_inf_nth with _ _ _ 0%nat in Hin3 as [i' Hleni Heqi].
             rewrite <- Heqi.
             apply H1. }
@@ -3606,7 +3609,7 @@ Proof.
               unfold R_to_oRpos.
               rewrite nth_indep with _ _ _ _ 0 in Hf2.
               2:{ rewrite <- Heqvxr in Hin.
-                  apply In_inf_rev_inv in Hin.
+                  apply in_inf_rev_inv in Hin.
                   apply In_inf_nth with _ _ _ 0%nat in Hin as [k Hltk Heqk].
                   rewrite <- Heqk.
                   rewrite <- Hlen.

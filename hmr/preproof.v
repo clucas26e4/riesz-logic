@@ -22,15 +22,15 @@ Inductive preHMR : hypersequent -> Type :=
 | prehmrr_C : forall G T, preHMR (T :: T :: G) -> preHMR (T :: G)
 | prehmrr_S : forall G T1 T2, preHMR ((T1 ++ T2) :: G) -> preHMR (T1 :: T2 :: G)
 | prehmrr_T : forall G T r, preHMR (seq_mul r T :: G) -> preHMR (T :: G)
-| prehmrr_ID : forall G T n r s, sum_vec r = sum_vec s -> preHMR (T :: G) -> preHMR ((vec s (covar n) ++ vec r (var n) ++ T) :: G)
-| prehmrr_Z : forall G T r, preHMR (T :: G) -> preHMR ((vec r zero ++ T) :: G)
+| prehmrr_ID : forall G T n r s, sum_vec r = sum_vec s -> preHMR (T :: G) -> preHMR ((vec s (HMR_covar n) ++ vec r (HMR_var n) ++ T) :: G)
+| prehmrr_Z : forall G T r, preHMR (T :: G) -> preHMR ((vec r HMR_zero ++ T) :: G)
 
 | prehmrr_plus : forall G T A B r, preHMR ((vec r A ++ vec r B ++ T) :: G) -> preHMR ((vec r (A +S B) ++ T) :: G)
 | prehmrr_mul : forall G T A r0 r, preHMR ((vec (mul_vec r0 r) A ++ T) :: G) -> preHMR ((vec r (r0 *S A) ++ T) :: G)
 | prehmrr_max : forall G T A B r, preHMR ((vec r B ++ T) :: (vec r A ++ T) :: G) -> preHMR ((vec r (A \/S B) ++ T) :: G)
 | prehmrr_min : forall G T A B r, preHMR ((vec r A ++ T) :: G) -> preHMR ((vec r B ++ T) :: G) -> preHMR ((vec r (A /\S B) ++ T) :: G)
-| prehmrr_one : forall G T r s, sum_vec s <= sum_vec r -> preHMR (T :: G) -> preHMR ((vec s coone ++ vec r one ++ T) :: G)
-| prehmrr_diamond : forall T r s, sum_vec s <= sum_vec r -> preHMR ((vec s coone ++ vec r one ++ T) :: nil) -> preHMR ((vec s coone ++ vec r one ++ seq_diamond T) :: nil)
+| prehmrr_one : forall G T r s, sum_vec s <= sum_vec r -> preHMR (T :: G) -> preHMR ((vec s HMR_coone ++ vec r HMR_one ++ T) :: G)
+| prehmrr_diamond : forall T r s, sum_vec s <= sum_vec r -> preHMR ((vec s HMR_coone ++ vec r HMR_one ++ T) :: nil) -> preHMR ((vec s HMR_coone ++ vec r HMR_one ++ seq_diamond T) :: nil)
 | prehmrr_ex_seq : forall G T1 T2, Permutation_Type T1 T2 -> preHMR (T1 :: G) -> preHMR (T2 :: G)
 | prehmrr_ex_hseq : forall G H, Permutation_Type G H -> preHMR G -> preHMR H.
 

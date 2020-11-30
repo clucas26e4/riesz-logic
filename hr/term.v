@@ -5,36 +5,36 @@ Require Import Rpos.
 Require Import RL.OLlibs.List_more.
 
 Inductive term : Type :=
-| var : nat -> term
-| covar : nat -> term
-| zero : term
-| plus : term -> term -> term
-| mul : Rpos -> term -> term
-| max : term -> term -> term
-| min : term -> term -> term.
+| HR_var : nat -> term
+| HR_covar : nat -> term
+| HR_zero : term
+| HR_plus : term -> term -> term
+| HR_mul : Rpos -> term -> term
+| HR_max : term -> term -> term
+| HR_min : term -> term -> term.
 
-Fixpoint minus A :=
+Fixpoint HR_minus A : term:=
   match A with
-  | var n => covar n
-  | covar n => var n
-  | zero => zero
-  | plus A B => plus (minus A) (minus B)
-  | mul r A => mul r (minus A)
-  | max A B => min (minus A) (minus B)
-  | min A B => max (minus A) (minus B)
+  | HR_var n => HR_covar n
+  | HR_covar n => HR_var n
+  | HR_zero => HR_zero
+  | HR_plus A B => HR_plus (HR_minus A) (HR_minus B)
+  | HR_mul r A => HR_mul r (HR_minus A)
+  | HR_max A B => HR_min (HR_minus A) (HR_minus B)
+  | HR_min A B => HR_max (HR_minus A) (HR_minus B)
   end.
 
 (** Notations *)
-Notation "A +S B" := (plus A B) (at level 20, left associativity).
-Notation "A \/S B" := (max A B) (at level 40, left associativity).
-Notation "A /\S B" := (min A B) (at level 45, left associativity).
-Notation "-S A" := (minus A) (at level 15).
-Notation "A -S B" := (plus A (minus B)) (at level 10, left associativity).
-Notation "r *S A" := (mul r A) (at level 15).
+Notation "A +S B" := (HR_plus A B) (at level 20, left associativity).
+Notation "A \/S B" := (HR_max A B) (at level 40, left associativity).
+Notation "A /\S B" := (HR_min A B) (at level 45, left associativity).
+Notation "-S A" := (HR_minus A) (at level 15).
+Notation "A -S B" := (HR_plus A (HR_minus B)) (at level 10, left associativity).
+Notation "r *S A" := (HR_mul r A) (at level 15).
 
 Fixpoint sum_term k A :=
   match k with
-  | 0 => zero
+  | 0 => HR_zero
   | 1 => A
   | S n => A +S (sum_term n A)
   end.
@@ -42,20 +42,20 @@ Fixpoint sum_term k A :=
 (** Complexity *)
 Fixpoint HR_complexity_term A :=
   match A with
-  | var n => 0
-  | covar n => 0
-  | zero => 1
-  | plus A B => 1 + HR_complexity_term A + HR_complexity_term B
-  | min A B => 1 + HR_complexity_term A + HR_complexity_term B
-  | max A B => 1 + HR_complexity_term A + HR_complexity_term B
-  | mul r A => 1 + HR_complexity_term A
+  | HR_var n => 0
+  | HR_covar n => 0
+  | HR_zero => 1
+  | HR_plus A B => 1 + HR_complexity_term A + HR_complexity_term B
+  | HR_min A B => 1 + HR_complexity_term A + HR_complexity_term B
+  | HR_max A B => 1 + HR_complexity_term A + HR_complexity_term B
+  | HR_mul r A => 1 + HR_complexity_term A
   end.                                                       
 
 Fixpoint max_var_term A :=
   match A with
-  | var n => n
-  | covar n => n
-  | zero => 0%nat
+  | HR_var n => n
+  | HR_covar n => n
+  | HR_zero => 0%nat
   | A +S B => Nat.max (max_var_term A) (max_var_term B)
   | r *S A => max_var_term A
   | A /\S B => Nat.max (max_var_term A) (max_var_term B)
@@ -65,25 +65,25 @@ Fixpoint max_var_term A :=
 (** Substitution *)
 Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
   match t1 with
-  | var y => if (beq_nat x y) then t2 else var y
-  | covar y => if (beq_nat x y) then (minus t2) else covar y
-  | zero => zero
-  | plus t t' => plus (subs t x t2) (subs t' x t2)
-  | min t t' => min (subs t x t2) (subs t' x t2)
-  | max t t' => max (subs t x t2) (subs t' x t2)
-  | mul y t => mul y (subs t x t2)
+  | HR_var y => if (beq_nat x y) then t2 else HR_var y
+  | HR_covar y => if (beq_nat x y) then (HR_minus t2) else HR_covar y
+  | HR_zero => HR_zero
+  | HR_plus t t' => HR_plus (subs t x t2) (subs t' x t2)
+  | HR_min t t' => HR_min (subs t x t2) (subs t' x t2)
+  | HR_max t t' => HR_max (subs t x t2) (subs t' x t2)
+  | HR_mul y t => HR_mul y (subs t x t2)
   end.
 
 (** Definition of positive part, negative part and absolute value *)
-Notation "'pos' A" := (A \/S zero) (at level 5).
-Notation "'neg' A" := ((-S A) \/S zero) (at level 5).
+Notation "'pos' A" := (A \/S HR_zero) (at level 5).
+Notation "'neg' A" := ((-S A) \/S HR_zero) (at level 5).
 Notation "'abs' A" := (A \/S (-S A)) (at level 5).
 
 (** Definition of the proposition stating if a formula is an atom *)
 Definition is_atom A :=
   match A with
-  | var _ => True
-  | covar _ => True
+  | HR_var _ => True
+  | HR_covar _ => True
   | _ => False
   end.
 

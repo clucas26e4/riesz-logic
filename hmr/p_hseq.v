@@ -167,13 +167,13 @@ Fixpoint vec_mul_vec l1 l2 :=
 Fixpoint sum_weight_p_seq_var n (T : p_sequent) :=
   match T with
   | nil => FOL_R_cst 0
-  | ((r , var n0) :: T) => if n =? n0 then r +R (sum_weight_p_seq_var n T) else sum_weight_p_seq_var n T
+  | ((r , HMR_var n0) :: T) => if n =? n0 then r +R (sum_weight_p_seq_var n T) else sum_weight_p_seq_var n T
   | ( _ :: T) => sum_weight_p_seq_var n T
   end.
 Fixpoint sum_weight_p_seq_covar n (T : p_sequent) :=
   match T with
   | nil => FOL_R_cst 0
-  | ((r , covar n0) :: T) => if n =? n0 then r +R (sum_weight_p_seq_covar n T) else sum_weight_p_seq_covar n T
+  | ((r , HMR_covar n0) :: T) => if n =? n0 then r +R (sum_weight_p_seq_covar n T) else sum_weight_p_seq_covar n T
   | ( _ :: T) => sum_weight_p_seq_covar n T
   end.
 Fixpoint p_sum_weight_var n G :=
@@ -190,13 +190,13 @@ Fixpoint p_sum_weight_covar n G :=
 Fixpoint sum_weight_p_seq_one (T : p_sequent) :=
   match T with
   | nil => FOL_R_cst 0
-  | ((r , one) :: T) => r +R (sum_weight_p_seq_one T)
+  | ((r , HMR_one) :: T) => r +R (sum_weight_p_seq_one T)
   | ( _ :: T) => sum_weight_p_seq_one T
   end.
 Fixpoint sum_weight_p_seq_coone (T : p_sequent) :=
   match T with
   | nil => FOL_R_cst 0
-  | ((r , coone) :: T) => r +R (sum_weight_p_seq_coone T)
+  | ((r , HMR_coone) :: T) => r +R (sum_weight_p_seq_coone T)
   | ( _ :: T) => sum_weight_p_seq_coone T
   end.
 Fixpoint p_sum_weight_one G :=
@@ -215,8 +215,8 @@ Fixpoint only_diamond_p_seq (T : p_sequent) :=
   match T with
   | nil => nil
   | (a , <S> A) :: T => (a , A) :: only_diamond_p_seq T
-  | (a , one) :: T => (a , one) :: only_diamond_p_seq T
-  | (a , coone) :: T => (a , coone) :: only_diamond_p_seq T
+  | (a , HMR_one) :: T => (a , HMR_one) :: only_diamond_p_seq T
+  | (a , HMR_coone) :: T => (a , HMR_coone) :: only_diamond_p_seq T
   | _ :: T => only_diamond_p_seq T
   end.
 
@@ -498,28 +498,28 @@ Qed.
 
 Lemma only_diamond_p_seq_vec_var :
   forall n r,
-    only_diamond_p_seq (vec r (var n)) = nil.
+    only_diamond_p_seq (vec r (HMR_var n)) = nil.
 Proof.
   intros n; induction r; simpl; auto.
 Qed.
 
 Lemma only_diamond_p_seq_vec_covar :
   forall n r,
-    only_diamond_p_seq (vec r (covar n)) = nil.
+    only_diamond_p_seq (vec r (HMR_covar n)) = nil.
 Proof.
   intros n; induction r; simpl; auto.
 Qed.
 
 Lemma only_diamond_p_seq_vec_one :
   forall r,
-    only_diamond_p_seq (vec r one) = vec r one.
+    only_diamond_p_seq (vec r HMR_one) = vec r HMR_one.
 Proof.
   induction r; simpl; try rewrite IHr; reflexivity.
 Qed.
 
 Lemma only_diamond_p_seq_vec_coone :
   forall r,
-    only_diamond_p_seq (vec r coone) = vec r coone.
+    only_diamond_p_seq (vec r HMR_coone) = vec r HMR_coone.
 Proof.
   induction r; simpl; try rewrite IHr; reflexivity.
 Qed.
@@ -605,19 +605,19 @@ Proof.
 Qed.
 
 Lemma sum_weight_p_seq_var_vec_var_eq : forall val n r,
-    FOL_R_pred_sem val (sum_weight_p_seq_var n (vec r (var n)) =R sum_vec r).
+    FOL_R_pred_sem val (sum_weight_p_seq_var n (vec r (HMR_var n)) =R sum_vec r).
 Proof.
   intros val n; induction r; simpl in *; try (rewrite Nat.eqb_refl; simpl; rewrite IHr); reflexivity.
 Qed.
 
 Lemma sum_weight_p_seq_covar_vec_covar_eq : forall val n r,
-    FOL_R_pred_sem val (sum_weight_p_seq_covar n (vec r (covar n)) =R sum_vec r).
+    FOL_R_pred_sem val (sum_weight_p_seq_covar n (vec r (HMR_covar n)) =R sum_vec r).
 Proof.
   intros val n; induction r; simpl; try (rewrite Nat.eqb_refl; simpl; rewrite IHr); nra.
 Qed.
 
 Lemma sum_weight_p_seq_var_vec_neq : forall val n A r,
-    var n <> A ->
+    HMR_var n <> A ->
     FOL_R_term_sem val (sum_weight_p_seq_var n (vec r A)) = 0.
 Proof.
   intros val n A; induction r; intros Hneq; simpl; try reflexivity.
@@ -625,7 +625,7 @@ Proof.
 Qed.
 
 Lemma sum_weight_p_seq_covar_vec_neq : forall val n A r,
-    covar n <> A ->
+    HMR_covar n <> A ->
     FOL_R_term_sem val (sum_weight_p_seq_covar n (vec r A)) = 0.
 Proof.
   intros val n A; induction r; intros Hneq; simpl; try reflexivity.
@@ -667,19 +667,19 @@ Proof.
 Qed.
 
 Lemma sum_weight_p_seq_one_vec_one_eq : forall val r,
-    FOL_R_pred_sem val (sum_weight_p_seq_one (vec r one) =R sum_vec r).
+    FOL_R_pred_sem val (sum_weight_p_seq_one (vec r HMR_one) =R sum_vec r).
 Proof.
   intros val; induction r; simpl in *; try (simpl; rewrite IHr); reflexivity.
 Qed.
 
 Lemma sum_weight_p_seq_coone_vec_coone_eq : forall val r,
-    FOL_R_pred_sem val (sum_weight_p_seq_coone (vec r coone) =R sum_vec r).
+    FOL_R_pred_sem val (sum_weight_p_seq_coone (vec r HMR_coone) =R sum_vec r).
 Proof.
   intros val; induction r; simpl; try (simpl; rewrite IHr); nra.
 Qed.
 
 Lemma sum_weight_p_seq_one_vec_neq : forall val A r,
-    one <> A ->
+    HMR_one <> A ->
     FOL_R_term_sem val (sum_weight_p_seq_one (vec r A)) = 0.
 Proof.
   intros val A; induction r; intros Hneq; simpl; try reflexivity.
@@ -688,7 +688,7 @@ Proof.
 Qed.
 
 Lemma sum_weight_p_seq_coone_vec_neq : forall val A r,
-    coone <> A ->
+    HMR_coone <> A ->
     FOL_R_term_sem val (sum_weight_p_seq_coone (vec r A)) = 0.
 Proof.
   intros val A; induction r; intros Hneq; simpl; try reflexivity.
@@ -709,14 +709,14 @@ Proof.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, var n) :: D)); auto.
+    split with (A, ((a, HMR_var n) :: D)); auto.
     Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, covar n) :: D)); auto.
+    split with (A, ((a, HMR_covar n) :: D)); auto.
     Permutation_Type_solve.
-  - split with ((a, zero), T); auto.
+  - split with ((a, HMR_zero), T); auto.
   - split with ((a, A1 +S A2), T); auto.
   - split with ((a, r *S A), T); auto.
   - split with ((a, A1 \/S A2), T); auto.
@@ -724,12 +724,12 @@ Proof.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, one) :: D)); auto.
+    split with (A, ((a, HMR_one) :: D)); auto.
     Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, coone) :: D)); auto.
+    split with (A, ((a, HMR_coone) :: D)); auto.
     Permutation_Type_solve.
   - destruct IHT as [[B D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
@@ -1120,19 +1120,19 @@ Qed.
 
 Lemma hmrr_Z_decrease_complexity : forall G T r,
     r <> nil ->
-    HMR_complexity_p_seq (vec r zero ++ T) = fst (HMR_complexity_p_hseq ((vec r zero ++ T) :: G)) ->
-    HMR_complexity_p_hseq (T :: G) <2 HMR_complexity_p_hseq ((vec r zero ++ T) :: G).
+    HMR_complexity_p_seq (vec r HMR_zero ++ T) = fst (HMR_complexity_p_hseq ((vec r HMR_zero ++ T) :: G)) ->
+    HMR_complexity_p_hseq (T :: G) <2 HMR_complexity_p_hseq ((vec r HMR_zero ++ T) :: G).
 Proof.
   intros G T r Hnnil Heq.
   simpl.
-  case_eq (HMR_complexity_p_seq T =? fst (HMR_complexity_p_hseq G)); intros H1; case_eq (HMR_complexity_p_seq (vec r zero ++ T) =? fst (HMR_complexity_p_hseq G)); intros H2.
+  case_eq (HMR_complexity_p_seq T =? fst (HMR_complexity_p_hseq G)); intros H1; case_eq (HMR_complexity_p_seq (vec r HMR_zero ++ T) =? fst (HMR_complexity_p_hseq G)); intros H2.
   - exfalso.
     destruct r; [ apply Hnnil; reflexivity | ].
     apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
     simpl in H2.
     rewrite complexity_p_seq_app in H2.
     lia.
-  - case_eq (HMR_complexity_p_seq (vec r zero ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H3.
+  - case_eq (HMR_complexity_p_seq (vec r HMR_zero ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H3.
     + exfalso.
       apply Nat.eqb_eq in H1; apply Nat.eqb_neq in H2; apply Nat.ltb_lt in H3.
       destruct r; [ apply Hnnil; reflexivity | ].
@@ -1150,7 +1150,7 @@ Proof.
       simpl in H2; lia.
   - simpl in Heq; rewrite H2 in Heq.
     case_eq (HMR_complexity_p_seq T <? fst (HMR_complexity_p_hseq G))%nat; intros H3;
-      case_eq (HMR_complexity_p_seq (vec r zero ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
+      case_eq (HMR_complexity_p_seq (vec r HMR_zero ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
     + exfalso.
       apply Nat.eqb_neq in H2; apply H2; apply Heq.
     + apply fst_lt2.
@@ -1435,12 +1435,12 @@ Qed.
 
 Lemma hmrr_Z_decrease_modal_complexity : forall G T r,
     r <> nil ->
-    HMR_complexity_p_seq (vec r zero ++ T) = fst (HMR_complexity_p_hseq ((vec r zero ++ T) :: G)) ->
-    modal_complexity_p_hseq (T :: G) <3 modal_complexity_p_hseq ((vec r zero ++ T) :: G).
+    HMR_complexity_p_seq (vec r HMR_zero ++ T) = fst (HMR_complexity_p_hseq ((vec r HMR_zero ++ T) :: G)) ->
+    modal_complexity_p_hseq (T :: G) <3 modal_complexity_p_hseq ((vec r HMR_zero ++ T) :: G).
 Proof.
   intros G T r Hnnil Heq.
   unfold modal_complexity_p_hseq.
-  replace (max_diamond_p_hseq ((vec r zero ++ T) :: G)) with (max_diamond_p_hseq (T :: G)).
+  replace (max_diamond_p_hseq ((vec r HMR_zero ++ T) :: G)) with (max_diamond_p_hseq (T :: G)).
   2:{ simpl; rewrite max_diamond_p_seq_app.
       rewrite max_diamond_p_seq_vec; auto. }
   apply lt_nat2_fst_eq_lt_nat3.

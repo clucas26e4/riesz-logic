@@ -5,43 +5,43 @@ Require Import RL.OLlibs.List_more.
 (** ** Term *)
 
 Inductive term : Type :=
-| var : nat -> term
-| covar : nat -> term
-| zero : term
-| plus : term -> term -> term
-| mul : Rpos -> term -> term
-| max : term -> term -> term
-| min : term -> term -> term
-| one : term
-| coone : term
-| diamond : term -> term.
+| HMR_var : nat -> term
+| HMR_covar : nat -> term
+| HMR_zero : term
+| HMR_plus : term -> term -> term
+| HMR_mul : Rpos -> term -> term
+| HMR_max : term -> term -> term
+| HMR_min : term -> term -> term
+| HMR_one : term
+| HMR_coone : term
+| HMR_diamond : term -> term.
 
-Fixpoint minus A :=
+Fixpoint HMR_minus A :=
   match A with
-  | var n => covar n
-  | covar n => var n
-  | zero => zero
-  | plus A B => plus (minus A) (minus B)
-  | mul r A => mul r (minus A)
-  | max A B => min (minus A) (minus B)
-  | min A B => max (minus A) (minus B)
-  | one => coone
-  | coone => one
-  | diamond A => diamond (minus A)
+  | HMR_var n => HMR_covar n
+  | HMR_covar n => HMR_var n
+  | HMR_zero => HMR_zero
+  | HMR_plus A B => HMR_plus (HMR_minus A) (HMR_minus B)
+  | HMR_mul r A => HMR_mul r (HMR_minus A)
+  | HMR_max A B => HMR_min (HMR_minus A) (HMR_minus B)
+  | HMR_min A B => HMR_max (HMR_minus A) (HMR_minus B)
+  | HMR_one => HMR_coone
+  | HMR_coone => HMR_one
+  | HMR_diamond A => HMR_diamond (HMR_minus A)
   end.
 
 (** Notations *)
-Notation "A +S B" := (plus A B) (at level 20, left associativity).
-Notation "A \/S B" := (max A B) (at level 40, left associativity).
-Notation "A /\S B" := (min A B) (at level 45, left associativity).
-Notation "-S A" := (minus A) (at level 15).
-Notation "A -S B" := (plus A (minus B)) (at level 10, left associativity).
-Notation "r *S A" := (mul r A) (at level 15).
-Notation "<S> A" := (diamond A) (at level 15).
+Notation "A +S B" := (HMR_plus A B) (at level 20, left associativity).
+Notation "A \/S B" := (HMR_max A B) (at level 40, left associativity).
+Notation "A /\S B" := (HMR_min A B) (at level 45, left associativity).
+Notation "-S A" := (HMR_minus A) (at level 15).
+Notation "A -S B" := (HMR_plus A (HMR_minus B)) (at level 10, left associativity).
+Notation "r *S A" := (HMR_mul r A) (at level 15).
+Notation "<S> A" := (HMR_diamond A) (at level 15).
 
 Fixpoint sum_term k A :=
   match k with
-  | 0 => zero
+  | 0 => HMR_zero
   | 1 => A
   | S n => A +S (sum_term n A)
   end.
@@ -49,30 +49,30 @@ Fixpoint sum_term k A :=
 (** Complexity *)
 Fixpoint HMR_complexity_term A :=
   match A with
-  | var n => 0
-  | covar n => 0
-  | one => 0
-  | coone => 0
+  | HMR_var n => 0
+  | HMR_covar n => 0
+  | HMR_one => 0
+  | HMR_coone => 0
   | <S> A => 0
-  | zero => 1
-  | plus A B => 1 + HMR_complexity_term A + HMR_complexity_term B
-  | min A B => 1 + HMR_complexity_term A + HMR_complexity_term B
-  | max A B => 1 + HMR_complexity_term A + HMR_complexity_term B
-  | mul r A => 1 + HMR_complexity_term A
+  | HMR_zero => 1
+  | HMR_plus A B => 1 + HMR_complexity_term A + HMR_complexity_term B
+  | HMR_min A B => 1 + HMR_complexity_term A + HMR_complexity_term B
+  | HMR_max A B => 1 + HMR_complexity_term A + HMR_complexity_term B
+  | HMR_mul r A => 1 + HMR_complexity_term A
   end.
 
 Fixpoint max_diamond_term A :=
   match A with
-  | var n => 0
-  | covar n => 0
-  | one => 0
-  | coone => 0
+  | HMR_var n => 0
+  | HMR_covar n => 0
+  | HMR_one => 0
+  | HMR_coone => 0
   | <S> A => 1 + max_diamond_term A
-  | zero => 0
-  | plus A B => Nat.max (max_diamond_term A) (max_diamond_term B)
-  | min A B => Nat.max (max_diamond_term A) (max_diamond_term B)
-  | max A B => Nat.max (max_diamond_term A) (max_diamond_term B)
-  | mul r A => max_diamond_term A
+  | HMR_zero => 0
+  | HMR_plus A B => Nat.max (max_diamond_term A) (max_diamond_term B)
+  | HMR_min A B => Nat.max (max_diamond_term A) (max_diamond_term B)
+  | HMR_max A B => Nat.max (max_diamond_term A) (max_diamond_term B)
+  | HMR_mul r A => max_diamond_term A
   end.
 
 Lemma max_diamond_minus :
@@ -83,11 +83,11 @@ Qed.
 
 Fixpoint max_var_term A :=
   match A with
-  | var n => n
-  | covar n => n
-  | zero => 0%nat
-  | one => 0%nat
-  | coone => 0%nat
+  | HMR_var n => n
+  | HMR_covar n => n
+  | HMR_zero => 0%nat
+  | HMR_one => 0%nat
+  | HMR_coone => 0%nat
   | <S> A => max_var_term A
   | A +S B => Nat.max (max_var_term A) (max_var_term B)
   | r *S A => max_var_term A
@@ -98,38 +98,38 @@ Fixpoint max_var_term A :=
 (** Substitution *)
 Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
   match t1 with
-  | var y => if (beq_nat x y) then t2 else var y
-  | covar y => if (beq_nat x y) then (minus t2) else covar y
-  | zero => zero
-  | plus t t' => plus (subs t x t2) (subs t' x t2)
-  | min t t' => min (subs t x t2) (subs t' x t2)
-  | max t t' => max (subs t x t2) (subs t' x t2)
-  | mul y t => mul y (subs t x t2)
-  | one => one
-  | coone => coone
-  | diamond t => diamond (subs t x t2)
+  | HMR_var y => if (beq_nat x y) then t2 else HMR_var y
+  | HMR_covar y => if (beq_nat x y) then (HMR_minus t2) else HMR_covar y
+  | HMR_zero => HMR_zero
+  | HMR_plus t t' => HMR_plus (subs t x t2) (subs t' x t2)
+  | HMR_min t t' => HMR_min (subs t x t2) (subs t' x t2)
+  | HMR_max t t' => HMR_max (subs t x t2) (subs t' x t2)
+  | HMR_mul y t => HMR_mul y (subs t x t2)
+  | HMR_one => HMR_one
+  | HMR_coone => HMR_coone
+  | HMR_diamond t => HMR_diamond (subs t x t2)
   end.
 
 (** Definition of positive part, negative part and absolute value *)
-Notation "'pos' A" := (A \/S zero) (at level 5).
-Notation "'neg' A" := ((-S A) \/S zero) (at level 5).
+Notation "'pos' A" := (A \/S HMR_zero) (at level 5).
+Notation "'neg' A" := ((-S A) \/S HMR_zero) (at level 5).
 Notation "'abs' A" := (A \/S (-S A)) (at level 5).
 
 (** Definition of atoms *)
 Definition is_atom A :=
   match A with
-  | var _ => True
-  | covar _ => True
+  | HMR_var _ => True
+  | HMR_covar _ => True
   | _ => False
   end.
 
 Definition is_basic A :=
   match A with
-  | var _ => True
-  | covar _ => True
-  | one => True
-  | coone => True
-  | diamond A => True
+  | HMR_var _ => True
+  | HMR_covar _ => True
+  | HMR_one => True
+  | HMR_coone => True
+  | HMR_diamond A => True
   | _ => False
   end.
 

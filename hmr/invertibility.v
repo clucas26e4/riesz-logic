@@ -21,14 +21,14 @@ Require Import RL.OLlibs.Permutation_Type_solve.
 
 map takes a function f and a list (l_0,...,l_n) and return the list (f (l_0),...,f (l_n).
 
-(map (fun x => (vec (fst x) zero ++ snd x)) L) is thus the hypersequent (|- \vec{r_0}.0, T_0 | ... | |- \vec{r_n}.0, T_n) *)
+(map (fun x => (vec (fst x) HMR_zero ++ snd x)) L) is thus the hypersequent (|- \vec{r_0}.0, T_0 | ... | |- \vec{r_n}.0, T_n) *)
 Lemma hmrr_Z_inv_gen P : forall L,
-    HMR P (map (fun x => (vec (fst x) zero ++ snd x)) L) ->
+    HMR P (map (fun x => (vec (fst x) HMR_zero ++ snd x)) L) ->
     HMR P (map (fun x => (snd x)) L).
 Proof.
   intros L.
-  remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L) as G.
-  assert (Allperm G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L)) by (rewrite <- HeqG; clear; induction G; simpl; try now constructor).
+  remember (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) HMR_zero ++ snd x) L) as G.
+  assert (Allperm G (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) HMR_zero ++ snd x) L)) by (rewrite <- HeqG; clear; induction G; simpl; try now constructor).
   clear HeqG.
   intro pi; revert L X; induction pi; intros L Hperm.
   - destruct L; [ | destruct L]; try now inversion Hperm.
@@ -94,10 +94,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> (covar n)) as Hnc by now auto.
-    assert (zero <> (var n)) as Hnv by now auto.
+    assert (HMR_zero <> (HMR_covar n)) as Hnc by now auto.
+    assert (HMR_zero <> (HMR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change (Db :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
@@ -111,7 +111,7 @@ Proof.
     simpl.
     destruct p as [r1 T1]; simpl in *.
     destruct (perm_decomp_vec_eq _ _ _ _ _ X) as [ [[[[a1 b1] c1] T'] D'] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec c1 zero ++ T').
+    apply hmrr_ex_seq with (vec c1 HMR_zero ++ T').
     { Permutation_Type_solve. }
     apply hmrr_Z.
     change (T' :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
@@ -123,7 +123,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> A +S B) as Hneq by now auto.
+    assert (HMR_zero <> A +S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (A +S B) ++ Db).
     { Permutation_Type_solve. }
@@ -138,7 +138,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> r0 *S A) as Hneq by now auto.
+    assert (HMR_zero <> r0 *S A) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (r0 *S A) ++ Db).
     { Permutation_Type_solve. }
@@ -155,7 +155,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> A \/S B) as Hneq by now auto.
+    assert (HMR_zero <> A \/S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (A \/S B) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
@@ -177,7 +177,7 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> A /\S B) as Hneq by now auto.
+    assert (HMR_zero <> A /\S B) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply hmrr_ex_seq with (vec r (A /\S B) ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
@@ -203,10 +203,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> coone) as Hnc by now auto.
-    assert (zero <> one) as Hnv by now auto.
+    assert (HMR_zero <> HMR_coone) as Hnc by now auto.
+    assert (HMR_zero <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ Db).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change (Db :: map (fun x : list Rpos * list (Rpos * term) => snd x) L)
@@ -218,10 +218,10 @@ Proof.
     Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
-    assert (zero <> coone) as Hnc by now auto.
-    assert (zero <> one) as Hnv by now auto.
+    assert (HMR_zero <> HMR_coone) as Hnc by now auto.
+    assert (HMR_zero <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ Db) ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ Db) ; [ Permutation_Type_solve | ].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
     apply seq_diamond_perm_decomp in H5' as [Db'' H5']; subst.
@@ -229,9 +229,9 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    change ((vec s coone ++ vec r one ++ Db'') :: nil)
+    change ((vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)
       with
-        (map (fun x : list Rpos * list (Rpos * term) => snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
+        (map (fun x : list Rpos * list (Rpos * term) => snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
@@ -239,8 +239,8 @@ Proof.
     apply Permutation_Type_app; try reflexivity.
     simpl in X.
     apply seq_diamond_perm_inv.
-    apply Permutation_Type_app_inv_l with (vec r one).
-    apply Permutation_Type_app_inv_l with (vec s coone).
+    apply Permutation_Type_app_inv_l with (vec r HMR_one).
+    apply Permutation_Type_app_inv_l with (vec s HMR_coone).
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
@@ -350,10 +350,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> (covar n)) as Hnc by now auto.
-    assert (A +S B <> (var n)) as Hnv by now auto.
+    assert (A +S B <> (HMR_covar n)) as Hnc by now auto.
+    assert (A +S B <> (HMR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec r1 A ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec r1 A ++ vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
@@ -366,9 +366,9 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> zero) as Hneq by now auto.
+    assert (A +S B <> HMR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec r zero ++ vec r1 A ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec r1 A ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -492,10 +492,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> coone) as Hnc by now auto.
-    assert (A +S B <> one) as Hnv by now auto.
+    assert (A +S B <> HMR_coone) as Hnc by now auto.
+    assert (A +S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 A ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec r1 A ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec r1 A ++ vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) L)
@@ -507,8 +507,8 @@ Proof.
     Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
-    assert (A +S B <> coone) as Hnc by now auto.
-    assert (A +S B <> one) as Hnv by now auto.
+    assert (A +S B <> HMR_coone) as Hnc by now auto.
+    assert (A +S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
@@ -516,11 +516,11 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
-    change ((vec s coone ++ vec r one ++ Db'') :: nil)
+    change ((vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)
       with
-        (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
+        (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ vec (fst x) B ++ snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
@@ -528,8 +528,8 @@ Proof.
     apply Permutation_Type_app; try reflexivity.
     simpl in X.
     apply seq_diamond_perm_inv.
-    apply Permutation_Type_app_inv_l with (vec r one).
-    apply Permutation_Type_app_inv_l with (vec s coone).
+    apply Permutation_Type_app_inv_l with (vec r HMR_one).
+    apply Permutation_Type_app_inv_l with (vec s HMR_coone).
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
@@ -638,10 +638,10 @@ Proof with try assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (a *S A <> (covar n)) as Hnc by now auto.
-    assert (a *S A <> (var n)) as Hnv by now auto.
+    assert (a *S A <> (HMR_covar n)) as Hnc by now auto.
+    assert (a *S A <> (HMR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec (mul_vec a r1) A  ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec (mul_vec a r1) A  ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec (mul_vec a r1) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
@@ -654,9 +654,9 @@ Proof with try assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (a *S A <> zero) as Hneq by now auto.
+    assert (a *S A <> HMR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec r zero ++ vec (mul_vec a r1) A ++ Db).
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec (mul_vec a r1) A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -779,10 +779,10 @@ Proof with try assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (a *S A <> coone) as Hnc by now auto.
-    assert (a *S A <> one) as Hnv by now auto.
+    assert (a *S A <> HMR_coone) as Hnc by now auto.
+    assert (a *S A <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec (mul_vec a r1) A ++ Db).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec (mul_vec a r1) A ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec (mul_vec a r1) A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) L)
@@ -794,8 +794,8 @@ Proof with try assumption.
     Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
-    assert (a *S A <> coone) as Hnc by now auto.
-    assert (a *S A <> one) as Hnv by now auto.
+    assert (a *S A <> HMR_coone) as Hnc by now auto.
+    assert (a *S A <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
@@ -803,11 +803,11 @@ Proof with try assumption.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
-    change ((vec s coone ++ vec r one ++ Db'') :: nil)
+    change ((vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)
       with
-        (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
+        (map (fun x : list Rpos * list (Rpos * term) => vec (mul_vec a (fst x)) A ++ snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
@@ -815,8 +815,8 @@ Proof with try assumption.
     apply Permutation_Type_app; try reflexivity.
     simpl in X.
     apply seq_diamond_perm_inv.
-    apply Permutation_Type_app_inv_l with (vec r one).
-    apply Permutation_Type_app_inv_l with (vec s coone).
+    apply Permutation_Type_app_inv_l with (vec r HMR_one).
+    apply Permutation_Type_app_inv_l with (vec s HMR_coone).
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
@@ -1018,15 +1018,15 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> (covar n)) as Hnc by now auto.
-    assert (A \/S B <> (var n)) as Hnv by now auto.
+    assert (A \/S B <> (HMR_covar n)) as Hnc by now auto.
+    assert (A \/S B <> (HMR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     eapply hmrr_ex_hseq; [ |  apply (IHpi ((r1 , Db) :: L))].
@@ -1038,14 +1038,14 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> zero) as Hneq by now auto.
+    assert (A \/S B <> HMR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec r zero ++ vec r1 A ++ Db).
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     eapply hmrr_ex_hseq ; [ rewrite app_comm_cons; apply Permutation_Type_app_comm | ].
     simpl.
-    apply hmrr_ex_seq with (vec r zero ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_Z; try assumption.
     eapply hmrr_ex_hseq; [ |  apply (IHpi ((r1 , Db) :: L))].
@@ -1245,17 +1245,17 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> coone) as Hnc by now auto.
-    assert (A \/S B <> one) as Hnv by now auto.
+    assert (A \/S B <> HMR_coone) as Hnc by now auto.
+    assert (A \/S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 A ++ Db).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     apply hmrr_ex_hseq with ((vec r1 B ++ T1) :: (vec r1 A ++ Db) :: (map (fun x => vec (fst x) A ++ snd x) L) ++ (map (fun x => vec (fst x) B ++ snd x) L)).
     { etransitivity ; [ apply Permutation_Type_swap | ].
       apply Permutation_Type_skip.
       apply Permutation_Type_middle. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 B ++ Db) ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec r1 B ++ Db) ; [ Permutation_Type_solve | ].
     apply hmrr_one; try assumption.
     apply hmrr_ex_hseq with (map (fun x => vec (fst x) A ++ snd x) ((r1, Db) :: L) ++ map (fun x => vec (fst x) B ++ snd x) ((r1, Db) :: L) ).
     { simpl.
@@ -1267,8 +1267,8 @@ Proof.
     Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
-    assert (A \/S B <> coone) as Hnc by now auto.
-    assert (A \/S B <> one) as Hnv by now auto.
+    assert (A \/S B <> HMR_coone) as Hnc by now auto.
+    assert (A \/S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
@@ -1277,11 +1277,11 @@ Proof.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
     apply hmrr_W.
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
     apply hmrr_C.
-    change ((vec s coone ++ vec r one ++ Db'') :: (vec s coone ++ vec r one ++ Db'') :: nil) with
-        (map (fun x => vec (fst x) A ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil) ++ map (fun x => vec (fst x) B ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
+    change ((vec s HMR_coone ++ vec r HMR_one ++ Db'') :: (vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil) with
+        (map (fun x => vec (fst x) A ++ snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil) ++ map (fun x => vec (fst x) B ++ snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
@@ -1289,8 +1289,8 @@ Proof.
     apply Permutation_Type_app; try reflexivity.
     simpl in X.
     apply seq_diamond_perm_inv.
-    apply Permutation_Type_app_inv_l with (vec r one).
-    apply Permutation_Type_app_inv_l with (vec s coone).
+    apply Permutation_Type_app_inv_l with (vec r HMR_one).
+    apply Permutation_Type_app_inv_l with (vec s HMR_coone).
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
@@ -1401,10 +1401,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> (covar n)) as Hnc by now auto.
-    assert (A /\S B <> (var n)) as Hnv by now auto.
+    assert (A /\S B <> (HMR_covar n)) as Hnc by now auto.
+    assert (A /\S B <> (HMR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _  _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 A ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec r1 A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
@@ -1417,9 +1417,9 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> zero) as Hneq by now auto.
+    assert (A /\S B <> HMR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec r zero ++ vec r1 A ++ Db).
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec r1 A ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -1575,10 +1575,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> coone) as Hnc by now auto.
-    assert (A /\S B <> one) as Hnv by now auto.
+    assert (A /\S B <> HMR_coone) as Hnc by now auto.
+    assert (A /\S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 A ++ Db).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec r1 A ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec r1 A ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) L)
@@ -1590,8 +1590,8 @@ Proof.
     Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> coone) as Hnc by now auto.
-    assert (A /\S B <> one) as Hnv by now auto.
+    assert (A /\S B <> HMR_coone) as Hnc by now auto.
+    assert (A /\S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
@@ -1599,11 +1599,11 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
-    change ((vec s coone ++ vec r one ++ Db'') :: nil)
+    change ((vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)
       with
-        (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
+        (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) A ++ snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
@@ -1611,8 +1611,8 @@ Proof.
     apply Permutation_Type_app; try reflexivity.
     simpl in X.
     apply seq_diamond_perm_inv.
-    apply Permutation_Type_app_inv_l with (vec r one).
-    apply Permutation_Type_app_inv_l with (vec s coone).
+    apply Permutation_Type_app_inv_l with (vec r HMR_one).
+    apply Permutation_Type_app_inv_l with (vec s HMR_coone).
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
@@ -1719,10 +1719,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> (covar n)) as Hnc by now auto.
-    assert (A /\S B <> (var n)) as Hnv by now auto.
+    assert (A /\S B <> (HMR_covar n)) as Hnc by now auto.
+    assert (A /\S B <> (HMR_var n)) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s (covar n) ++ vec r (var n) ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_ID; try assumption.
     change ((vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
@@ -1735,9 +1735,9 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> zero) as Hneq by now auto.
+    assert (A /\S B <> HMR_zero) as Hneq by now auto.
     destruct (perm_decomp_vec_neq _ _ _ _ _ _ Hneq X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec r zero ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec r HMR_zero ++ vec r1 B ++ Db).
     { etransitivity; [ apply Permutation_Type_app_comm | ].
       rewrite <- ? app_assoc; repeat (apply Permutation_Type_app; try reflexivity).
       Permutation_Type_solve. }
@@ -1893,10 +1893,10 @@ Proof.
   - destruct L; inversion Hperm; subst.
     simpl.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> coone) as Hnc by now auto.
-    assert (A /\S B <> one) as Hnv by now auto.
+    assert (A /\S B <> HMR_coone) as Hnc by now auto.
+    assert (A /\S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec r1 B ++ Db).
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec r1 B ++ Db).
     { Permutation_Type_solve. }
     apply hmrr_one; try assumption.
     change ((vec r1 B ++ Db) :: map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) L)
@@ -1908,8 +1908,8 @@ Proof.
     Permutation_Type_solve.
   - destruct L; [ | destruct L]; inversion Hperm; try inversion X0; subst.
     destruct p as [r1 T1]; simpl in *.
-    assert (A /\S B <> coone) as Hnc by now auto.
-    assert (A /\S B <> one) as Hnv by now auto.
+    assert (A /\S B <> HMR_coone) as Hnc by now auto.
+    assert (A /\S B <> HMR_one) as Hnv by now auto.
     destruct (perm_decomp_vec_neq_2 _ _ _ _ _ _ _ _ Hnc Hnv X) as [ [[[Ta Tb] Da ] Db] [H1' [[[H2' H3'] H4'] H5']]].
     apply seq_diamond_perm_decomp in H1' as [D' H1'].
     apply seq_diamond_app_inv in H1' as [[Da' Db'] [HD' [HDa' HDb']]]; subst.
@@ -1917,11 +1917,11 @@ Proof.
     destruct r1.
     2:{ symmetry in H4'; apply seq_diamond_perm_decomp in H4' as [D' H'].
         destruct D'; inversion H'. }
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond Db'') ; [ Permutation_Type_solve | ].
     apply hmrr_diamond; try assumption.
-    change ((vec s coone ++ vec r one ++ Db'') :: nil)
+    change ((vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)
       with
-        (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((nil, vec s coone ++ vec r one ++ Db'') :: nil)).
+        (map (fun x : list Rpos * list (Rpos * term) => vec (fst x) B ++ snd x) ((nil, vec s HMR_coone ++ vec r HMR_one ++ Db'') :: nil)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_nil].
     simpl.
@@ -1929,8 +1929,8 @@ Proof.
     apply Permutation_Type_app; try reflexivity.
     simpl in X.
     apply seq_diamond_perm_inv.
-    apply Permutation_Type_app_inv_l with (vec r one).
-    apply Permutation_Type_app_inv_l with (vec s coone).
+    apply Permutation_Type_app_inv_l with (vec r HMR_one).
+    apply Permutation_Type_app_inv_l with (vec s HMR_coone).
     transitivity T1; try assumption.
     etransitivity ; [ apply H2' | ].
     rewrite app_assoc.
@@ -1959,12 +1959,12 @@ Proof.
 Qed.
 
 Lemma hmrr_diamond_inv_gen : forall L,
-    HMR_T_M (map (fun x => (vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ seq_diamond (snd x))) L) ->
-    HMR_T_M (map (fun x => (vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x)) L).
+    HMR_T_M (map (fun x => (vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ seq_diamond (snd x))) L) ->
+    HMR_T_M (map (fun x => (vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x)) L).
 Proof.
   intros L.
-  remember (map (fun x => (vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ seq_diamond (snd x))) L) as G.
-  assert (Allperm G (map (fun x => (vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ seq_diamond (snd x))) L)) by (rewrite <- HeqG; clear; induction G; simpl; try now constructor).
+  remember (map (fun x => (vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ seq_diamond (snd x))) L) as G.
+  assert (Allperm G (map (fun x => (vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ seq_diamond (snd x))) L)) by (rewrite <- HeqG; clear; induction G; simpl; try now constructor).
   clear HeqG.
   intro pi; revert L X; induction pi; intros L Hperm.
   - destruct L ; [ | destruct L]; inversion Hperm; try inversion X0; subst.
@@ -1976,12 +1976,12 @@ Proof.
     apply IHpi; try assumption.
   - destruct L; inversion Hperm; subst.
     simpl; apply hmrr_C.
-    change ((vec (fst (fst p)) coone ++ vec (snd (fst p)) one ++ snd p)
-              :: (vec (fst (fst p)) coone ++ vec (snd (fst p)) one ++ snd p)
+    change ((vec (fst (fst p)) HMR_coone ++ vec (snd (fst p)) HMR_one ++ snd p)
+              :: (vec (fst (fst p)) HMR_coone ++ vec (snd (fst p)) HMR_one ++ snd p)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (p :: p :: L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (p :: p :: L)).
     apply IHpi.
     apply Forall2_inf_cons ; [ | apply Forall2_inf_cons]; try assumption.
   - destruct L ; [ | destruct L]; inversion Hperm; try inversion X0; subst.
@@ -1989,15 +1989,15 @@ Proof.
     destruct p0 as [[s2 r2] T2'].
     simpl in *.
     apply hmrr_S.
-    apply hmrr_ex_seq with (vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ T1' ++ T2').
+    apply hmrr_ex_seq with (vec (s1 ++ s2) HMR_coone ++ vec (r1 ++ r2) HMR_one ++ T1' ++ T2').
     { rewrite ? vec_app.
       Permutation_Type_solve. }
-    change ((vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ T1' ++ T2')
+    change ((vec (s1 ++ s2) HMR_coone ++ vec (r1 ++ r2) HMR_one ++ T1' ++ T2')
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
       with
-        (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1 ++ s2, r1 ++ r2) , T1' ++ T2') :: L)).
+        (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1 ++ s2, r1 ++ r2) , T1' ++ T2') :: L)).
     apply IHpi.
     apply Forall2_inf_cons; try assumption.
     simpl.
@@ -2008,46 +2008,46 @@ Proof.
     apply decomp_M_case_2 in X as [[[[[[D1 D2] s1] s2] r1] r2] [H1 [[[H2 H3] H4] H5]]]; simpl in *.
     apply seq_diamond_perm_decomp in H3 as [D H3].
     apply seq_diamond_app_inv in H3 as [[D1' D2'] [Heq1 [Heq2 Heq3]]]; subst.
-    apply hmrr_ex_seq with ((vec s1 coone ++ vec r1 one ++ D1') ++ (vec s2 coone ++ vec r2 one ++ D2')).
-    { transitivity (vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ D1' ++ D2').
+    apply hmrr_ex_seq with ((vec s1 HMR_coone ++ vec r1 HMR_one ++ D1') ++ (vec s2 HMR_coone ++ vec r2 HMR_one ++ D2')).
+    { transitivity (vec (s1 ++ s2) HMR_coone ++ vec (r1 ++ r2) HMR_one ++ D1' ++ D2').
       - rewrite ? vec_app.
         Permutation_Type_solve.
       - repeat apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve.
         apply seq_diamond_perm_inv.
-        apply Permutation_Type_app_inv_l with (vec r one).
-        apply Permutation_Type_app_inv_l with (vec s coone).
+        apply Permutation_Type_app_inv_l with (vec r HMR_one).
+        apply Permutation_Type_app_inv_l with (vec s HMR_coone).
         inversion Hperm; subst.
         etransitivity ; [ | apply X].
-        transitivity (vec (s1 ++ s2) coone ++ vec (r1 ++ r2) one ++ (seq_diamond (D1' ++ D2'))).
+        transitivity (vec (s1 ++ s2) HMR_coone ++ vec (r1 ++ r2) HMR_one ++ (seq_diamond (D1' ++ D2'))).
         + repeat apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve.
         + etransitivity ; [ | apply Permutation_Type_app ; symmetry; [ apply H4 | apply H5]].
           rewrite ? vec_app; rewrite seq_diamond_app.
           Permutation_Type_solve. }
     apply hmrr_M; try assumption.
-    + change ((vec s1 coone ++ vec r1 one ++ D1')
+    + change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ D1')
                 :: map
                 (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                   vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
+                   vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
         with
-          (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),D1')::L)).
+          (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),D1')::L)).
       apply IHpi1; simpl; apply Forall2_inf_cons; assumption.
-    + change ((vec s2 coone ++ vec r2 one ++ D2')
+    + change ((vec s2 HMR_coone ++ vec r2 HMR_one ++ D2')
                 :: map
                 (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                   vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
+                   vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
         with
-          (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s2,r2),D2')::L)).
+          (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s2,r2),D2')::L)).
       apply IHpi2; simpl; apply Forall2_inf_cons; assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [r1 T1]; simpl in *.
     apply hmrr_T with r; try assumption.
     rewrite ? seq_mul_app; rewrite ? seq_mul_vec_mul_vec.
-    change ((vec (mul_vec r (fst r1)) coone ++ vec (mul_vec r (snd r1)) one ++ seq_mul r T1)
+    change ((vec (mul_vec r (fst r1)) HMR_coone ++ vec (mul_vec r (snd r1)) HMR_one ++ seq_mul r T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
       with
-        (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((mul_vec r (fst r1), mul_vec r (snd r1)), seq_mul r T1) :: L)).
+        (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((mul_vec r (fst r1), mul_vec r (snd r1)), seq_mul r T1) :: L)).
     apply IHpi.
     simpl; apply Forall2_inf_cons; try assumption.
     etransitivity ; [ apply seq_mul_perm; apply X | ].
@@ -2058,7 +2058,7 @@ Proof.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct s.
     2:{ exfalso.
-        assert (~ In (r0, covar n) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r0, HMR_covar n) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2075,12 +2075,12 @@ Proof.
           + apply seq_diamond_only_diamond.
             intros B; intros H; inversion H.
         - apply H.
-          apply Permutation_Type_in with (vec (r0 :: s) (covar n) ++ vec r (var n) ++ T); try assumption.
+          apply Permutation_Type_in with (vec (r0 :: s) (HMR_covar n) ++ vec r (HMR_var n) ++ T); try assumption.
           simpl; left.
           reflexivity. }
     destruct r.
     2:{ exfalso.
-        assert (~ In (r, var n) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r, HMR_var n) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2097,22 +2097,22 @@ Proof.
           + apply seq_diamond_only_diamond.
             intros B; intros H; inversion H.
         - apply H.
-          apply Permutation_Type_in with (vec (r :: r0) (var n) ++ T); try assumption.
+          apply Permutation_Type_in with (vec (r :: r0) (HMR_var n) ++ T); try assumption.
           simpl; left.
           reflexivity. }
     simpl in *.
-    change ((vec s1 coone ++ vec r1 one ++ T1)
+    change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
     apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
     2:{ exfalso.
-        assert (~ In (r, zero) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r, HMR_zero) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2129,22 +2129,22 @@ Proof.
           + apply seq_diamond_only_diamond.
             intros B; intros H; inversion H.
         - apply H.
-          apply Permutation_Type_in with (vec (r :: r0) zero ++ T); try assumption.
+          apply Permutation_Type_in with (vec (r :: r0) HMR_zero ++ T); try assumption.
           simpl; left.
           reflexivity. }
     simpl in *.
-    change ((vec s1 coone ++ vec r1 one ++ T1)
+    change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
     apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
     2:{ exfalso.
-        assert (~ In (r, A +S B) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r, A +S B) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2165,18 +2165,18 @@ Proof.
           simpl; left.
           reflexivity. }
     simpl in *.
-    change ((vec s1 coone ++ vec r1 one ++ T1)
+    change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
     apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
     2:{ exfalso.
-        assert (~ In (r, r0 *S A) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r, r0 *S A) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2197,18 +2197,18 @@ Proof.
           simpl; left.
           reflexivity. }
     simpl in *.
-    change ((vec s1 coone ++ vec r1 one ++ T1)
+    change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi.
     apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
     2:{ exfalso.
-        assert (~ In (r, (A \/S B)) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r, (A \/S B)) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2230,18 +2230,18 @@ Proof.
           reflexivity. }
     simpl in *.
     apply hmrr_C.
-    change ((vec s1 coone ++ vec r1 one ++ T1) :: (vec s1 coone ++ vec r1 one ++ T1)
+    change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ T1) :: (vec s1 HMR_coone ++ vec r1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::((s1,r1),T1)::L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),T1)::((s1,r1),T1)::L)).
     apply IHpi.
     apply Forall2_inf_cons; try apply Forall2_inf_cons; try assumption.    
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
     destruct r.
     2:{ exfalso.
-        assert (~ In (r, (A /\S B)) (vec s1 coone ++ vec r1 one ++ seq_diamond T1)) as H.
+        assert (~ In (r, (A /\S B)) (vec s1 HMR_coone ++ vec r1 HMR_one ++ seq_diamond T1)) as H.
         - intros Hin.
           apply in_app_or in Hin.
           case Hin ; [ | intros Hin2; apply in_app_or in Hin2; case Hin2].
@@ -2262,42 +2262,42 @@ Proof.
           simpl; left.
           reflexivity. }
     simpl in *.
-    change ((vec s1 coone ++ vec r1 one ++ T1)
+    change ((vec s1 HMR_coone ++ vec r1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
-      with (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s1,r1),T1)::L)).
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
+      with (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s1,r1),T1)::L)).
     apply IHpi1.
     apply Forall2_inf_cons; try assumption.
   - destruct L; inversion Hperm; subst.
     destruct p as [[s1 r1] T1]; simpl in *.
-    destruct (perm_decomp_vec_eq_2 T (seq_diamond T1) r1 s1 r s one coone) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]]; [ now auto | apply X | ].
+    destruct (perm_decomp_vec_eq_2 T (seq_diamond T1) r1 s1 r s HMR_one HMR_coone) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]]; [ now auto | apply X | ].
     destruct c2.
     2:{ exfalso.
-        refine (seq_diamond_only_diamond T1 coone r2 _ _).
+        refine (seq_diamond_only_diamond T1 HMR_coone r2 _ _).
         - intros B Heq; inversion Heq.
         - apply in_inf_in.
-          apply Permutation_Type_in_inf with (vec (r2 :: c2) coone ++ vec c1 one ++ D'); try Permutation_Type_solve.
+          apply Permutation_Type_in_inf with (vec (r2 :: c2) HMR_coone ++ vec c1 HMR_one ++ D'); try Permutation_Type_solve.
           left; reflexivity. }
     destruct c1.
     2:{ exfalso.
-        refine (seq_diamond_only_diamond T1 one r2 _ _).
+        refine (seq_diamond_only_diamond T1 HMR_one r2 _ _).
         - intros B Heq; inversion Heq.
         - apply in_inf_in.
-          apply Permutation_Type_in_inf with (vec (r2 :: c1) one ++ D'); try Permutation_Type_solve.
+          apply Permutation_Type_in_inf with (vec (r2 :: c1) HMR_one ++ D'); try Permutation_Type_solve.
           left; reflexivity. }
     simpl in *; rewrite app_nil_r in *.
-    apply hmrr_ex_seq with (vec s coone ++ vec r one ++ vec a2 coone ++ vec a1 one ++ T1).
-    { transitivity (vec (a2 ++ s) coone ++ vec (a1 ++ r) one ++ T1); [ | repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve) ].
+    apply hmrr_ex_seq with (vec s HMR_coone ++ vec r HMR_one ++ vec a2 HMR_coone ++ vec a1 HMR_one ++ T1).
+    { transitivity (vec (a2 ++ s) HMR_coone ++ vec (a1 ++ r) HMR_one ++ T1); [ | repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve) ].
       rewrite ? vec_app.
       Permutation_Type_solve. }
     apply hmrr_one; try assumption.
-    change ((vec a2 coone ++ vec a1 one ++ T1)
+    change ((vec a2 HMR_coone ++ vec a1 HMR_one ++ T1)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
       with
-        (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((a2,a1), T1)::L)).
+        (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((a2,a1), T1)::L)).
     apply IHpi.
     simpl; apply Forall2_inf_cons; try assumption.
     Permutation_Type_solve.    
@@ -2309,7 +2309,7 @@ Proof.
       - simpl in *.
         destruct s'; try reflexivity.
         exfalso.
-        assert (~ In (r0, coone) (vec r one ++ seq_diamond T)) as H.
+        assert (~ In (r0, HMR_coone) (vec r HMR_one ++ seq_diamond T)) as H.
         + intros Hin; apply in_app_or in Hin; case Hin.
           * intros H; clear - H.
             induction r; inversion H; try inversion H0.
@@ -2317,12 +2317,12 @@ Proof.
           * apply seq_diamond_only_diamond.
             intros B Heq; inversion Heq.
         + apply H.
-          apply Permutation_Type_in with (vec (r0 :: s') coone ++ vec r' one ++ seq_diamond T'); try Permutation_Type_solve.
+          apply Permutation_Type_in with (vec (r0 :: s') HMR_coone ++ vec r' HMR_one ++ seq_diamond T'); try Permutation_Type_solve.
           left; reflexivity.
       - destruct (in_inf_split a s') as [[s1' s2'] H].
-        + assert (In_inf (a , coone) (vec s' coone)).
-          * destruct (in_inf_app_or (vec s' coone) (vec r' one ++ seq_diamond T') (a , coone)); try assumption.
-            -- apply Permutation_Type_in_inf with (vec (a :: s) coone ++ vec r one ++ seq_diamond T); try Permutation_Type_solve; left; reflexivity.
+        + assert (In_inf (a , HMR_coone) (vec s' HMR_coone)).
+          * destruct (in_inf_app_or (vec s' HMR_coone) (vec r' HMR_one ++ seq_diamond T') (a , HMR_coone)); try assumption.
+            -- apply Permutation_Type_in_inf with (vec (a :: s) HMR_coone ++ vec r HMR_one ++ seq_diamond T); try Permutation_Type_solve; left; reflexivity.
             -- clear - i.
                exfalso.
                induction r'.
@@ -2338,7 +2338,7 @@ Proof.
           transitivity (a :: s1' ++ s2'); try Permutation_Type_solve.
           apply Permutation_Type_skip.
           apply IHs.
-          apply Permutation_Type_cons_inv with (a , coone); rewrite ? vec_app in Hperm; simpl in *.
+          apply Permutation_Type_cons_inv with (a , HMR_coone); rewrite ? vec_app in Hperm; simpl in *.
           etransitivity ; [ apply Hperm | ].
           rewrite app_comm_cons.
           rewrite ? app_assoc.
@@ -2351,7 +2351,7 @@ Proof.
       - simpl in *.
         destruct r'; try reflexivity.
         exfalso.
-        assert (~ In (r, one) (vec s coone ++ seq_diamond T)) as H.
+        assert (~ In (r, HMR_one) (vec s HMR_coone ++ seq_diamond T)) as H.
         + intros Hin; apply in_app_or in Hin; case Hin.
           * intros H; clear - H.
             induction s; inversion H; try inversion H0.
@@ -2359,13 +2359,13 @@ Proof.
           * apply seq_diamond_only_diamond.
             intros B Heq; inversion Heq.
         + apply H.
-          apply Permutation_Type_in with (vec s' coone ++ vec (r :: r') one ++ seq_diamond T'); try Permutation_Type_solve.
+          apply Permutation_Type_in with (vec s' HMR_coone ++ vec (r :: r') HMR_one ++ seq_diamond T'); try Permutation_Type_solve.
           apply in_or_app; right.
           left; reflexivity.
       - destruct (in_inf_split a r') as [[r1' r2'] H].
-        + assert (In_inf (a , one) (vec r' one)).
-          * destruct (in_inf_app_or (vec s' coone) (vec r' one ++ seq_diamond T') (a , one)).
-            -- apply Permutation_Type_in_inf with (vec s coone ++ vec (a :: r) one ++ seq_diamond T); try Permutation_Type_solve.
+        + assert (In_inf (a , HMR_one) (vec r' HMR_one)).
+          * destruct (in_inf_app_or (vec s' HMR_coone) (vec r' HMR_one ++ seq_diamond T') (a , HMR_one)).
+            -- apply Permutation_Type_in_inf with (vec s HMR_coone ++ vec (a :: r) HMR_one ++ seq_diamond T); try Permutation_Type_solve.
                apply in_inf_or_app; right; left; reflexivity.
             -- clear - i.
                exfalso.
@@ -2385,7 +2385,7 @@ Proof.
           transitivity (a :: r1' ++ r2'); try Permutation_Type_solve.
           apply Permutation_Type_skip.
           apply IHr.
-          apply Permutation_Type_cons_inv with (a , one); rewrite ? vec_app in Hperm; simpl in *.
+          apply Permutation_Type_cons_inv with (a , HMR_one); rewrite ? vec_app in Hperm; simpl in *.
           rewrite vec_app.
           etransitivity ; [ apply Permutation_Type_middle |  ].
           etransitivity ; [ apply Hperm | ].
@@ -2393,20 +2393,20 @@ Proof.
     assert (Permutation_Type T T') as HpermT.
     { clear - X Hperms Hpermr.
       apply seq_diamond_perm_inv.
-      apply Permutation_Type_app_inv_l with (vec r one).
-      apply Permutation_Type_app_inv_l with (vec s coone).
+      apply Permutation_Type_app_inv_l with (vec r HMR_one).
+      apply Permutation_Type_app_inv_l with (vec s HMR_coone).
       etransitivity ; [ apply X | ].
       repeat (try apply Permutation_Type_app; try apply vec_perm; try Permutation_Type_solve). }
     eapply hmrr_ex_seq; [ | apply pi].
     repeat (try apply Permutation_Type_app; try apply vec_perm; try apply seq_diamond_perm; try Permutation_Type_solve).
   - destruct L; inversion Hperm; subst.
     destruct p0 as [[s r] T]; simpl in *.
-    change ((vec s coone ++ vec r one ++ T)
+    change ((vec s HMR_coone ++ vec r HMR_one ++ T)
               :: map
               (fun x : list Rpos * list Rpos * list (Rpos * term) =>
-                 vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) L)
+                 vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) L)
       with
-        (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s,r), T) :: L)).
+        (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s,r), T) :: L)).
     apply IHpi.
     simpl; apply Forall2_inf_cons; try assumption.
     Permutation_Type_solve.
@@ -2420,11 +2420,11 @@ Qed.
 
 (** ** The regular rules are invertibles, those lemmas are instances of the previous ones *)
           
-Lemma hmrr_Z_inv : forall G T r,  HMR_T_M ((vec r zero ++ T) :: G) -> HMR_T_M (T :: G).
+Lemma hmrr_Z_inv : forall G T r,  HMR_T_M ((vec r HMR_zero ++ T) :: G) -> HMR_T_M (T :: G).
 Proof.
   intros G.
   assert ({ L & prod
-                  ( G = map (fun x : list Rpos * list (Rpos * term) => vec (fst x) zero ++ snd x) L)
+                  ( G = map (fun x : list Rpos * list (Rpos * term) => vec (fst x) HMR_zero ++ snd x) L)
                   ( G =  map (fun x : list Rpos * list (Rpos * term) =>  snd x) L) }) as [L [H1 H2]].
   { induction G.
     - split with nil; split;reflexivity.
@@ -2529,12 +2529,12 @@ Proof.
   apply pi.
 Qed.
 
-Lemma hmrr_diamond_inv : forall T r s, HMR_T_M ((vec s coone ++ vec r one ++ seq_diamond T) :: nil) -> HMR_T_M ((vec s coone ++ vec r one ++ T) :: nil).
+Lemma hmrr_diamond_inv : forall T r s, HMR_T_M ((vec s HMR_coone ++ vec r HMR_one ++ seq_diamond T) :: nil) -> HMR_T_M ((vec s HMR_coone ++ vec r HMR_one ++ T) :: nil).
 Proof.
   intros T r s pi.
-  change ((vec s coone ++ vec r one ++ T) :: nil)
+  change ((vec s HMR_coone ++ vec r HMR_one ++ T) :: nil)
     with
-      (map (fun x => vec (fst (fst x)) coone ++ vec (snd (fst x)) one ++ snd x) (((s,r),T) :: nil)).
+      (map (fun x => vec (fst (fst x)) HMR_coone ++ vec (snd (fst x)) HMR_one ++ snd x) (((s,r),T) :: nil)).
   apply hmrr_diamond_inv_gen.
   apply pi.
 Qed.

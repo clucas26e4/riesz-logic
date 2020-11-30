@@ -14,52 +14,52 @@ Local Open Scope R_scope.
 (** ** Basic definitions needed for equational reasoning *)
 (** Context *)
 Inductive context : Type :=
-| hole : context
-| cohole : context
-| TC : term -> context
-| varC : nat -> context
-| covarC : nat -> context
-| zeroC : context
-| minC : context -> context -> context
-| maxC : context -> context -> context
-| plusC : context -> context -> context
-| mulC : Rpos -> context -> context
-| oneC : context
-| cooneC : context
-| diamondC : context -> context.
+| HMR_hole : context
+| HMR_cohole : context
+| HMR_TC : term -> context
+| HMR_varC : nat -> context
+| HMR_covarC : nat -> context
+| HMR_zeroC : context
+| HMR_minC : context -> context -> context
+| HMR_maxC : context -> context -> context
+| HMR_plusC : context -> context -> context
+| HMR_mulC : Rpos -> context -> context
+| HMR_oneC : context
+| HMR_cooneC : context
+| HMR_diamondC : context -> context.
 
 Fixpoint evalContext (c : context) (t : term) : term :=
   match c with
-  | hole => t
-  | cohole => -S t
-  | TC t' => t'
-  | varC n => var n
-  | covarC n => covar n
-  | zeroC => zero
-  | minC c1 c2 => min (evalContext c1 t) (evalContext c2 t)
-  | maxC c1 c2 => max (evalContext c1 t) (evalContext c2 t)
-  | plusC c1 c2 => plus (evalContext c1 t) (evalContext c2 t)
-  | mulC x c => mul x (evalContext c t)
-  | oneC => one
-  | cooneC => coone
-  | diamondC c => diamond (evalContext c t)
+  | HMR_hole => t
+  | HMR_cohole => -S t
+  | HMR_TC t' => t'
+  | HMR_varC n => HMR_var n
+  | HMR_covarC n => HMR_covar n
+  | HMR_zeroC => HMR_zero
+  | HMR_minC c1 c2 => HMR_min (evalContext c1 t) (evalContext c2 t)
+  | HMR_maxC c1 c2 => HMR_max (evalContext c1 t) (evalContext c2 t)
+  | HMR_plusC c1 c2 => HMR_plus (evalContext c1 t) (evalContext c2 t)
+  | HMR_mulC x c => HMR_mul x (evalContext c t)
+  | HMR_oneC => HMR_one
+  | HMR_cooneC => HMR_coone
+  | HMR_diamondC c => HMR_diamond (evalContext c t)
   end.
 
 Fixpoint minusC c :=
   match c with
-  | hole => cohole
-  | cohole => hole
-  | TC t => TC (-S t)
-  | varC n => covarC n
-  | covarC n => varC n
-  | zeroC => zeroC
-  | plusC c1 c2 => plusC (minusC c1) (minusC c2)
-  | mulC r c1 => mulC r (minusC c1)
-  | maxC c1 c2 => minC (minusC c1) (minusC c2)
-  | minC c1 c2 => maxC (minusC c1) (minusC c2)
-  | oneC => cooneC
-  | cooneC => oneC
-  | diamondC c => diamondC (minusC c)
+  | HMR_hole => HMR_cohole
+  | HMR_cohole => HMR_hole
+  | HMR_TC t => HMR_TC (-S t)
+  | HMR_varC n => HMR_covarC n
+  | HMR_covarC n => HMR_varC n
+  | HMR_zeroC => HMR_zeroC
+  | HMR_plusC c1 c2 => HMR_plusC (minusC c1) (minusC c2)
+  | HMR_mulC r c1 => HMR_mulC r (minusC c1)
+  | HMR_maxC c1 c2 => HMR_minC (minusC c1) (minusC c2)
+  | HMR_minC c1 c2 => HMR_maxC (minusC c1) (minusC c2)
+  | HMR_oneC => HMR_cooneC
+  | HMR_cooneC => HMR_oneC
+  | HMR_diamondC c => HMR_diamondC (minusC c)
   end.
 
 (** ** Equational Reasoning *)
@@ -71,35 +71,35 @@ Inductive eqMALG : term -> term -> Type :=
 | sym t1 t2 : eqMALG t1 t2 -> eqMALG t2 t1
 | subs_r t1 t2 n t : eqMALG t1 t2 -> eqMALG (subs t1 n t) (subs t2 n t)
 (** vector space axioms *)
-| asso_plus t1 t2 t3 : eqMALG (plus t1 (plus t2 t3)) (plus (plus t1 t2) t3)
-| commu_plus t1 t2 : eqMALG (plus t1 t2) (plus t2 t1)
-| neutral_plus t : eqMALG (plus t zero) t
-| opp_plus t : eqMALG (plus t (minus t)) zero
+| asso_plus t1 t2 t3 : eqMALG (t1 +S (t2 +S t3)) ((t1 +S t2) +S t3)
+| commu_plus t1 t2 : eqMALG (t1 +S t2) (t2 +S t1)
+| neutral_plus t : eqMALG (t +S HMR_zero) t
+| opp_plus t : eqMALG (t -S t) HMR_zero
 | minus_ax a b t (Hlt: (projT1 b < projT1 a)%R) : eqMALG ((a *S t) +S (b *S (-S t))) ((minus_pos Hlt) *S t)
-| mul_1 t  : eqMALG (mul One t) t
-| mul_assoc x y t : eqMALG (mul x (mul y t)) (mul (time_pos x y) t)
-| mul_distri_term x t1 t2 : eqMALG (mul x (plus t1 t2)) (plus (mul x t1) (mul x t2))
-| mul_distri_coeff x y t : eqMALG (mul (plus_pos x y) t) (plus (mul x t) (mul y t))
-| mul_minus x t : eqMALG (mul x (minus t)) (minus (mul x t))
+| mul_1 t  : eqMALG (One *S t) t
+| mul_assoc x y t : eqMALG (x *S (y *S t)) ((time_pos x y) *S t)
+| mul_distri_term x t1 t2 : eqMALG (x *S (t1 +S t2)) ((x *S t1) +S (x *S t2))
+| mul_distri_coeff x y t : eqMALG ((plus_pos x y) *S t) ((x *S t) +S (y *S t))
+| mul_minus x t : eqMALG (x *S (-S t)) (-S (x *S t))
 (** lattice axioms *)
-| asso_max t1 t2 t3 : eqMALG (max t1 (max t2 t3)) (max (max t1 t2) t3)
-| commu_max t1 t2 : eqMALG (max t1 t2) (max t2 t1)
-| abso_max t1 t2 : eqMALG (max t1 (min t1 t2)) t1
-| asso_min t1 t2 t3 : eqMALG (min t1 (min t2 t3)) (min (min t1 t2) t3)
-| commu_min t1 t2 : eqMALG (min t1 t2) (min t2 t1)
-| abso_min t1 t2 : eqMALG (min t1 (max t1 t2)) t1
+| asso_max t1 t2 t3 : eqMALG (t1 \/S (t2 \/S t3)) ((t1 \/S t2) \/S t3)
+| commu_max t1 t2 : eqMALG (t1 \/S t2) (t2 \/S t1)
+| abso_max t1 t2 : eqMALG (t1 \/S (t1 /\S t2)) t1
+| asso_min t1 t2 t3 : eqMALG (t1 /\S (t2 /\S t3)) ((t1 /\S t2) /\S t3)
+| commu_min t1 t2 : eqMALG (t1 /\S t2) (t2 /\S t1)
+| abso_min t1 t2 : eqMALG (t1 /\S (t1 \/S t2)) t1
+(** compability axiom *)
+| compa_plus_ax t1 t2 t3 : eqMALG (((t1 /\S t2) +S t3) /\S (t2 +S t3)) ((t1 /\S t2) +S t3)
+| compa_mul_ax r t : eqMALG (HMR_zero /\S (r *S (t \/S HMR_zero))) HMR_zero
 (** modal axioms *)
 | diamond_linear t1 t2 : eqMALG (<S> (t1 +S t2)) ((<S> t1) +S (<S> t2))
 | diamond_mul r t : eqMALG (<S> (r *S t)) (r *S <S> t)
-| diamond_one : eqMALG ((<S> one) /\S one) (<S> one)
-| diamond_pos t : eqMALG (zero /\S <S> (t \/S zero)) zero
-| one_pos : eqMALG (zero /\S one) zero
-(** compability axiom *)
-| compa_plus_ax t1 t2 t3 : eqMALG (min (plus (min t1 t2) t3) (plus t2 t3)) (plus (min t1 t2) t3)
-| compa_mul_ax r t : eqMALG (min zero (mul r (max t zero))) zero.    
+| diamond_one : eqMALG ((<S> HMR_one) /\S HMR_one) (<S> HMR_one)
+| diamond_pos t : eqMALG (HMR_zero /\S <S> (t \/S HMR_zero)) HMR_zero
+| one_pos : eqMALG (HMR_zero /\S HMR_one) HMR_zero.
 
 Notation "A === B" := (eqMALG A B) (at level 90, no associativity).
-Notation "A <== B" := (eqMALG (min A B) A) (at level 90, no associativity).
+Notation "A <== B" := (eqMALG (A /\S B) A) (at level 90, no associativity).
 
 (** *** === is an equivalence relation **)
 
@@ -123,14 +123,14 @@ Hint Resolve cong_S : core.
 Lemma plus_left : forall A B C, A === C -> A +S B === C +S B.
 Proof.
   intros A B C eq.
-  apply (@ctxt (plusC hole (TC B))).
+  apply (@ctxt (HMR_plusC HMR_hole (HMR_TC B))).
   apply eq.
 Qed.
 
 Lemma plus_right : forall A B C, B === C -> A +S B === A +S C.
 Proof.
   intros A B C eq.
-  apply (@ctxt (plusC (TC A) hole)).
+  apply (@ctxt (HMR_plusC (HMR_TC A) HMR_hole)).
   apply eq.
 Qed.
 
@@ -140,20 +140,20 @@ Proof.
   transitivity (A +S D); [apply plus_right | apply plus_left]; assumption.
 Qed.
 
-Global Instance plus_cong_instance : Proper (eqMALG ==> eqMALG ==> eqMALG) plus | 10.
+Global Instance plus_cong_instance : Proper (eqMALG ==> eqMALG ==> eqMALG) HMR_plus | 10.
 Proof. repeat intro; now apply plus_cong. Qed.
 
 Lemma max_left : forall A B C, A === C -> A \/S B === C \/S B.
 Proof.
   intros A B C eq.
-  apply (@ctxt (maxC hole (TC B))).
+  apply (@ctxt (HMR_maxC HMR_hole (HMR_TC B))).
   apply eq.
 Qed.
 
 Lemma max_right : forall A B C, B === C -> A \/S B === A \/S C.
 Proof.
   intros A B C eq.
-  apply (@ctxt (maxC (TC A) hole)).
+  apply (@ctxt (HMR_maxC (HMR_TC A) HMR_hole)).
   apply eq.
 Qed.
 
@@ -163,24 +163,24 @@ Proof.
   transitivity (A \/S D); [apply max_right | apply max_left]; assumption.
 Qed.
 
-Global Instance max_cong_instance : Proper (eqMALG ==> eqMALG ==> eqMALG) max | 10.
+Global Instance max_cong_instance : Proper (eqMALG ==> eqMALG ==> eqMALG) HMR_max | 10.
 Proof. repeat intro; now apply max_cong. Qed.
 
 Lemma min_left : forall A B C, A === C -> A /\S B === C /\S B.
 Proof.
   intros A B C eq.
-  apply (@ctxt (minC hole (TC B))).
+  apply (@ctxt (HMR_minC HMR_hole (HMR_TC B))).
   apply eq.
 Qed.
 
 Lemma min_right : forall A B C, B === C -> A /\S B === A /\S C.
 Proof.
   intros A B C eq.
-  apply (@ctxt (minC (TC A) hole)).
+  apply (@ctxt (HMR_minC (HMR_TC A) HMR_hole)).
   apply eq.
 Qed.
 
-Lemma mul_left : forall x y A , x = y -> mul x A === mul y A.
+Lemma mul_left : forall x y A , x = y -> HMR_mul x A === HMR_mul y A.
 Proof.
   intros x y A eq.
   rewrite eq.
@@ -193,37 +193,37 @@ Proof.
   transitivity (A /\S D); [apply min_right | apply min_left]; assumption.
 Qed.
 
-Global Instance min_cong_instance : Proper (eqMALG ==> eqMALG ==> eqMALG) min | 10.
+Global Instance min_cong_instance : Proper (eqMALG ==> eqMALG ==> eqMALG) HMR_min | 10.
 Proof. repeat intro; now apply min_cong. Qed.
 
-Lemma mul_right : forall x A B , A === B -> mul x A === mul x B.
+Lemma mul_right : forall x A B , A === B -> x *S A === x *S B.
 Proof.
   intros x A B eq.
-  apply (@ctxt (mulC x hole)).
+  apply (@ctxt (HMR_mulC x HMR_hole)).
   apply eq.
 Qed.
 
-Global Instance mul_right_instance x : Proper (eqMALG ==> eqMALG) (mul x) | 10.
+Global Instance mul_right_instance x : Proper (eqMALG ==> eqMALG) (HMR_mul x) | 10.
 Proof. repeat intro; now apply mul_right. Qed.
 
 Lemma minus_cong : forall A B , A === B -> -S A === -S B.
 Proof.
   intros A B eq.
-  apply (@ctxt cohole).
+  apply (@ctxt HMR_cohole).
   assumption.
 Qed.
 
-Global Instance minus_cong_instance : Proper (eqMALG ==> eqMALG) minus | 10.
+Global Instance minus_cong_instance : Proper (eqMALG ==> eqMALG) HMR_minus | 10.
 Proof. repeat intro; now apply minus_cong. Qed.
 
 Lemma diamond_cong : forall A B, A === B -> (<S> A === <S> B).
 Proof.
   intros A B eq.
-  apply (@ctxt (diamondC hole)).
+  apply (@ctxt (HMR_diamondC HMR_hole)).
   apply eq.
 Qed.
 
-Global Instance diamond_cong_instance : Proper (eqMALG ==> eqMALG) diamond | 10.
+Global Instance diamond_cong_instance : Proper (eqMALG ==> eqMALG) HMR_diamond | 10.
 Proof. repeat intro; now apply diamond_cong. Qed.
 
 Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_cong mul_left mul_right diamond_cong : core.
@@ -253,7 +253,7 @@ Qed.
 
 Hint Resolve minus_distri : MGA_solver.
 
-Lemma minus_zero : zero === -S zero.
+Lemma minus_zero : HMR_zero === -S HMR_zero.
 Proof.
   auto.
 Qed.
@@ -373,14 +373,14 @@ Proof with auto with *.
   apply leq_cong_r with (B +S (-S C) +S C)...
   apply trans with (B +S ((-S C) +S C))...
   apply trans with (B +S (C -S C))...
-  apply trans with (B +S zero)...
+  apply trans with (B +S HMR_zero)...
 Qed.
 
 Lemma leq_plus_right : forall A B C, A -S B <== C -> A <== C +S B.
 Proof with auto with *.
   intros A B C leq.
   apply leq_cong_l with ( A -S B +S B)...
-  apply trans with (A +S zero)...
+  apply trans with (A +S HMR_zero)...
   apply trans with (A +S (B -S B))...
   apply trans with (A +S ((-S B) +S B))...
 Qed.
@@ -413,7 +413,7 @@ Proof with auto.
     apply leq_plus_right.
     apply leq_cong_l with B.
       * apply trans with (B +S (C -S C))...
-        apply trans with (B +S zero)...
+        apply trans with (B +S HMR_zero)...
       * apply leq_cong_r with (B \/S A)...
 Qed.
 
@@ -422,12 +422,12 @@ Hint Resolve max_plus : MGA_solver.
 Lemma minus_reverse_leq : forall A B, B <== A -> (-S A) <== (-S B).
 Proof with auto.
   intros A B leq.
-  apply leq_cong_r with (-S B +S zero)...
-  apply leq_cong_r with (zero -S B)...
+  apply leq_cong_r with (-S B +S HMR_zero)...
+  apply leq_cong_r with (HMR_zero -S B)...
   apply leq_minus_right.
   apply leq_cong_l with (B -S A)...
   apply leq_minus_left.
-  apply leq_cong_r with (A +S zero)...
+  apply leq_cong_r with (A +S HMR_zero)...
   apply leq_cong_r with A...
 Qed.
 
@@ -473,24 +473,24 @@ Qed.
 
 Hint Resolve leq_plus_cong : MGA_solver.
 
-Lemma cond_leq : forall A B, zero <== (A -S B) -> B <== A.
+Lemma cond_leq : forall A B, HMR_zero <== (A -S B) -> B <== A.
 Proof with auto with MGA_solver.
   intros A B Hleq.
   apply leq_cong_r with ((A -S B) +S B).
-  { apply trans with (A +S zero)...
+  { apply trans with (A +S HMR_zero)...
     apply trans with (A +S (B -S B))...
     apply trans with (A +S ((-S B) +S B))... }
-  apply leq_cong_l with (zero +S B)...
-  apply trans with (B +S zero)...
+  apply leq_cong_l with (HMR_zero +S B)...
+  apply trans with (B +S HMR_zero)...
 Qed.
 
-Lemma cond_leq_inv : forall A B, B <== A -> zero <== (A -S B).
+Lemma cond_leq_inv : forall A B, B <== A -> HMR_zero <== (A -S B).
 Proof with auto with MGA_solver.
   intros A B Hleq.
   apply leq_cong_l with (B -S B)...
 Qed.
 
-Lemma eq_minus : forall A B, A === B -> A -S B === zero.
+Lemma eq_minus : forall A B, A === B -> A -S B === HMR_zero.
 Proof with auto with MGA_solver.
   intros A B eq.
   apply trans with (B -S B)...
@@ -498,27 +498,27 @@ Qed.
 
 Hint Resolve eq_minus : MGA_solver.
 
-Lemma minus_eq : forall A B, A -S B === zero -> A === B.
+Lemma minus_eq : forall A B, A -S B === HMR_zero -> A === B.
 Proof with auto with MGA_solver.
   intros A B eq.
-  apply trans with (A +S zero)...
+  apply trans with (A +S HMR_zero)...
   apply trans with (A +S (B -S B))...
   apply trans with (A +S ((-S B) +S B))...
   apply trans with (A -S B +S B)...
-  apply trans with (zero +S B)...
-  apply trans with (B +S zero)...
+  apply trans with (HMR_zero +S B)...
+  apply trans with (B +S HMR_zero)...
 Qed.  
 
 Lemma mul_compa : forall (r : Rpos) A B, A <== B -> (r *S A) <== (r *S B).
 Proof with auto with MGA_solver.
   intros r A B HleqAB.
   apply cond_leq.
-  apply leq_cong_r with ((r *S ((B -S A) \/S zero))).
+  apply leq_cong_r with ((r *S ((B -S A) \/S HMR_zero))).
   { apply trans with ((r *S B) +S (r *S (-S A)))...
     apply trans with (r *S (B -S A))...
     apply mul_right.
     apply sym.
-    apply trans with (zero \/S (B -S A))...
+    apply trans with (HMR_zero \/S (B -S A))...
     apply min_max.
     apply cond_leq_inv...
   }
@@ -527,18 +527,18 @@ Qed.
 
 Hint Resolve mul_compa : MGA_solver.
 
-Lemma mul_0 :  forall r, r *S zero === zero.
+Lemma mul_0 :  forall r, r *S HMR_zero === HMR_zero.
 Proof with auto with MGA_solver.
   intro r.
-  transitivity (r *S (zero +S zero))...
-  transitivity (r *S zero +S r *S zero)...
-  transitivity (r *S zero +S r *S (-S zero))...
-  transitivity (r *S zero +S (-S (r *S zero)))...
+  transitivity (r *S (HMR_zero +S HMR_zero))...
+  transitivity (r *S HMR_zero +S r *S HMR_zero)...
+  transitivity (r *S HMR_zero +S r *S (-S HMR_zero))...
+  transitivity (r *S HMR_zero +S (-S (r *S HMR_zero)))...
 Qed.
 
 Hint Resolve mul_0 : MGA_solver.  
 
-Lemma no_div_zero : forall r A, r *S A === zero -> A === zero.
+Lemma no_div_zero : forall r A, r *S A === HMR_zero -> A === HMR_zero.
 Proof with auto with MGA_solver.
   intros r A eq.
   transitivity (One *S A)...
@@ -548,7 +548,7 @@ Proof with auto with MGA_solver.
     rewrite Rinv_l...
     nra. }
   apply trans with ((inv_pos r) *S (r *S A))...
-  apply trans with ((inv_pos r) *S zero)...
+  apply trans with ((inv_pos r) *S HMR_zero)...
 Qed.
 
 Lemma mul_distri_minus : forall k A B, (k *S A) -S (k *S B) === k *S (A -S B).
@@ -567,16 +567,16 @@ Qed.
 
 Hint Resolve mul_distri_minus minus_max_min : MGA_solver.
 
-Lemma zero_leq_pos : forall A , zero <== pos A.
+Lemma zero_leq_pos : forall A , HMR_zero <== pos A.
 Proof with auto with MGA_solver.
   intro A.
-  apply leq_cong_r with (zero \/S A)...
+  apply leq_cong_r with (HMR_zero \/S A)...
 Qed.
 
-Lemma zero_leq_neg : forall A , zero <== neg A.
+Lemma zero_leq_neg : forall A , HMR_zero <== neg A.
 Proof with auto with MGA_solver.
   intro A.
-  apply leq_cong_r with (zero \/S (-S A))...
+  apply leq_cong_r with (HMR_zero \/S (-S A))...
 Qed.
 
 Hint Resolve zero_leq_pos zero_leq_neg : MGA_solver.
@@ -584,7 +584,7 @@ Hint Resolve zero_leq_pos zero_leq_neg : MGA_solver.
 Lemma eq_minus_right : forall A B C, A +S C === B -> A === B -S C.
 Proof with auto with MGA_solver.
   intros A B C eq.
-  apply trans with (A +S zero)...
+  apply trans with (A +S HMR_zero)...
   apply trans with (A +S (C -S C))...
   apply trans with ((A +S C) -S C)...
 Qed.
@@ -592,7 +592,7 @@ Qed.
 Lemma eq_plus_right : forall A B C, A -S C === B -> A === B +S C.
 Proof with auto with MGA_solver.
   intros A B C eq.
-  apply trans with (A +S zero)...
+  apply trans with (A +S HMR_zero)...
   apply trans with (A +S (C -S C))...
   apply trans with (A +S ((-S C) +S C))...
   apply trans with ((A -S C) +S C)...
@@ -603,10 +603,10 @@ Proof with auto with MGA_solver.
   intros A.
   apply eq_minus_right.
   apply trans with (A \/S (A -S A))...
-  apply trans with ((A +S zero) \/S (A -S A))...
-  apply trans with ((zero +S A) \/S (A -S A))...
-  apply trans with ((A -S A) \/S (zero +S A))...
-  apply trans with (((-S A) +S A) \/S (zero +S A))...
+  apply trans with ((A +S HMR_zero) \/S (A -S A))...
+  apply trans with ((HMR_zero +S A) \/S (A -S A))...
+  apply trans with ((A -S A) \/S (HMR_zero +S A))...
+  apply trans with (((-S A) +S A) \/S (HMR_zero +S A))...
   apply trans with (neg A +S A)...
 Qed.
 
@@ -643,15 +643,15 @@ Qed.
 
 Hint Resolve min_plus : MGA_solver.
 
-Lemma min_pos_neg : forall A, (pos A) /\S (neg A) === zero.
+Lemma min_pos_neg : forall A, (pos A) /\S (neg A) === HMR_zero.
 Proof with auto with MGA_solver.
   intros A.
   apply trans with ((A +S (neg A)) /\S (neg A))...
-  apply trans with ((A +S (neg A)) /\S (neg A +S zero))...
-  apply trans with ((A +S (neg A)) /\S (zero +S neg A))...
-  apply trans with ((A /\S zero) +S neg A)...
-  apply trans with ( (-S (-S (A /\S zero))) +S neg A)...
-  apply trans with ( (-S ((-S A) \/S (-S zero))) +S neg A)...
+  apply trans with ((A +S (neg A)) /\S (neg A +S HMR_zero))...
+  apply trans with ((A +S (neg A)) /\S (HMR_zero +S neg A))...
+  apply trans with ((A /\S HMR_zero) +S neg A)...
+  apply trans with ( (-S (-S (A /\S HMR_zero))) +S neg A)...
+  apply trans with ( (-S ((-S A) \/S (-S HMR_zero))) +S neg A)...
   apply trans with ( (-S (neg A)) +S neg A)...
   apply trans with (neg A -S neg A)...
 Qed.
@@ -659,39 +659,39 @@ Qed.
 Hint Resolve min_pos_neg : MGA_solver.
 
 Lemma cond_zero_leq_max : forall A B,
-    (A \/S B) === (pos A \/S pos B) -> zero <== A \/S B.
+    (A \/S B) === (pos A \/S pos B) -> HMR_zero <== A \/S B.
 Proof with auto with MGA_solver.
   intros A B eq.
-  apply trans with ((A \/S B) /\S zero)...
+  apply trans with ((A \/S B) /\S HMR_zero)...
   apply max_min.
-  apply trans with ((A \/S B) \/S (zero \/S zero))...
-  apply trans with (A \/S (B \/S (zero \/S zero)))...
-  apply trans with (A \/S (pos B \/S zero))...
-  apply trans with (A \/S (zero \/S pos B))...
+  apply trans with ((A \/S B) \/S (HMR_zero \/S HMR_zero))...
+  apply trans with (A \/S (B \/S (HMR_zero \/S HMR_zero)))...
+  apply trans with (A \/S (pos B \/S HMR_zero))...
+  apply trans with (A \/S (HMR_zero \/S pos B))...
   apply trans with (pos A \/S pos B)...
 Qed.
 
 Lemma cond_eq_pos : forall A B,
-    zero <== A \/S B -> (A \/S B) === (pos A \/S pos B).
+    HMR_zero <== A \/S B -> (A \/S B) === (pos A \/S pos B).
 Proof with auto with MGA_solver.
   intros A B eq.
-  apply trans with (A \/S (zero \/S pos B))...
-  apply trans with (A \/S (pos B \/S zero))...
-  apply trans with (A \/S (B \/S (zero \/S zero)))...
-  apply trans with ((A \/S B) \/S (zero \/S zero))...
-  apply trans with (A \/S B \/S zero)...
-  apply trans with (zero \/S (A \/S B))...
+  apply trans with (A \/S (HMR_zero \/S pos B))...
+  apply trans with (A \/S (pos B \/S HMR_zero))...
+  apply trans with (A \/S (B \/S (HMR_zero \/S HMR_zero)))...
+  apply trans with ((A \/S B) \/S (HMR_zero \/S HMR_zero))...
+  apply trans with (A \/S B \/S HMR_zero)...
+  apply trans with (HMR_zero \/S (A \/S B))...
 Qed.
 
 Lemma max_pos : forall A B, A \/S B === (pos (A -S B)) +S B.
 Proof with auto with MGA_solver.
   intros A B.
-  apply trans with ((A +S zero) \/S B)...
+  apply trans with ((A +S HMR_zero) \/S B)...
   apply trans with ((A +S (B -S B)) \/S B)...
   apply trans with ((A +S ((-S B) +S B)) \/S B)...
   apply trans with ((A +S (-S B) +S B) \/S B)...
-  apply trans with ((A +S (-S B) +S B) \/S (B +S zero))...
-  apply trans with ((A +S (-S B) +S B) \/S (zero +S B))...
+  apply trans with ((A +S (-S B) +S B) \/S (B +S HMR_zero))...
+  apply trans with ((A +S (-S B) +S B) \/S (HMR_zero +S B))...
 Qed.
 
 Hint Resolve max_pos : MGA_solver.
@@ -707,8 +707,8 @@ Proof with auto with MGA_solver.
   apply trans with (((-S A) \/S (-S B)) +S A)...
   apply trans with (((-S A) +S A) \/S ((-S B) +S A))...
   apply trans with ((A -S A) \/S ((-S B) +S A))...
-  apply trans with (zero \/S ((-S B) +S A))...
-  apply trans with (zero \/S (A -S B))...
+  apply trans with (HMR_zero \/S ((-S B) +S A))...
+  apply trans with (HMR_zero \/S (A -S B))...
 Qed.
 
 Hint Resolve min_pos : MGA_solver.
@@ -722,8 +722,8 @@ Proof with auto with MGA_solver.
   apply trans with (B +S ((pos (A -S B)) +S (A -S (pos (A -S B)))))...
   apply trans with (B +S ((pos (A -S B)) +S ((-S (pos (A -S B))) +S A)))...
   apply trans with (B +S ((pos (A -S B)) +S (-S (pos (A -S B))) +S A))...
-  apply trans with (B +S (zero +S A))...
-  apply trans with (B +S (A +S zero))...
+  apply trans with (B +S (HMR_zero +S A))...
+  apply trans with (B +S (A +S HMR_zero))...
   apply trans with (B +S A)...
 Qed.
 
@@ -763,7 +763,7 @@ Proof with auto with MGA_solver.
                apply leq_cong_l with (A \/S C /\S B \/S C)...
       * apply leq_cong_l with (m +S ((A /\S B /\S C) -S C))...
         apply leq_cong_l with ((m +S (A /\S B /\S C)) -S C)...
-        apply leq_cong_r with (B +S zero)...
+        apply leq_cong_r with (B +S HMR_zero)...
         apply leq_cong_r with (B +S (C -S C))...
         apply leq_cong_r with ((B +S C) -S C)...
         apply leq_plus...
@@ -799,26 +799,26 @@ Proof with auto with MGA_solver.
   intros A B.
   apply trans with (pos (A \/S B) -S (neg (A \/S B)))...
   apply trans with ((pos A \/S pos B) -S (neg (A \/S B))).
-  - apply (@ctxt (plusC hole (minusC (TC (neg (A \/S B)))))).
-    apply trans with (A \/S B \/S (zero \/S zero))...
-    apply trans with (A \/S (B \/S pos zero))...
-    apply trans with (A \/S (pos B \/S zero))...
-    apply trans with (A \/S (zero \/S pos B))...
-  - apply trans with ((pos A \/S pos B) -S (((-S A) /\S (-S B)) \/S zero))...
+  - apply (@ctxt (HMR_plusC HMR_hole (minusC (HMR_TC (neg (A \/S B)))))).
+    apply trans with (A \/S B \/S (HMR_zero \/S HMR_zero))...
+    apply trans with (A \/S (B \/S pos HMR_zero))...
+    apply trans with (A \/S (pos B \/S HMR_zero))...
+    apply trans with (A \/S (HMR_zero \/S pos B))...
+  - apply trans with ((pos A \/S pos B) -S (((-S A) /\S (-S B)) \/S HMR_zero))...
 Qed.
 
 Hint Resolve decomp_max_pos_neg : MGA_solver.
 
-Lemma cond_zero_leq_max_2 : forall A B, (neg A) /\S (neg B) === zero -> zero <== A \/S B.
+Lemma cond_zero_leq_max_2 : forall A B, (neg A) /\S (neg B) === HMR_zero -> HMR_zero <== A \/S B.
 Proof with auto with MGA_solver.
   intros A B eq.
   apply cond_zero_leq_max...
-  apply trans with ((pos A \/S pos B) +S zero)...
-  apply trans with ((pos A \/S pos B) -S zero)...
+  apply trans with ((pos A \/S pos B) +S HMR_zero)...
+  apply trans with ((pos A \/S pos B) -S HMR_zero)...
   apply trans with ((pos A \/S pos B) -S (neg A /\S neg B))...
 Qed.
 
-Lemma cond_min_neg_eq_zero : forall A B, zero <== A \/S B -> (neg A) /\S (neg B) === zero.
+Lemma cond_min_neg_eq_zero : forall A B, HMR_zero <== A \/S B -> (neg A) /\S (neg B) === HMR_zero.
 Proof with auto with MGA_solver.
   intros A B leq.
   apply trans with (((pos A) \/S (pos B)) -S (A \/S B)); auto using eq_minus_right, cond_eq_pos with MGA_solver.
@@ -826,7 +826,7 @@ Proof with auto with MGA_solver.
   apply trans with ((A \/S B) +S (neg A /\S neg B)); auto using eq_plus_right with MGA_solver.
 Qed.
 
-Lemma zero_leq_abs : forall A, zero <== abs A.
+Lemma zero_leq_abs : forall A, HMR_zero <== abs A.
 Proof with auto with MGA_solver.
   intro A.
   apply cond_zero_leq_max_2.
@@ -932,15 +932,15 @@ Hint Resolve mean_prop : MGA_solver.
 Lemma decomp_abs : forall A , abs A === pos A +S neg A.
 Proof with auto with MGA_solver.
   intro A.
-  apply trans with ((A +S zero) \/S (-S A))...
+  apply trans with ((A +S HMR_zero) \/S (-S A))...
   rewrite <-(opp_plus A) at 1.
   apply trans with (((A +S A) -S A) \/S (-S A))...
-  apply trans with (((A +S A) -S A) \/S ((-S A) +S zero))...
-  apply trans with (((A +S A) -S A) \/S (zero -S A))...
-  apply trans with (((A +S A) \/S zero) -S A)...
-  transitivity ((((plus_pos One One) *S A) \/S zero) -S A)...
-  transitivity ((((plus_pos One One) *S A) \/S (zero +S zero)) -S A)...
-  transitivity ((((plus_pos One One) *S A) \/S ((plus_pos One One) *S zero)) -S A)...
+  apply trans with (((A +S A) -S A) \/S ((-S A) +S HMR_zero))...
+  apply trans with (((A +S A) -S A) \/S (HMR_zero -S A))...
+  apply trans with (((A +S A) \/S HMR_zero) -S A)...
+  transitivity ((((plus_pos One One) *S A) \/S HMR_zero) -S A)...
+  transitivity ((((plus_pos One One) *S A) \/S (HMR_zero +S HMR_zero)) -S A)...
+  transitivity ((((plus_pos One One) *S A) \/S ((plus_pos One One) *S HMR_zero)) -S A)...
   apply trans with (((plus_pos One One) *S (pos A)) -S A)...
   apply trans with ((pos A +S pos A) -S A)...
   apply trans with (pos A +S (pos A -S A))...
@@ -951,54 +951,54 @@ Hint Resolve decomp_abs : MGA_solver.
 Lemma pos_leq_abs : forall A , pos A <== abs A.
 Proof with auto with MGA_solver.
   intro A.
-  apply leq_cong_l with (pos A +S zero)...
+  apply leq_cong_l with (pos A +S HMR_zero)...
   apply leq_cong_r with (pos A +S neg A)...
 Qed.
 
 Lemma neg_leq_abs : forall A , neg A <== abs A.
 Proof with auto with MGA_solver.
   intro A.
-  apply leq_cong_l with (neg A +S zero)...
-  apply leq_cong_l with (zero +S neg A)...
+  apply leq_cong_l with (neg A +S HMR_zero)...
+  apply leq_cong_l with (HMR_zero +S neg A)...
   apply leq_cong_r with (pos A +S neg A)...
 Qed.
 
 Hint Resolve pos_leq_abs neg_leq_abs : MGA_solver.
 
-Lemma abs_eq_zero : forall A , abs A === zero -> A === zero.
+Lemma abs_eq_zero : forall A , abs A === HMR_zero -> A === HMR_zero.
 Proof with auto with MGA_solver.
   intros A eq.
   apply trans with (pos A -S neg A)...
-  apply trans with (pos A -S zero)...
+  apply trans with (pos A -S HMR_zero)...
   - apply plus_right.
     apply minus_cong.
     apply leq_antisym...
     apply leq_trans with (abs A)...
     apply leq_cong_r with (abs A)...
-  - apply trans with (pos A +S zero)...
+  - apply trans with (pos A +S HMR_zero)...
     apply trans with (pos A)...
     apply leq_antisym...
     apply leq_trans with (abs A)...
     apply leq_cong_r with (abs A)...
 Qed.
 
-Lemma min_minus_leq_zero : forall A , A /\S (-S A) <== zero.
+Lemma min_minus_leq_zero : forall A , A /\S (-S A) <== HMR_zero.
 Proof with auto with MGA_solver. 
   intro A.
   apply leq_cong_l with (-S (-S (A /\S (-S A))))...
-  apply leq_cong_r with (-S zero)...
+  apply leq_cong_r with (-S HMR_zero)...
   apply minus_reverse_leq.
   apply leq_cong_r with ((-S A) \/S (-S (-S A)))...
 Qed.
 
 Hint Resolve min_minus_leq_zero : MGA_solver.
 
-Lemma two_eq_zero : forall A , (plus_pos One One) *S A === zero -> A === zero.
+Lemma two_eq_zero : forall A , (plus_pos One One) *S A === HMR_zero -> A === HMR_zero.
 Proof with auto with MGA_solver.
   intros A eq.
   assert (A === -S A).
-  - apply trans with ((-S A) +S zero)...
-    apply trans with (zero -S A)...
+  - apply trans with ((-S A) +S HMR_zero)...
+    apply trans with (HMR_zero -S A)...
     apply eq_minus_right...
     apply trans with ((plus_pos One One) *S A)...
   - apply abs_eq_zero.
@@ -1012,8 +1012,8 @@ Qed.
 Lemma inj_mul_two : forall A B, (plus_pos One One) *S A === (plus_pos One One) *S B -> A === B.
 Proof with auto with MGA_solver.
   intros A B eq.
-  apply trans with (B +S zero)...
-  apply trans with (zero +S B)...
+  apply trans with (B +S HMR_zero)...
+  apply trans with (HMR_zero +S B)...
   apply eq_plus_right.
   apply two_eq_zero...
   apply trans with (((plus_pos One One) *S A) +S ((plus_pos One One) *S (-S B)))...
@@ -1032,7 +1032,7 @@ Proof with auto with MGA_solver.
   intros A B.
   apply max_leq...
   - apply leq_cong_l with ((-S A) +S (-S B))...
-  - apply leq_cong_l with (zero +S zero)...
+  - apply leq_cong_l with (HMR_zero +S HMR_zero)...
 Qed.
 
 Hint Resolve neg_subdistri_plus : MGA_solver.
@@ -1090,17 +1090,17 @@ Proof with try reflexivity.
   - simpl; rewrite IHA...
 Qed.
 
-Lemma diamond_zero : <S> zero === zero.
+Lemma diamond_zero : <S> HMR_zero === HMR_zero.
 Proof.
-  rewrite <- (opp_plus zero) at 1.
+  rewrite <- (opp_plus HMR_zero) at 1.
   rewrite diamond_linear.
   apply opp_plus.
 Qed.
 
-Lemma leq_diamond : forall A, zero <== A -> zero <== (<S> A).
+Lemma leq_diamond : forall A, HMR_zero <== A -> HMR_zero <== (<S> A).
 Proof.
   intros A Hleq.
-  apply leq_cong_r with (<S> (A \/S zero)).
+  apply leq_cong_r with (<S> (A \/S HMR_zero)).
   2:{ apply diamond_pos. }
   apply diamond_cong.
   symmetry; rewrite commu_max; apply min_max.
@@ -1108,8 +1108,8 @@ Proof.
 Qed.
 
 Lemma leq_pos_max_mul_l : forall A B r,
-    zero <== (r *S A) \/S B ->
-    zero <== A \/S B.
+    HMR_zero <== (r *S A) \/S B ->
+    HMR_zero <== A \/S B.
 Proof.
   intros A B [r Hpos]; 
     remember (existT (fun r : R => (0 <? r)%R = true) r Hpos) as t; intros Hleq.
@@ -1165,8 +1165,8 @@ Proof.
 Qed.
 
 Lemma leq_pos_max_mul_l_inv : forall A B r,
-    zero <== A \/S B ->
-    zero <== (r *S A) \/S B.
+    HMR_zero <== A \/S B ->
+    HMR_zero <== (r *S A) \/S B.
 Proof.
   intros A B r Hleq.
   apply leq_pos_max_mul_l with (inv_pos r).

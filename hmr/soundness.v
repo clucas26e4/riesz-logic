@@ -15,7 +15,7 @@ Local Open Scope R_scope.
 
 (** ** all rules are sound *)
 
-Lemma W_sound : forall G T, G <> nil ->  zero <== (sem_hseq G) -> zero <== sem_hseq (T :: G).
+Lemma W_sound : forall G T, G <> nil ->  HMR_zero <== (sem_hseq G) -> HMR_zero <== sem_hseq (T :: G).
 Proof with try assumption.
   intros G T notEmpty Hleq.
   destruct G; [ now exfalso | ].
@@ -36,7 +36,7 @@ Proof with try assumption.
     now auto with MGA_solver.
 Qed.
 
-Lemma S_sound : forall G T1 T2, zero <== sem_hseq ((T1 ++ T2) :: G) -> zero <== sem_hseq (T1 :: T2 :: G).
+Lemma S_sound : forall G T1 T2, HMR_zero <== sem_hseq ((T1 ++ T2) :: G) -> HMR_zero <== sem_hseq (T1 :: T2 :: G).
 Proof with try assumption.
   intros G T1 T2 Hleq.
   destruct G.
@@ -76,13 +76,13 @@ Proof with try assumption.
     + apply leq_min; now auto with MGA_solver.
 Qed.
 
-Lemma M_sound : forall G T1 T2, zero <== sem_hseq (T1 :: G) -> zero <== sem_hseq (T2 :: G) ->
-                                zero <== sem_hseq ((T1 ++ T2) :: G).
+Lemma M_sound : forall G T1 T2, HMR_zero <== sem_hseq (T1 :: G) -> HMR_zero <== sem_hseq (T2 :: G) ->
+                                HMR_zero <== sem_hseq ((T1 ++ T2) :: G).
 Proof with try assumption.
   intros [ | T3 G ] T1 T2 Hleq1 Hleq2.
   - simpl in *.
     rewrite sem_seq_plus.
-    rewrite <-(neutral_plus zero).
+    rewrite <-(neutral_plus HMR_zero).
     apply leq_plus_cong...
   - unfold sem_hseq in *; fold (sem_hseq (T3 :: G)) in *; fold (sem_hseq (T3 :: G)) in *; fold (sem_hseq (T3 :: G)).
     rewrite sem_seq_plus.
@@ -96,7 +96,7 @@ Proof with try assumption.
         - rewrite (commu_min (neg (sem_seq T1 +S sem_seq T2))).
           apply min_leq. }
       (* NEED MOVING *)
-      assert (forall A B C, zero <== A -> zero <== B -> zero <== C -> A +S B /\S C <== (A /\S C) +S (B /\S C)) as plus_pos_min.
+      assert (forall A B C, HMR_zero <== A -> HMR_zero <== B -> HMR_zero <== C -> A +S B /\S C <== (A /\S C) +S (B /\S C)) as plus_pos_min.
       { clear.
         intros A B C H1 H2 H3.
         apply leq_plus_right.
@@ -132,7 +132,7 @@ Proof with try assumption.
             apply min_leq. }            
       eapply leq_trans.
       * apply plus_pos_min; apply zero_leq_neg.
-      * rewrite <- (neutral_plus zero) at 5.
+      * rewrite <- (neutral_plus HMR_zero) at 5.
         apply leq_plus_cong; (rewrite cond_min_neg_eq_zero ; [ apply leq_refl | ])...
     + apply leq_min.
       * rewrite commu_max.
@@ -142,8 +142,8 @@ Proof with try assumption.
 Qed.
 
 Lemma T_sound :  forall G T r,
-    zero <== sem_hseq (seq_mul r T :: G) ->
-    zero <== sem_hseq (T :: G).
+    HMR_zero <== sem_hseq (seq_mul r T :: G) ->
+    HMR_zero <== sem_hseq (T :: G).
 Proof with try assumption.
   intros [ | T2 G] T [r Hpos]; 
     remember (existT (fun r : R => (0 <? r)%R = true) r Hpos) as t; intros Hleq.
@@ -216,7 +216,7 @@ Proof.
       reflexivity.
 Qed.
 
-Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r zero ++ T) :: G).
+Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r HMR_zero ++ T) :: G).
 Proof.
   intros [ | T2 G] T [ | r0 r].
   - reflexivity.
@@ -328,7 +328,7 @@ Lemma min_sound : forall G T A  B r, sem_hseq ((vec r A ++ T) :: G) /\S sem_hseq
     reflexivity.
 Qed.
 
-Lemma one_sound : forall G T r s, sum_vec s <= sum_vec r -> sem_hseq (T :: G) <== sem_hseq ((vec s coone ++ vec r one ++ T) :: G).
+Lemma one_sound : forall G T r s, sum_vec s <= sum_vec r -> sem_hseq (T :: G) <== sem_hseq ((vec s HMR_coone ++ vec r HMR_one ++ T) :: G).
 Proof.
   intros [ | T2 G] T r s H.
   - simpl.
@@ -357,7 +357,7 @@ Proof.
       rewrite (sem_seq_vec _ _ Hnnilr).
       rewrite (sem_seq_vec _ _ Hnnils).
       rewrite commu_plus.
-      rewrite (commu_plus (_ *S one)).
+      rewrite (commu_plus (_ *S HMR_one)).
       rewrite <- asso_plus.
       case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1; [ | apply R_blt_nlt in H1].
       * change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
@@ -402,7 +402,7 @@ Proof.
       rewrite (sem_seq_vec _ _ Hnnilr).
       rewrite (sem_seq_vec _ _ Hnnils).
       rewrite commu_plus.
-      rewrite (commu_plus (_ *S one)).
+      rewrite (commu_plus (_ *S HMR_one)).
       rewrite <- asso_plus.
       case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1; [ | apply R_blt_nlt in H1].
       * change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
@@ -420,11 +420,11 @@ Proof.
         rewrite neutral_plus; apply leq_refl.
 Qed.
   
-Lemma diamond_sound : forall T r s, sum_vec s <= sum_vec r -> zero <== sem_hseq ((vec s coone ++ vec r one ++ T) :: nil) -> zero <== sem_hseq ((vec s coone ++ vec r one ++ seq_diamond T) :: nil).
+Lemma diamond_sound : forall T r s, sum_vec s <= sum_vec r -> HMR_zero <== sem_hseq ((vec s HMR_coone ++ vec r HMR_one ++ T) :: nil) -> HMR_zero <== sem_hseq ((vec s HMR_coone ++ vec r HMR_one ++ seq_diamond T) :: nil).
 Proof.
   intros T r s H Hleq.
   simpl in *.
-  apply leq_trans with (<S> (sem_seq (vec s coone ++ vec r one ++ T))).
+  apply leq_trans with (<S> (sem_seq (vec s HMR_coone ++ vec r HMR_one ++ T))).
   { apply leq_diamond; apply Hleq. }
   rewrite <- sem_seq_diamond.
   rewrite ? seq_diamond_app.
@@ -450,7 +450,7 @@ Proof.
     rewrite ? (sem_seq_vec _ _ Hnnilr).
     rewrite ? (sem_seq_vec _ _ Hnnils).
     rewrite commu_plus.
-    rewrite (commu_plus (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils) *S coone)).
+    rewrite (commu_plus (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils) *S HMR_coone)).
     case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1 ; [ apply R_blt_lt in H1 | apply R_blt_nlt in H1].
     + change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
       change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
@@ -464,7 +464,7 @@ Proof.
 Qed.
 
 (** ** HMR is sound *)
-Lemma hmr_sound b : forall G, HMR b G -> zero <== sem_hseq G.
+Lemma hmr_sound b : forall G, HMR b G -> HMR_zero <== sem_hseq G.
 Proof with try assumption.
   intros G pi.
   induction pi.
@@ -474,7 +474,7 @@ Proof with try assumption.
   - now apply S_sound.
   - now apply M_sound.
   - now apply T_sound with r.
-  - change (covar n) with (-S (var n)); now rewrite <-ext_ID_sound.
+  - change (HMR_covar n) with (-S (HMR_var n)); now rewrite <-ext_ID_sound.
   - now rewrite <-Z_sound.
   - now rewrite <-plus_sound.
   - now rewrite <-mul_sound.

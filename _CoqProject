@@ -37,6 +37,7 @@ hr/soundness.v
 hr/tactics.v
 hr/tech_lemmas.v
 hr/term.v
+hr/complexity.v
 
 hmr/can_elim.v
 hmr/completeness.v
