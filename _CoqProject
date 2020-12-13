@@ -61,3 +61,4 @@ hmr/soundness.v
 hmr/tactics.v
 hmr/tech_lemmas.v
 hmr/term.v
+hmr/complexity.v

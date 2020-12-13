@@ -232,8 +232,98 @@ Definition p_seq_well_defined (val : nat -> R) (T : p_sequent) :=
 
 Definition p_hseq_well_defined (val : nat -> R) G : Type :=
   Forall_inf (p_seq_well_defined val) G.
+
 (** * Properties *)
 (** ** vec *)
+Lemma vec_inj : forall vr vs A,
+    vec vr A = vec vs A ->
+    vr = vs.
+Proof.
+  induction vr; intros [ | s vs] A Heq; inversion Heq; subst; auto.
+  rewrite IHvr with vs A; auto.
+Qed.
+
+Lemma in_inf_vec_eq_term : forall vr r A B, In_inf (r, A) (vec vr B) -> prod (A = B) (In_inf r vr).
+Proof.
+  induction vr; intros r A B Hin; inversion Hin; subst.
+  - inversion H; split; auto.
+    left; reflexivity.
+  - destruct IHvr with r A B; auto.
+    split; auto.
+    right; assumption.
+Qed.
+
+Lemma Permutation_Type_vec : forall vr vs A,
+    Permutation_Type vr vs ->
+    Permutation_Type (vec vr A) (vec vs A).
+Proof.
+  intros vr vs A Hperm; induction Hperm; simpl; Permutation_Type_solve.
+Qed.
+
+Lemma Permutation_Type_vec_decomp : forall T vr A,
+    Permutation_Type T (vec vr A) ->
+    { vs & prod (T = vec vs A) (Permutation_Type vr vs)}.
+Proof.
+  intros T vr A Hperm.
+  remember (vec vr A) as D.
+  revert vr A HeqD.
+  induction Hperm; intros vr A HeqD.
+  - split with nil; repeat split; auto.
+    destruct vr; auto.
+    inversion HeqD.
+  - destruct vr; inversion HeqD; subst.
+    specialize (IHHperm vr A) as [vs [Heq Hperm']]; auto.
+    split with (f :: vs).
+    repeat split.
+    + rewrite Heq; reflexivity.
+    + apply Permutation_Type_skip; auto.
+  - destruct vr; inversion HeqD.
+    destruct vr; inversion H1; subst.
+    split with (f0 :: f :: vr).
+    repeat split; auto.
+    apply Permutation_Type_swap.
+  - destruct (IHHperm2 vr A HeqD) as [vs [Heq' Hperm']].
+    destruct (IHHperm1 vs A Heq') as [vs' [Heq'' Hperm'']].
+    split with vs'; repeat split; auto.
+    Permutation_Type_solve.
+Qed.
+
+Lemma Permutation_Type_vec_inv : forall vr vs A,
+    Permutation_Type (vec vr A) (vec vs A) ->
+    Permutation_Type vr vs.
+Proof.
+  intros vr vs A Hperm.
+  remember (vec vr A); remember (vec vs A).
+  revert vr vs A Heql Heql0.
+  induction Hperm; intros vr vs A Heql Heql0.
+  - destruct vr; destruct vs; auto; inversion Heql; inversion Heql0.
+  - destruct vr; destruct vs; inversion Heql; inversion Heql0; subst.
+    inversion H2.
+    apply Permutation_Type_skip.
+    apply IHHperm with A; auto.
+  - destruct vr; destruct vs; inversion Heql; inversion Heql0; subst.
+    destruct vr; destruct vs; inversion H1; inversion H3; subst.
+    rewrite vec_inj with vr vs A; auto.
+    apply Permutation_Type_swap.
+  - subst.
+    destruct (Permutation_Type_vec_decomp _ _ _ Hperm2) as [vr' [ Heq Hperm]].
+    subst.
+    specialize (IHHperm2 vr' vs A (eq_refl _) (eq_refl _)).
+    specialize (IHHperm1 vr vr' A (eq_refl _) (eq_refl _)).
+    Permutation_Type_solve.    
+Qed.
+
+Lemma seq_mul_vec_eq_vec_mul_vec : forall r vr A,
+    seq_mul r (vec vr A) = vec (mul_vec r vr) A.
+Proof.
+  intros r vr A; induction vr; simpl; try rewrite IHvr; reflexivity.
+Qed.
+
+Lemma vec_length : forall vr A, length (vec vr A) = length vr.
+Proof.
+  induction vr; intros A; try specialize (IHvr A); simpl; lia.
+Qed.
+
 Lemma vec_app : forall vr1 vr2 A, vec (vr1 ++ vr2) A = vec vr1 A ++ vec vr2 A.
 Proof.
   induction vr1; intros vr2 A; simpl; try rewrite IHvr1; try reflexivity.
@@ -246,6 +336,13 @@ Proof.
   - simpl.
     rewrite IHvr1.
     destruct a; simpl; nra.
+Qed.
+
+Lemma Permutation_Type_mul_vec : forall r vr vs,
+  Permutation_Type vr vs ->
+  Permutation_Type (mul_vec r vr) (mul_vec r vs).
+Proof.
+  intros r vr vs Hperm; induction Hperm; simpl; Permutation_Type_solve.
 Qed.
 
 Lemma mul_vec_sum_vec : forall r vr val, FOL_R_pred_sem val (sum_vec (mul_vec r vr) =R r *R (sum_vec vr)).
@@ -452,6 +549,11 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma seq_mul_perm : forall T1 T2 r, Permutation_Type T1 T2 -> Permutation_Type (seq_mul r T1) (seq_mul r T2).
+Proof.
+  intros T1 T2 r Hperm; induction Hperm; try destruct x; try destruct y; simpl; Permutation_Type_solve.
+Qed.
+
 Fixpoint seq_mul_vec vr T :=
   match vr with
   | nil => nil
@@ -522,6 +624,12 @@ Lemma only_diamond_p_seq_vec_coone :
     only_diamond_p_seq (vec r HMR_coone) = vec r HMR_coone.
 Proof.
   induction r; simpl; try rewrite IHr; reflexivity.
+Qed.
+Lemma only_diamond_p_seq_vec_diamond :
+  forall r B,
+    only_diamond_p_seq (vec r (<S> B)) = vec r B.
+Proof.
+  intros r B; induction r; simpl; try rewrite IHr; reflexivity.
 Qed.
 
 Lemma only_diamond_p_seq_only_diamond :
@@ -760,6 +868,26 @@ Proof.
 Qed.
 
 (** Complexity related theorem *)
+
+Lemma complexity_p_hseq_cons : forall T G,
+    fst (HMR_complexity_p_hseq (T :: G)) = max (HMR_complexity_p_seq T) (fst (HMR_complexity_p_hseq G)).
+Proof.
+  intros T G.
+  simpl.
+  case_eq (HMR_complexity_p_seq T =? fst (HMR_complexity_p_hseq G)); intros H; (apply Nat.eqb_eq in H + apply Nat.eqb_neq in H);
+    case_eq (HMR_complexity_p_seq T <? fst (HMR_complexity_p_hseq G))%nat; intros H2; (apply Nat.ltb_lt in H2 + apply Nat.ltb_nlt in H2); simpl in *; lia.
+Qed.  
+
+Lemma complexity_p_hseq_app : forall G1 G2,
+    fst (HMR_complexity_p_hseq (G1 ++ G2)) = max (fst (HMR_complexity_p_hseq G1)) (fst (HMR_complexity_p_hseq G2)).
+Proof.
+  induction G1; intros G2; try specialize (IHG1 G2); simpl; try lia.
+  rewrite IHG1.
+  case_eq (HMR_complexity_p_seq a =? Init.Nat.max (fst (HMR_complexity_p_hseq G1)) (fst (HMR_complexity_p_hseq G2))); intros H1; (apply Nat.eqb_eq in H1 + apply Nat.eqb_neq in H1);
+    case_eq ((HMR_complexity_p_seq a <? Init.Nat.max (fst (HMR_complexity_p_hseq G1)) (fst (HMR_complexity_p_hseq G2)))%nat); intros H2; (apply Nat.ltb_lt in H2 + apply Nat.ltb_nlt in H2);
+      case_eq (HMR_complexity_p_seq a =? fst (HMR_complexity_p_hseq G1)); intros H3; (apply Nat.eqb_eq in H3 + apply Nat.eqb_neq in H3);
+        case_eq ((HMR_complexity_p_seq a <? fst (HMR_complexity_p_hseq G1))%nat); intros H4; (apply Nat.ltb_lt in H4 + apply Nat.ltb_nlt in H4); simpl; lia.
+Qed.
 
 Lemma max_diamond_p_seq_app : forall T1 T2,
     max_diamond_p_seq (T1 ++ T2) = Nat.max (max_diamond_p_seq T1) (max_diamond_p_seq T2).

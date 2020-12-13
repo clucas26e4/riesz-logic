@@ -282,3 +282,62 @@ Qed.
 Axiom FOL_R_decidable : forall f v, (FOL_R_formula_sem v f) + (FOL_R_formula_sem v f -> False).
 
 Definition Permutation_Type_FOL_R_term val l1 l2 := Permutation_Type (map (FOL_R_term_sem val) l1) (map (FOL_R_term_sem val) l2).
+
+(** Size of a formula *)
+
+Fixpoint degree_FOL_R_term t :=
+  match t with
+  | FOL_R_var _ => 1%nat
+  | FOL_R_cst _ => 0%nat
+  | FOL_R_add t1 t2 => max (degree_FOL_R_term t1) (degree_FOL_R_term t2)
+  | FOL_R_mul t1 t2 => ((degree_FOL_R_term t1) + (degree_FOL_R_term t2))%nat
+  end.
+
+Definition degree_FOL_R_pred p :=
+  match p with
+  | FOL_R_eq t1 t2 => max (degree_FOL_R_term t1) (degree_FOL_R_term t2)
+  | FOL_R_neq t1 t2 => max (degree_FOL_R_term t1) (degree_FOL_R_term t2)
+  | FOL_R_le t1 t2 => max (degree_FOL_R_term t1) (degree_FOL_R_term t2)
+  end.
+
+Fixpoint degree_FOL_R_formula f :=
+  match f with
+  | FOL_R_true => 0%nat
+  | FOL_R_false => 0%nat
+  | FOL_R_atoms p => degree_FOL_R_pred p
+  | FOL_R_and f1 f2 => max (degree_FOL_R_formula f1) (degree_FOL_R_formula f2)
+  | FOL_R_or f1 f2 => max (degree_FOL_R_formula f1) (degree_FOL_R_formula f2)
+  | FOL_R_exists _ f => degree_FOL_R_formula f
+  end.
+
+Fixpoint nb_pol_FOL_R_formula f :=
+  match f with
+  | FOL_R_true => 0%nat
+  | FOL_R_false => 0%nat
+  | FOL_R_atoms p => 1%nat
+  | FOL_R_and f1 f2 => ((nb_pol_FOL_R_formula f1) + (nb_pol_FOL_R_formula f2))%nat
+  | FOL_R_or f1 f2 => ((nb_pol_FOL_R_formula f1) + (nb_pol_FOL_R_formula f2))%nat
+  | FOL_R_exists _ f => nb_pol_FOL_R_formula f
+  end.
+
+Fixpoint nb_exists_FOL_R_formula f :=
+  match f with
+  | FOL_R_true => 0%nat
+  | FOL_R_false => 0%nat
+  | FOL_R_atoms p => 0%nat
+  | FOL_R_and f1 f2 => ((nb_exists_FOL_R_formula f1) + (nb_exists_FOL_R_formula f2))%nat
+  | FOL_R_or f1 f2 => ((nb_exists_FOL_R_formula f1) + (nb_exists_FOL_R_formula f2))%nat
+  | FOL_R_exists _ f => (1 + nb_exists_FOL_R_formula f)%nat
+  end.
+
+Lemma degree_FOL_R_and : forall f1 f2,
+    degree_FOL_R_formula (FOL_R_and f1 f2) = max (degree_FOL_R_formula f1) (degree_FOL_R_formula f2).
+Proof.
+  reflexivity.
+Qed.
+
+Lemma nb_exists_FOL_R_exists_vec : forall f v,
+    nb_exists_FOL_R_formula (exists_vec v f) = (length v + nb_exists_FOL_R_formula f)%nat.
+Proof.
+  intros f; induction v; simpl; auto.
+Qed.
