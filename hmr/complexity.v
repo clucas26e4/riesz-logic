@@ -273,7 +273,7 @@ Qed.
 (** Necessary definition *)
 Fixpoint complexity_A n :=
   match n with
-  | 0 => HMR_var n
+  | 0 => HMR_var 0
   | S n => (<S> (complexity_A n)) \/S (<S> (complexity_A n))
   end.
 
