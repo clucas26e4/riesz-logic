@@ -268,8 +268,68 @@ Proof.
   assert (2 ^ k <> 0).
   { apply pow_not_0; lia. }
   lia.
-Qed.  
+Qed.
 
+Lemma p_seq_is_atomic_app : forall T1 T2,
+    p_seq_is_atomic T1 ->
+    p_seq_is_atomic T2 ->
+    p_seq_is_atomic (T1 ++ T2).
+Proof.
+  induction T1; intros T2 Hat1 Hat2; inversion Hat1; subst; auto.
+  simpl; apply Forall_inf_cons; auto.
+  apply IHT1; auto.
+Qed.
+
+Lemma p_seq_is_atomic_seq_mul : forall r T,
+    p_seq_is_atomic T ->
+    p_seq_is_atomic (seq_mul r T).
+Proof.
+  intros r; induction T; intros Hat; inversion Hat; subst; auto.
+  destruct a as [a A]; simpl; apply Forall_inf_cons; auto.
+  apply IHT.
+  apply X0.
+Qed.
+
+Lemma p_hseq_is_atomic_flat_map :
+  forall k G l,
+    p_hseq_is_atomic G ->
+    p_hseq_is_atomic (flat_map (fun i : nat => seq_mul (FOL_R_var (k + i)) (nth i G nil)) l :: nil).
+Proof.
+  intros k G l Hat; revert k; induction l; intros k; apply Forall_inf_cons; try apply Forall_inf_nil.
+  simpl.
+  apply p_seq_is_atomic_app.
+  - apply p_seq_is_atomic_seq_mul.
+    case_eq (a <? length G); intros H; (apply Nat.ltb_lt in H + apply Nat.ltb_nlt in H); [ | rewrite nth_overflow; try lia; apply Forall_inf_nil].
+    apply Forall_inf_forall with G; auto.
+    apply nth_In_inf; assumption.
+  - specialize (IHl k).
+    inversion IHl; assumption.
+Qed.
+
+Lemma p_seq_is_atomic_perm :
+  forall T1 T2,
+    Permutation_Type T1 T2 ->
+    p_seq_is_atomic T1 ->
+    p_seq_is_atomic T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; intros Hat1; try destruct x; try destruct y; repeat apply Forall_inf_cons; try inversion Hat1; try inversion X0; subst; auto.
+  - apply IHHperm; apply Forall_inf_nil.
+  - apply IHHperm.
+    apply Forall_inf_cons; assumption.
+Qed.
+
+Lemma p_hseq_is_atomic_perm :
+  forall G1 G2,
+    Permutation_Type G1 G2 ->
+    p_hseq_is_atomic G1 ->
+    p_hseq_is_atomic G2.
+Proof.
+  intros G1 G2 Hperm; induction Hperm; intros Hat1; repeat apply Forall_inf_cons; try inversion Hat1; try inversion X0; subst; auto.
+  - apply IHHperm; apply Forall_inf_nil.
+  - apply IHHperm.
+    apply Forall_inf_cons; assumption.
+Qed.
+  
 (** Necessary definition *)
 Fixpoint complexity_A n :=
   match n with
@@ -960,7 +1020,144 @@ Proof.
     lia.
 Qed.
                                                                            
-Lemma FOL_R_basic_aux_complexity
+Lemma FOL_R_basic_case_aux_complexity_case_0
+      (G : p_hypersequent)
+      (V : list (list nat))
+      n
+      (Heqn : max_diamond_p_hseq G = n)
+      (acc : Acc lt_nat4 (modal_complexity_p_hseq G , length V)) :
+    p_hseq_is_atomic G ->
+    nb_exists_FOL_R_formula (FOL_R_basic_case_aux G V n Heqn acc) = length V * length G
+with HMR_dec_formula_aux_complexity_case_0
+       (G : p_hypersequent)
+       (x: nat)
+       (Heqx : snd (fst (modal_complexity_p_hseq G)) = x)
+       p
+       (Heqp : apply_logical_rule_on_p_hypersequent (p_hseq_put_non_basic_fst G) = p)
+       (acc : Acc lt_nat4 (modal_complexity_p_hseq G, S (length (make_subsets (length G))))) :
+       p_hseq_is_atomic G ->
+       nb_exists_FOL_R_formula (HMR_dec_formula_aux G x Heqx p Heqp acc) = (pow2 (length G) -1)* length G.
+Proof.
+  - intros Hb.
+    destruct acc as [acc].
+    destruct n.
+    2:{ exfalso.
+        replace (max_diamond_p_hseq G) with 0 in Heqn; try lia.
+        symmetry.
+        apply p_hseq_is_atomic_max_diamond_0.
+        apply Hb. }
+    destruct V; [ reflexivity | ].
+    simpl.
+    rewrite nb_exists_FOL_R_exists_vec.
+    rewrite seq_length.
+    rewrite nb_exists_FOL_R_phi.
+    specialize (FOL_R_basic_case_aux_complexity_case_0 G V
+                                         0%nat
+                                         Heqn
+                                         (acc _
+                                              (lt_nat4_last
+                                                 _
+                                                 _
+                                                 _
+                                                 (Nat.lt_succ_diag_r _)))
+                                         Hb).
+    rewrite FOL_R_basic_case_aux_complexity_case_0.
+    lia.
+  - intros Hb.
+    destruct acc as [acc].
+    destruct x.
+    2:{ exfalso.
+        simpl in Heqx.
+        replace (fst (HMR_complexity_p_hseq G)) with 0%nat in Heqx; try lia.
+        symmetry; apply p_hseq_is_basic_complexity_0.
+        apply p_hseq_is_atomic_basic.
+        apply Hb. }
+    simpl.
+    etransitivity; [ apply FOL_R_basic_case_aux_complexity_case_0 | ]; auto.
+    rewrite map_length.
+    rewrite make_subsets_length.
+    unfold pow2; lia.
+Qed.
+
+Fixpoint FOL_R_basic_case_aux_complexity_case_1
+      (G : p_hypersequent)
+      (V : list (list nat))
+      n
+      (Heqn : max_diamond_p_hseq G = n)
+      (acc : Acc lt_nat4 (modal_complexity_p_hseq G , length V)) :
+  forall j,
+    G <> nil ->
+    H_shape_hseq 0 j 0 0 G ->
+    nb_exists_FOL_R_formula (FOL_R_basic_case_aux G V n Heqn acc) = length V * (length G + 1).
+Proof.
+  intros j Hnnil Hshape.
+  destruct acc as [acc].
+  destruct n.
+  { clear - Heqn Hshape Hnnil.
+    destruct Hshape as [[G1 G2] [Hperm [[H1 H2] H3]]].
+    destruct G2; [ | exfalso; simpl in *; lia ].
+    destruct G1.
+    { apply Permutation_Type_length in Hperm.
+      destruct G; inversion Hperm.
+      contradiction. }
+    exfalso.
+    inversion H2; subst.
+    destruct X as [[vr vs] [Hperm' [H4 H5]]].
+    rewrite max_diamond_p_hseq_perm with _ (p :: G1) in Heqn by Permutation_Type_solve.
+    simpl in Heqn.
+    destruct vr; try now inversion H4.
+    simpl in Hperm'.
+    assert (In_inf (f , <S> (complexity_A 0)) p).
+    { apply Permutation_Type_in_inf with ((f, <S> complexity_A 0 )
+                                            :: vec vr (<S> complexity_A 0) ++
+                                            vec vs
+                                            (complexity_A 1)); [symmetry; apply Hperm' | ].
+      left; reflexivity. }
+    apply in_inf_split in X as [[pa pb] Heq].
+    rewrite Heq in Heqn.
+    rewrite max_diamond_p_seq_app in Heqn.
+    change (max_diamond_p_seq ((f, <S> complexity_A 0) :: pb)) with (max (S (max_diamond_term (complexity_A 0))) (max_diamond_p_seq pb)) in Heqn.
+    lia. }
+  destruct V; [ reflexivity | ].
+  simpl.
+  rewrite nb_exists_FOL_R_exists_vec.
+  rewrite seq_length.
+  simpl; rewrite nb_exists_FOL_R_all_zero; rewrite nb_exists_FOL_R_all_gtz; rewrite nb_exists_FOL_R_all_atoms_eq.
+  rewrite FOL_R_basic_case_aux_complexity_case_1 with _ _ _ _ _ j; auto.
+  rewrite HMR_dec_formula_aux_complexity_case_0.
+  2:{ erewrite flat_map_ext.
+      2:{ intros a.
+          rewrite <- (map_nth only_diamond_p_seq).
+          change (S (max_var_weight_p_hseq G + a)) with ((S (max_var_weight_p_hseq G)) + a).
+          reflexivity. }
+      apply p_hseq_is_atomic_flat_map.
+      clear - Hshape.
+      destruct Hshape as [[G1 G2] [Hperm [[H1 H2] H3]]].
+      destruct G2; inversion H1.
+      clear - H2 Hperm; rewrite app_nil_r in Hperm.
+      apply p_hseq_is_atomic_perm with (map only_diamond_p_seq G1).
+      { apply Permutation_Type_map.
+        symmetry; apply Hperm. }
+      clear - H2.
+      induction G1; [apply Forall_inf_nil | ].
+      simpl; apply Forall_inf_cons; inversion H2; subst.
+      2:{ apply IHG1; apply X0. }
+      clear - X.
+      destruct X as [[r s] [Hperm [H1 H2]]].
+      destruct s; inversion H2.
+      simpl; rewrite app_nil_r in Hperm.
+      apply p_seq_is_atomic_perm with (only_diamond_p_seq (vec r (<S> complexity_A 0))).
+      { apply only_diamond_p_seq_perm.
+        symmetry; apply Hperm. }
+      rewrite only_diamond_p_seq_vec_diamond.
+      clear.
+      induction r; simpl; constructor; try assumption.
+      apply I. }
+  simpl.
+  lia.
+Qed.
+    
+Lemma FOL_R_basic_case_aux_complexity
       (G : p_hypersequent)
       (V : list (list nat))
       n
@@ -969,8 +1166,8 @@ Lemma FOL_R_basic_aux_complexity
   forall i j,
     In_inf (seq 0 (length G)) V ->
     H_shape_hseq i j 0 0 G ->
-    pow2 j <= pred (length G) ->
-    tetra_2 i j <= nb_exists_FOL_R_formula (FOL_R_basic_case_aux G V n Heqn acc)
+    pow2 (1 + j) <= length G ->
+    tetra_2 (1 + i) (1 + j) <= nb_exists_FOL_R_formula (FOL_R_basic_case_aux G V n Heqn acc)
 with HMR_dec_formula_aux_complexity
        (G : p_hypersequent)
        (x: nat)
@@ -981,57 +1178,46 @@ with HMR_dec_formula_aux_complexity
        forall i j k l,
          G <> nil ->
          H_shape_hseq i j k l G ->
-         pow2 j <= pred (length G + l) ->
-         tetra_2 i (j + k) <= nb_exists_FOL_R_formula (HMR_dec_formula_aux G x Heqx p Heqp acc).
+         pow2 (1 + j) <= length G + l ->
+         tetra_2 (1 + i) (1 + j + k) <= nb_exists_FOL_R_formula (HMR_dec_formula_aux G x Heqx p Heqp acc).
 Proof.
   - intros i j Hin Hshape Hlen.
     destruct acc as [acc].
     destruct n.
-    + replace i with 0 in *.
-      2:{ clear - Heqn Hshape Hlen.
-          destruct Hshape as [[G1 G2] [Hperm [[H1 H2] H3]]].
-          destruct G2; [ | exfalso; simpl in *; lia ].
-          destruct G1.
-          { apply Permutation_Type_length in Hperm.
-            unfold pow2 in *; simpl in *.
-            assert (H := le_1_pow2 j).
-            lia. }
-          destruct i; auto.
-          exfalso.
-          inversion H2; subst.
-          destruct X as [[vr vs] [Hperm' [H4 H5]]].
-          rewrite max_diamond_p_hseq_perm with _ (p :: G1) in Heqn by Permutation_Type_solve.
-          simpl in Heqn.
-          destruct vr; try now inversion H4.
-          simpl in Hperm'.
-          assert (In_inf (f , <S> (complexity_A (S i))) p).
-          { apply Permutation_Type_in_inf with ((f, <S> (<S> complexity_A i \/S <S> complexity_A i))
-                                               :: vec vr (<S> (<S> complexity_A i \/S <S> complexity_A i)) ++
-                                               vec vs
-                                               (<S> (<S> complexity_A i \/S <S> complexity_A i) \/S
-                                                                                                  <S> (<S> complexity_A i \/S <S> complexity_A i))); [symmetry; apply Hperm' | ].
-            left; reflexivity. }
-          apply in_inf_split in X as [[pa pb] Heq].
-          rewrite Heq in Heqn.
-          rewrite max_diamond_p_seq_app in Heqn.
-          change (max_diamond_p_seq ((f, <S> complexity_A (S i)) :: pb)) with (max (S (max_diamond_term (complexity_A (S i)))) (max_diamond_p_seq pb)) in Heqn.
-          lia. }
-      simpl.
-      destruct V.
-      * exfalso; contradiction.
-      * clear Hin.
-        simpl.
-        rewrite nb_exists_FOL_R_exists_vec.
-        rewrite seq_length.
-        transitivity (pow2 j); try lia.
-        apply id_le_pow2.
+    + clear - Heqn Hshape Hlen.
+      destruct Hshape as [[G1 G2] [Hperm [[H1 H2] H3]]].
+      destruct G2; [ | exfalso; simpl in *; lia ].
+      destruct G1.
+      { apply Permutation_Type_length in Hperm.
+        unfold pow2 in *; simpl in *.
+        assert (H := le_1_pow2 j).
+        lia. }
+      exfalso.
+      inversion H2; subst.
+      destruct X as [[vr vs] [Hperm' [H4 H5]]].
+      rewrite max_diamond_p_hseq_perm with _ (p :: G1) in Heqn by Permutation_Type_solve.
+      simpl in Heqn.
+      destruct vr; try now inversion H4.
+      simpl in Hperm'.
+      assert (In_inf (f , <S> (complexity_A i)) p).
+      { apply Permutation_Type_in_inf with ((f, <S> complexity_A i )
+                                              :: vec vr (<S> complexity_A i) ++
+                                              vec vs
+                                              (complexity_A (S i))); [symmetry; apply Hperm' | ].
+        left; reflexivity. }
+      apply in_inf_split in X as [[pa pb] Heq].
+      rewrite Heq in Heqn.
+      rewrite max_diamond_p_seq_app in Heqn.
+      change (max_diamond_p_seq ((f, <S> complexity_A i) :: pb)) with (max (S (max_diamond_term (complexity_A i))) (max_diamond_p_seq pb)) in Heqn.
+      lia. 
     + destruct i.
-      { simpl tetra_2.
-        etransitivity ; [ | apply nb_exists_FOL_R_basic_case_aux_complexity_le].
-        destruct V; [inversion Hin | ].
-        simpl.
-        transitivity (pow2 j); try lia.
-        apply id_le_pow2. }
+      { rewrite FOL_R_basic_case_aux_complexity_case_1 with _ _ _ _ _ j.
+        - simpl.
+          destruct V; try now inversion Hin.
+          simpl.
+          destruct G; simpl in *; lia.
+        - destruct G; [ inversion Heqn | clear; intros H; inversion H].
+        - apply Hshape. }
       etransitivity.
       2:{ apply nb_exists_FOL_R_basic_aux_sub.
           apply Hin. }
@@ -1042,13 +1228,15 @@ Proof.
             + destruct G; inversion Heqn.
               intros H; inversion H.
             + apply Hshape.
-          - unfold pow2; simpl; lia. }
+          - unfold pow2; simpl. lia. }
       simpl.
-      transitivity (tetra_2 i (pow2 j)).
-      * rewrite tetra_2_pow2.
+      transitivity (tetra_2 (S i) (pow2 (S j))).
+      * rewrite  tetra_2_pow2.
         reflexivity.
-      * apply tetra_2_le_mono.
-        lia.
+      * simpl.
+        apply pow2_le_mono.
+        apply tetra_2_le_mono.
+        destruct G; simpl in*; try lia.
   - intros i j k l Hnnil Hshape Hlen.
     destruct acc as [acc].
     destruct x.
@@ -1118,7 +1306,7 @@ Proof.
             simpl in Heqx.
             lia. }
       etransitivity.
-      2:{ refine (FOL_R_basic_aux_complexity _ _ _ _ _ _ _ _ Hshape _).
+      2:{ refine (FOL_R_basic_case_aux_complexity _ _ _ _ _ _ _ _ Hshape _).
           - rewrite <- (rev_involutive (seq _ _)).
             apply in_inf_map.
             apply cond_is_in_make_subsets.
@@ -1141,6 +1329,7 @@ Proof.
               rewrite ? seq_nth; lia.
           - lia. }
       simpl.
+      apply pow2_le_mono.
       apply tetra_2_le_mono.
       unfold pow2; simpl; lia.
     + destruct l.
@@ -1210,6 +1399,7 @@ Proof.
                       symmetry; apply p_hseq_put_max_complexity_fst.
                       intros H; subst; inversion Heqx. }                
                 rewrite pow2_S; rewrite Heqn in *.
+                rewrite pow2_S in *.
                 lia. }
             destruct Hshape2 as [[G1 G2] [Hperm [[H1 H2] H3]]].
             split with (((r, <S> complexity_A i) :: T) :: ((r, <S> complexity_A i) :: T) :: G1, G2).
@@ -1246,6 +1436,7 @@ Proof.
               apply Permutation_Type_length.
               symmetry; apply p_hseq_put_max_complexity_fst.
               intros H; subst; inversion Heqx. }
+        apply pow2_le_mono.
         apply tetra_2_le_mono.
         lia.
       * destruct (p_hseq_put_non_basic_fst_H_shape i j k l G Hshape) as [[[r T] H] [Heq [Hshape1 Hshape2]]].
@@ -1320,16 +1511,23 @@ Proof.
               apply Permutation_Type_length.
               symmetry; apply p_hseq_put_max_complexity_fst.
               intros H; subst; inversion Heqx. }
+        apply pow2_le_mono.
         apply tetra_2_le_mono.
         lia.
 Qed.
 
 Lemma decidability_non_elementary :
   forall i,
-    tetra_2 i 0 <= nb_exists_FOL_R_formula (HMR_dec_formula (((FOL_R_cst 1, complexity_A (S i)) :: nil) :: nil)).
+    tetra_2 i 1 <= nb_exists_FOL_R_formula (HMR_dec_formula (((FOL_R_cst 1, complexity_A i) :: nil) :: nil)).
 Proof.
   intro i.
-  change 0 with (0 + 0) at 1.
+  destruct i.
+  { unfold HMR_dec_formula.
+    rewrite HMR_dec_formula_aux_complexity_case_0.
+    - reflexivity.
+    - apply Forall_inf_cons; [ apply Forall_inf_cons ; [ | apply Forall_inf_nil] | apply Forall_inf_nil].
+      apply I. }
+  change 1 with (1 + 0 + 0) at 1.
   apply HMR_dec_formula_aux_complexity with 1.
   - intros H; inversion H.
   - split with (nil, (((FOL_R_cst 1, complexity_A (S i)) :: nil) :: nil)).

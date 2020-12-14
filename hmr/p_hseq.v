@@ -33,6 +33,8 @@ Definition p_seq_diamond (T : p_sequent) := map (fun x => (fst x, <S> (snd x))) 
 
 Definition p_seq_is_basic (T : p_sequent) := Forall_inf (fun x => match x with (a , A) => is_basic A end) T.
 
+Definition p_seq_is_atomic (T : p_sequent) := Forall_inf (fun x => match x with (a , A) => is_atom A end) T.
+
 Fixpoint eval_p_sequent (val : nat -> R) (T : p_sequent) : sequent :=
   match T with
   | nil => nil
@@ -54,6 +56,8 @@ Definition Permutation_Type_p_seq val (T1 T2 : p_sequent) := Permutation_Type (e
 Definition p_hypersequent : Set := list p_sequent.
 
 Definition p_hseq_is_basic G := Forall_inf p_seq_is_basic G.
+
+Definition p_hseq_is_atomic G := Forall_inf p_seq_is_atomic G.
 
 Definition Permutation_Type_p_hseq val (G1 G2 : p_hypersequent) := Permutation_Type (map (eval_p_sequent val) G1) (map (eval_p_sequent val) G2).
 
@@ -1022,6 +1026,25 @@ Proof.
   induction r; intros A; simpl; try rewrite IHr; lia.
 Qed.
 
+Lemma p_seq_is_atomic_max_diamond_0 : forall T,
+    p_seq_is_atomic T ->
+    max_diamond_p_seq T = 0%nat.
+Proof.
+  intros T; induction T; intros Hat; inversion Hat; subst; try reflexivity.
+  destruct a as [a A].
+  destruct A; try now inversion X; specialize (IHT X0).
+Qed.
+
+Lemma p_seq_is_atomic_basic : forall T,
+    p_seq_is_atomic T ->
+    p_seq_is_basic T.
+Proof.
+  induction T; intros Hat; inversion Hat; subst; constructor.
+  - destruct a as [a A]; destruct A; inversion X; auto.
+  - apply IHT.
+    apply X0.
+Qed.
+
 Lemma p_seq_is_basic_complexity_0 :
   forall T,
     p_seq_is_basic T ->
@@ -1040,6 +1063,25 @@ Proof.
   induction T; intros Heq; [ apply Forall_inf_nil |] .
   destruct a as [a A]; simpl in *.
   apply Forall_inf_cons ; [ apply is_basic_complexity_0_inv  | apply IHT]; lia.
+Qed.
+
+Lemma p_hseq_is_atomic_max_diamond_0 :
+  forall G,
+    p_hseq_is_atomic G ->
+    max_diamond_p_hseq G = 0%nat.
+Proof.
+  induction G; intros Hat; inversion Hat; subst; simpl; try lia.
+  specialize (IHG X0).
+  assert (H := p_seq_is_atomic_max_diamond_0 _ X); lia.
+Qed.
+
+Lemma p_hseq_is_atomic_basic : forall G,
+    p_hseq_is_atomic G ->
+    p_hseq_is_basic G.
+Proof.
+  induction G; intros Hat; inversion Hat; subst; constructor.
+  - apply p_seq_is_atomic_basic; assumption.
+  - apply IHG; assumption.
 Qed.
 
 Lemma p_hseq_is_basic_complexity_0 :
