@@ -1,6 +1,6 @@
 Require Import Rpos.
 Require Import FOL_R.
-Require Import lt_nat_tuples.
+Require Import RL.Utilities.riesz_logic_Nat_more.
 Require Import riesz_logic_List_more.
 Require Import RL.hmr.term.
 Require Import RL.hmr.semantic.

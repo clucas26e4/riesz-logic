@@ -1,4 +1,4 @@
-(** * Tools and lemma used to prove Lemma 4.26 and 4.43 more easily *)
+(** * Tools and lemma used to prove Lemma 4.26 and 4.44 more easily *)
 Require Import Rpos.
 Require Import riesz_logic_List_more.
 Require Import RL.hmr.term.

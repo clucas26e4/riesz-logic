@@ -1,6 +1,6 @@
 Require Import PeanoNat.
 Require Import Lia.
-Require Import RL.Utilities.lt_nat_tuples.
+Require Import RL.Utilities.riesz_logic_Nat_more.
 Require Import RL.OLlibs.List_Type.
 Require Import RL.OLlibs.List_more.
 Require Import RL.OLlibs.Permutation_Type.

@@ -1,6 +1,6 @@
 (** * Definition of hypersquents and sequents *)
 Require Import Rpos.
-Require Import lt_nat_tuples.
+Require Import RL.Utilities.riesz_logic_Nat_more.
 Require Import RL.hr.term.
 Require Import RL.hr.semantic.
 

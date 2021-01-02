@@ -10,7 +10,7 @@ OLlibs/Permutation_Type.v
 OLlibs/wf_prod.v
 
 Utilities/FOL_R.v
-Utilities/lt_nat_tuples.v
+Utilities/riesz_logic_Nat_more.v
 Utilities/riesz_logic_List_more.v
 Utilities/Rpos.v
 
@@ -52,7 +52,7 @@ hmr/lambda_prop_tools.v
 hmr_main_results.v
 hmr/M_elim.v
 hmr/p_hseq.v
-hmr/preproof.v
+hmr/prederivation.v
 hmr/Rsemantic.v
 hmr/Rterm.v
 hmr/semantic_Rsemantic_eq.v

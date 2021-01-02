@@ -12,8 +12,7 @@ Require Import RL.OLlibs.Permutation_Type_more.
 Require Import RL.OLlibs.Permutation_Type_solve.
 
 Local Open Scope R_scope.
-(** * Definition of hmr *)
-(** ** HMR *)
+(** * Definition of prederivations *)
 
 Inductive preHMR : hypersequent -> Type :=
 | prehmrr_leaf : forall G, preHMR G

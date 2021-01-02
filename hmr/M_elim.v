@@ -5,7 +5,7 @@ Require Import RL.hmr.semantic.
 Require Import RL.hmr.hseq.
 Require Import RL.hmr.hmr.
 Require Import RL.hmr.tech_lemmas.
-Require Import RL.hmr.preproof.
+Require Import RL.hmr.prederivation.
 
 Require Import CMorphisms.
 Require Import Lra.

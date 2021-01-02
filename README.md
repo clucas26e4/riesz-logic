@@ -16,8 +16,8 @@ To compile all the coq files and generate the documentation, type the following 
 This command generates a .html file for each Coq file, that only have definitions, statements and comments useful for the reader. It also generates a file "toc.html" where all the sections in the files are gathered together as well as a quick explanation of what the reader will find in the files.
 
 
-### The structure of the depository
-There are five folders in the depository:
+### The structure of the repository
+There are five folders in the repository:
 
 * QArithSternBrocot - contains the file sqrt2.v from the library [QArithSternBrocot](https://coq.inria.fr/distrib/8.2/contribs/QArithSternBrocot.html) used to prove the irrationality of sqrt 2.
 * OLlibs - contains a subset of the library [OLlibs](https://github.com/olaure01/ollibs), a collection of add-ons for the Coq Standard Library.
@@ -43,26 +43,27 @@ The files in hr and hmr are quite similar (because the structure of Section 3 an
 ##### Proof system
 * `hseq.v` : Definitions of sequents and hypersequents and some properties (like atomicity and complexity), as well as technical lemmas required to manipulate them in Coq.
 * `h(m)r.v` : Definitions of the H(M)R system and some basic lemmas.
-* `tech_lemmas.v` : Implementation of the lemmas in Section 3.3/4.2.
+* `tech_lemmas.v` : Implementation of the lemmas in Section 3.3 / 4.2.
 * `soundness.v` : Proof of soundness (Section 3.4/4.3)).
 * `completeness.v` : Proof of completeness (Section 3.5/4.4).
 * `invertibility.v` : Proof of the CAN-free invertibility of the logical rules (Section 3.6/4.5)
-* `preproof.v` (for HMR only):
+* `prederivation.v` (for HMR only): Definition of prederivations (unfinished derivations)
 * `M_elim.v` : Proof of the M elimination (Section 3.7/4.6)
 * `can_elim.v` : Proof of the CAN elimination (Section 3.8/4.7)
 * `p_hseq.v` : Definitions of parametrized sequents and parametrized hypersequents and some properties (like atomicity and complexity), as well as technical lemmas required to manipulate them in Coq.
 * `decidability.v` : Proof of decidability (Section 3.10/4.8)
+* `complexity.v` : Results on the size of the formula defined in decidability.v (Lemma 3.44/4.43)
 
 ##### Aux
 * `tactics.v` : Some tactics used in the other files, for instance a tactic that apply every possible logical rules to get an atomic hypersequent.
 * `h(m)r_perm_lemmas.v` : Technical construction and lemmas used to help manipulate lists of lists (instead of multisets of multisets like in the article). For instance, they help deal with the exchange rule cases in the proofs by induction.
-* `lambda_prop_tools.v` : some tools to make the proofs of Lemmas 3.32, 3.43, 4.26 and 4.43 easier to implement.
+* `lambda_prop_tools.v` : some tools to make the proofs of Lemmas 3.32, 3.42, 4.26 and 4.44 easier to implement.
 
 #### Utilities
 * `Rpos.v` : definition of positive real numbers and some lemmas used to manipulate them.
 * `riesz_logic_List_more.v` : additionnal lemmas for lists.
 * `FOL_R.v` : definition of First Order Logic over real numbers.
-* `lt_nat_tuples.v` : definition of a well-founded order on N², N³ and N⁴, used to ensure terminations (notably to prove decidability).
+* `riesz_logic_Nat_more.v` : definition of tetration (tower of exponentials) and well-founded orders on N², N³ and N⁴, used to ensure terminations (notably to prove decidability).
 
 ---
 
