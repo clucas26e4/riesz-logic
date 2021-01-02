@@ -1,5 +1,87 @@
 Require Import Lt.
 Require Import Wf_nat.
+Require Import PeanoNat.
+Require Import Lia.
+
+(** Power of 2 and tetration *)
+Lemma pow_not_0 : forall i j, i <> 0 -> i ^ j <> 0.
+Proof.
+  intros i; induction j; intros Hn0; simpl; try lia.
+Qed.
+
+Definition pow2 x := 2 ^ x.
+
+Lemma pow2_le_mono : forall x y, x <= y -> pow2 x <= pow2 y.
+Proof.
+  intros x y Hle; unfold pow2.
+  apply Nat.pow_le_mono; lia.
+Qed.
+
+Lemma pow2_add : forall x y, pow2 (x + y) = pow2 x * pow2 y.
+Proof.
+  intros x y; unfold pow2.
+  apply Nat.pow_add_r.
+Qed.
+
+Lemma pow2_S : forall x, pow2 (S x) = 2*(pow2 x).
+Proof.
+  intros x; unfold pow2.
+  reflexivity.
+Qed.
+
+Lemma le_1_pow2 : forall x, 1 <= 2^x.
+Proof.
+  induction x; simpl; try lia.
+Qed.
+
+Lemma id_le_pow2 : forall x, x <= 2^x.
+Proof.
+  induction x; simpl; try lia.
+  assert (H := le_1_pow2 x); lia.
+Qed.
+
+Fixpoint tetra_2 n j :=
+  match n with
+  | 0 => j
+  | S n => pow2 (tetra_2 n j)
+  end.
+
+Lemma tetra_2_le_mono : forall n j k,
+    j <= k ->
+    tetra_2 n j <= tetra_2 n k.
+Proof.
+  intros n j k Hle.
+  induction n; simpl; try lia.
+  apply pow2_le_mono; apply IHn.
+Qed.
+
+Lemma tetra_2_pow2 : forall n j,
+    tetra_2 n (pow2 j) = tetra_2 (S n) j.
+Proof.
+  intros n j; induction n; simpl; try lia.
+  rewrite IHn.
+  reflexivity.
+Qed.
+
+Lemma le_pow2_add : forall x y, x <> 0 -> y <> 0 ->2^x + 2^y <= 2^(x + y).
+Proof.
+  induction x; intros y Hxn0; simpl; try lia.
+  destruct x.
+  - clear.
+    induction y; simpl; try lia.
+    intros Hyn0.
+    destruct y; simpl; try lia.
+    simpl in *.
+    assert (S y <> 0) by auto.
+    specialize (IHy H).
+    lia.
+  - assert (S x <> 0) by auto.
+    intros Hyn0.
+    specialize (IHx y H Hyn0).
+    lia.
+Qed.
+
+(** Lexicographic order on N^2 *)
 
 Inductive lt_nat2 : (nat * nat) -> (nat * nat) -> Prop :=
 | fst_lt2 : forall a b c d, a < b -> lt_nat2 (a , c) (b, d)
@@ -33,6 +115,7 @@ apply well_founded_induction_type with lt_nat2.
 - assumption.
 Qed.
 
+(** Lexicographic order on N^3 *)
 
 Inductive lt_nat3 : (nat * nat * nat) -> (nat * nat * nat) -> Prop :=
 | fst_lt3 : forall a b c d e f, a < b -> lt_nat3 (a , c, e) (b, d , f)
@@ -70,6 +153,8 @@ apply well_founded_induction_type with lt_nat3.
 - apply wf_lt_nat3.
 - assumption.
 Qed.
+
+(** Lexicographic order on N^4 *)
 
 Inductive lt_nat4 : (nat * nat * nat * nat) -> (nat * nat * nat * nat) -> Prop :=
 | fst_lt4 : forall a b c d e f g h, a < b -> lt_nat4 (a , c, e, g) (b, d , f, h)

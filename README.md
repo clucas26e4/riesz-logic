@@ -11,7 +11,7 @@ If you have any trouble or question, please contact `christophe.lucas@ens-lyon.f
 To compile all the coq files and generate the documentation, type the following instruction in a terminal at the root of the project (where the file hr\_main\_results.v is).
 
 	$ ./configure
-	$ make html
+	$ make gallinahtml
 
 This command generates a .html file for each Coq file, that only have definitions, statements and comments useful for the reader. It also generates a file "toc.html" where all the sections in the files are gathered together as well as a quick explanation of what the reader will find in the files.
 

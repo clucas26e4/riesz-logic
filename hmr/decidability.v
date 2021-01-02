@@ -118,6 +118,7 @@ Proof.
   - apply IHL1; try assumption.
 Qed.
 (* end hide *)
+
 Lemma lambda_prop :
   forall G,
     hseq_is_basic G ->
@@ -787,6 +788,7 @@ Proof.
            apply H4.
 Qed.    
 
+(* get a real number x and convert |x| to oRpos *)
 Definition R_to_oRpos x :=
   match R_order_dec x with
               | R_is_gt _ H => Some (existT (fun x => 0 <? x = true) x H)
@@ -1248,215 +1250,7 @@ Proof.
   apply Hin.
 Qed.
 
-(* return a list of all non empty subsets of [0..n] *)
-Fixpoint make_subsets n :=
-  match n with
-  | 0%nat => nil
-  | S n => (n :: nil) :: (map (cons n) (make_subsets n)) ++ make_subsets n
-  end.
-
-Lemma cond_is_in_make_subsets : forall n l,
-    l <> nil ->
-    (forall i, nth i l 0 < n)%nat ->
-    (forall i j, (j < length l)%nat -> (i < j)%nat -> (nth i l 0 > nth j l 0)%nat) ->
-    In_inf l (make_subsets n).
-Proof.
-  induction n; intros l Hnnil Hle Hlt.
-  - specialize (Hle 0%nat).
-    exfalso; destruct l; inversion Hle.
-  - destruct l; [exfalso; apply Hnnil; reflexivity | ].
-    case_eq (n0 =? n); intros Heq.
-    + apply Nat.eqb_eq in Heq; subst.
-      destruct l.
-      * left; reflexivity.
-      * right.
-        apply in_inf_or_app; left.
-        apply in_inf_map_cons.
-        apply IHn.
-        -- intros H'; inversion H'.
-        -- intros i.
-           case_eq (i <? length (n0 :: l))%nat; intros H.
-           ++ specialize (Hlt 0%nat (S i)).
-              simpl in Hlt.
-              change (match i with
-                      | 0 => n0
-                      | S m => nth m l 0
-                      end)%nat with (nth i (n0 :: l) 0)%nat in Hlt.
-              apply Nat.ltb_lt in H; simpl in H.
-              lia.
-           ++ apply Nat.ltb_nlt in H.
-              rewrite nth_overflow ; destruct n; try lia.
-              exfalso.
-              specialize (Hlt 0 1)%nat.
-              simpl in Hlt; lia.
-        -- intros i j Hlen' Hlt'.
-           assert (H' := Hlt (S i) (S j)).
-           change (nth (S i) (S n :: n0 :: l) 0%nat) with (nth i (n0 :: l) 0%nat) in *.
-           change (nth (S j) (S n :: n0 :: l) 0)%nat with (nth j (n0 :: l) 0%nat) in *.
-           apply H'; simpl in *; lia.
-    + right; apply in_inf_or_app; right.
-      apply IHn.
-      -- intros H'; inversion H'.
-      -- intros i.
-         destruct i; [ specialize (Hle 0%nat); apply Nat.eqb_neq in Heq; simpl in *; lia | ].
-         case_eq (S i <? length (n0 :: l))%nat; intros H; [ apply Nat.ltb_lt in H | apply Nat.ltb_nlt in H].
-         ++ specialize (Hle i).
-            specialize (Hlt i (S i)).
-            lia.
-         ++ rewrite nth_overflow; destruct n; try lia.
-            destruct n0; inversion Heq.
-            specialize (Hle 0)%nat.
-            simpl in Hle; lia.
-      -- intros i j Hlen' Hlt'.
-         specialize (Hle j); specialize (Hlt i j).
-         apply Hlt; lia.
-Qed.
-
-Lemma cond_is_in_make_subsets_inv : forall n l,
-    In_inf l (make_subsets n) ->
-    (l <> nil) * (forall i, nth i l 0 < n)%nat * (forall i j, (j < length l)%nat -> (i < j)%nat -> (nth i l 0 > nth j l 0)%nat).
-Proof.
-  induction n; intros l; [ intros Hin | intros [Heq | Hin]].
-  - inversion Hin.
-  - destruct l; [ | destruct l]; inversion Heq; subst.
-    repeat split.
-    + intros H; inversion H.
-    + intros i; destruct i; [ | destruct i]; simpl; lia.
-    + intros i j Hlen Hlt.
-      destruct j ; [inversion Hlt | ].
-      destruct j; try now inversion Hlen.
-  - destruct (in_inf_app_or _ _ _ Hin).
-    + destruct (in_inf_map_cons_inv _ _ _ _ i) as [l' [Heq Hin']]; subst.
-      destruct (IHn l' Hin') as [[Hnnil Hlen] Hlt].
-      clear i Hin.
-      repeat split.
-      * intros H; inversion H.
-      * intros i.
-        destruct i.
-        -- simpl; lia.
-        -- specialize (Hlen i).
-           simpl.
-           lia.
-      * intros i j Hlen' Hlt'.
-        destruct j; try now inversion Hlt'.
-        change (nth (S j) (S n :: l') 0)%nat with (nth j l' 0)%nat.
-        destruct i.
-        -- simpl.
-           specialize (Hlen j).
-           lia.
-        -- change (nth (S i) (S n :: l') 0)%nat with (nth i l' 0)%nat.
-           apply Hlt; simpl in *; lia.
-    + specialize (IHn l i).
-      clear Hin i.
-      destruct IHn as [[Hnil Hlen] Hlt].
-      repeat split; auto.
-      intro i; specialize (Hlen i); lia.
-Qed.    
-    
-(* return the complementary list of v *)
-Fixpoint complementary (v : list nat) n :=
-  match v with
-  | nil => seq 0%nat n
-  | i :: v => remove (Nat.eq_dec) i (complementary v n)
-  end.
-
-Lemma In_inf_complementary : forall v n i,
-    In_inf i v ->
-    In_inf i (complementary v n) ->
-    False.
-Proof.
-  induction v; intros n i Hin1 Hin2; [ inversion Hin1 | ].
-  simpl in Hin2.
-  case_eq (i =? a); intros H.
-  - apply Nat.eqb_eq in H; subst.
-    apply In_inf_remove_not in Hin2.
-    apply Hin2.
-  - inversion Hin1; [ apply Nat.eqb_neq in H; lia | ].
-    apply IHv with n i; auto.
-    apply In_inf_remove_In_inf in Hin2.
-    apply Hin2.
-Qed.
-
-Lemma In_inf_complementary_inv : forall v n i,
-    (i < n)%nat ->
-    (In_inf i (complementary v n) -> False) ->
-    In_inf i v.
-Proof.
-  induction v; intros n i Hlt H.
-  - exfalso; apply H.
-    replace i with (i + 0)%nat by lia.
-    apply In_inf_seq.
-    apply Hlt.
-  - simpl in *.
-    case_eq (a =? i); intros Heq.
-    + left.
-      apply Nat.eqb_eq in Heq; auto.
-    + right.
-      apply IHv with n; auto.
-      intros Hin.
-      apply H.
-      apply In_inf_remove_In_inf_inv.
-      apply Nat.eqb_neq in Heq; split; auto.    
-Qed.
-
-Lemma In_inf_complementary2 : forall v n i,
-    In_inf i (complementary v n) ->
-    In_inf i v ->
-    False.
-Proof.
-  induction v; intros n i Hin1 Hin2; [ inversion Hin2 | ].
-  simpl in Hin1.
-  case_eq (i =? a); intros H.
-  - apply Nat.eqb_eq in H; subst.
-    apply In_inf_remove_not in Hin1.
-    apply Hin1.
-  - inversion Hin2; [ apply Nat.eqb_neq in H; lia | ].
-    apply IHv with n i; auto.
-    apply In_inf_remove_In_inf in Hin1.
-    apply Hin1.
-Qed.
-
-Lemma In_inf_complementary2_inv : forall v n i,
-    (i < n)%nat ->
-    (In_inf i v -> False) ->
-    In_inf i (complementary v n).
-Proof.
-  induction v; intros n i Hlt H.
-  - replace i with (i + 0)%nat by lia.
-    apply In_inf_seq.
-    apply Hlt.
-  - simpl in *.
-    case_eq (a =? i); intros Heq.
-    + exfalso; apply H; left; apply Nat.eqb_eq; apply Heq.
-    + apply In_inf_remove_In_inf_inv.
-      apply Nat.eqb_neq in Heq; split; auto.    
-Qed.
-
-Lemma complementary_partition : forall v n i,
-    (i < n)%nat ->
-    (In_inf i v) + (In_inf i (complementary v n)).
-Proof.
-  intros v n i Hlt.
-  assert (Hin := in_inf_dec Nat.eq_dec i v).
-  inversion Hin.
-  - left; apply X.
-  - right.
-    apply In_inf_complementary2_inv; auto.
-Qed.  
-  
-Lemma In_inf_complementary_lt : forall L n i,
-    In_inf i (complementary L n) ->
-    (i < n)%nat.
-Proof.
-  induction L; intros n i Hin.
-  - simpl complementary in Hin.
-    replace n with (0 + n)%nat by lia.
-    apply In_inf_seq_lt.
-    apply Hin.
-  - simpl in Hin.
-    apply In_inf_remove_In_inf in Hin as [Hneq Hin].
-    apply IHL; auto.
-Qed.
+(* Put non basic formula first, i.e., G in the form H | |- T, r.A with A non basic. *)
 
 Fixpoint p_seq_fst_non_basic_term (T : p_sequent) : (FOL_R_term * term) :=
   match T with
@@ -2318,7 +2112,7 @@ Definition FOL_R_phi G v :=
 (** return the whole formula *)
 
 (* begin hide *)
-
+(* auxiliary functions used to help Coq understands they terminate *)
 Fixpoint FOL_R_basic_case_aux (G : p_hypersequent) (V : list (list nat)) n (Heqn : max_diamond_p_hseq G = n) (acc : Acc lt_nat4 (modal_complexity_p_hseq G , length V)) : FOL_R_formula
 with HMR_dec_formula_aux (G : p_hypersequent) (x: nat) (Heqx : snd (fst (modal_complexity_p_hseq G)) = x) p (Heqp : apply_logical_rule_on_p_hypersequent (p_hseq_put_non_basic_fst G) = p) (acc : Acc lt_nat4 (modal_complexity_p_hseq G, S (length (make_subsets (length G))))) : FOL_R_formula.
   - destruct acc as [acc].

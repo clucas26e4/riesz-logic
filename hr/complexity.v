@@ -1,6 +1,13 @@
+Require Import CMorphisms.
+Require Import Lra.
+Require Import Lia.
+Require Import Omega.
+Require Import ZArith Psatz.
+Require Import FunctionalExtensionality.
+
 Require Import Rpos.
-Require Import riesz_logic_List_more.
 Require Import FOL_R.
+Require Import riesz_logic_List_more.
 Require Import lt_nat_tuples.
 Require Import RL.hr.term.
 Require Import RL.hr.semantic.
@@ -13,228 +20,11 @@ Require Import RL.hr.can_elim.
 Require Import RL.hr.M_elim.
 Require Import RL.hr.decidability.
 
-Require Import CMorphisms.
-Require Import Lra.
-Require Import Lia.
-Require Import Omega.
-Require Import ZArith Psatz.
-Require Import FunctionalExtensionality.
-
 Require Import RL.OLlibs.List_more.
 Require Import RL.OLlibs.List_Type.
 Require Import RL.OLlibs.Permutation_Type.
 Require Import RL.OLlibs.Permutation_Type_more.
 Require Import RL.OLlibs.Permutation_Type_solve.
-
-(* TODO move *)
-Lemma pow_not_0 : forall i j, i <> 0 -> i ^ j <> 0.
-Proof.
-  intros i; induction j; intros Hn0; simpl; try lia.
-Qed.
-
-Definition pow2 x := 2 ^ x.
-
-Lemma pow2_le_mono : forall x y, x <= y -> pow2 x <= pow2 y.
-Proof.
-  intros x y Hle; unfold pow2.
-  apply Nat.pow_le_mono; lia.
-Qed.
-
-Lemma pow2_add : forall x y, pow2 (x + y) = pow2 x * pow2 y.
-Proof.
-  intros x y; unfold pow2.
-  apply Nat.pow_add_r.
-Qed.
-
-Lemma pow2_S : forall x, pow2 (S x) = 2*(pow2 x).
-Proof.
-  intros x; unfold pow2.
-  reflexivity.
-Qed.
-
-Lemma NoDup_inf_rev {A} : forall (l : list A),
-    NoDup_inf l ->
-    NoDup_inf (rev l).
-Proof.
-  intros l.
-  apply Permutation_Type_NoDup_inf.
-  apply Permutation_Type_rev.
-Qed.
-
-Lemma NoDup_inf_nth {A} : forall l,
-    (forall (a0 : A) i j, i < length l -> j < length l -> i <> j -> nth i l a0 <> nth j l a0) ->
-    NoDup_inf l.
-Proof.
-  intros l; induction l; intros H; [ apply NoDup_inf_nil | ].
-  apply NoDup_inf_cons.
-  - intros Hin.
-    apply (In_inf_nth _ _ a) in Hin as [n Hlen Heq].
-    refine (H a 0 (S n) _ _ _ _); simpl; try lia.
-    auto.
-  - apply IHl.
-    intros a0 i j Hlen1 Hlen2 Hneq.
-    refine (H a0 (S i) (S j) _ _ _); simpl; lia.
-Qed.
-    
-Lemma list_split_max : forall v,
-    v <> nil ->
-    {' (la, lb, k) : _ & prod (v = la ++ k :: lb)
-                              ((Forall_inf (fun x => x <= k) la) *
-                               (Forall_inf (fun x => x <= k) lb))}.
-Proof.
-  induction v ; [ contradiction | ].
-  destruct v; intros _.
-  - split with (nil, nil, a).
-    repeat split; auto.
-  - destruct IHv as [[[la lb] k] [Heq [H1 H2]]]; [ intros H; inversion H | ].
-    case_eq (k <=? a); intros H.
-    + split with (nil, n :: v, a).
-      apply Nat.leb_le in H.
-      repeat split; auto.
-      rewrite Heq.
-      apply Forall_inf_app; [ | apply Forall_inf_cons].
-      * refine (Forall_inf_arrow _ _ H1).
-        intros a0 H'; lia.
-      * apply H.
-      * refine (Forall_inf_arrow _ _ H2).
-        intros a0 H'; lia.
-    + split with (a :: la, lb, k).
-      apply Nat.leb_nle in H.
-      repeat split; try rewrite Heq; auto.
-      apply Forall_inf_cons; auto.
-      lia.
-Qed.
-
-Lemma Forall_inf_le_not_In_inf : forall l k,
-    Forall_inf (fun x => x <= k) l ->
-    (In_inf k l -> False) ->
-    Forall_inf (fun x => x < k) l.
-Proof.
-  induction l; intros k Hall Hnin; inversion Hall; subst; auto.
-  apply Forall_inf_cons.
-  - assert (a <> k).
-    { intros H; subst; apply Hnin; left; auto. }
-    lia.
-  - apply IHl; auto.
-    intros Hin; apply Hnin; right; auto.
-Qed.
-    
-Lemma NoDup_inf_lt_length : forall v n,
-    Forall_inf (fun x => x < n) v ->
-    NoDup_inf v ->
-    length v <= n.
-Proof.
-  intros v; remember (length v).
-  revert v Heqn.
-  induction n; intros v Heqn k Hall Hndup; try lia.
-  assert (v <> nil) as Hnnil.
-  { destruct v; try now inversion Heqn; auto. }
-  destruct (list_split_max v Hnnil) as [[[la lb] k'] [Heq [H1 H2]]].
-  apply Permutation_Type_NoDup_inf with _ _ (k' :: la ++ lb) in Hndup; [ | rewrite Heq;Permutation_Type_solve ].
-  inversion Hndup; subst.
-  transitivity (S k').
-  - apply le_n_S.
-    refine (IHn (la ++ lb) _ k' _ _).
-    + replace (length (la ++ lb)) with (pred (length (la ++ k' :: lb))) by (rewrite ? app_length; simpl; lia).
-      rewrite <- Heqn; reflexivity.
-    + apply Forall_inf_le_not_In_inf; [ apply Forall_inf_app | ]; auto.
-    + apply X.
-  - apply Forall_inf_elt in Hall.
-    apply Hall.
-Qed.
-      
-Lemma seq_NoDup_inf : forall i j,
-    NoDup_inf (seq i j).
-Proof.
-  intros i j; revert i; induction j; intros i; simpl.
-  - apply NoDup_inf_nil.
-  - apply NoDup_inf_cons; auto.
-    apply not_In_inf_seq; lia.
-Qed.
-
-Lemma remove_NoDup_inf {A} (Eq_dec : forall (a b : A), {a = b} + {a <> b}): forall (a : A) l,
-    NoDup_inf l ->
-    NoDup_inf (remove Eq_dec a l).
-Proof.
-  intros a; induction l; intros Hndup; inversion Hndup; subst; simpl; auto.
-  case (Eq_dec a a0); intros H.
-  - apply IHl; assumption.
-  - apply NoDup_inf_cons; [ | apply IHl; assumption].
-    intros H1.
-    apply H0.
-    apply (In_inf_remove_In_inf _ _ _ _ _ H1).
-Qed.
-    
-Lemma complementary_NoDup_inf : forall v n,
-    NoDup_inf (complementary v n).
-Proof.
-  induction v; intros n; simpl.
-  - apply seq_NoDup_inf.
-  - apply remove_NoDup_inf.
-    apply IHv.
-Qed.
-
-Lemma remove_length_not_In_inf {A} (Eq_dec : forall (a b : A), {a = b} + {a <> b}): forall (a : A) l,
-    (In_inf a l -> False) ->
-    length (remove Eq_dec a l) = length l.
-Proof.
-  intros a; induction l; intros Hnin; simpl; try reflexivity.
-  case (Eq_dec a a0); intros H.
-  - exfalso; subst.
-    apply Hnin.
-    left; reflexivity.
-  - simpl; rewrite IHl; auto.
-    intros Hin; apply Hnin; right; apply Hin.
-Qed.
-
-Lemma remove_length_In_inf_no_dup {A} (Eq_dec : forall (a b : A), {a = b} + {a <> b}): forall (a : A) l,
-    In_inf a l ->
-    NoDup_inf l ->
-    length (remove Eq_dec a l) = pred (length l).
-Proof.
-  intros a l; induction l; intros Hin Hndup; try now inversion Hin.
-  inversion Hin; subst.
-  - rewrite remove_cons.
-    simpl.
-    inversion Hndup; subst.
-    apply remove_length_not_In_inf.
-    apply H0.
-  - simpl.
-    case (Eq_dec a a0); intros H.
-    + apply remove_length_not_In_inf; inversion Hndup; subst; assumption.
-    +  inversion Hndup; subst.
-       simpl; rewrite IHl; try assumption.
-       destruct l; simpl; try lia.
-       inversion X.
-Qed.    
-
-Lemma complementary_length_lt_no_dup : forall v n,
-    Forall_inf (fun x => x < n) v ->
-    NoDup_inf v ->
-    length (complementary v n) = n - (length v).
-Proof.
-  induction v; intros n Hall Hndup; simpl.
-  - rewrite seq_length; lia.
-  - inversion Hall; subst.
-    inversion Hndup; subst.
-    specialize (IHv n X X0).
-    rewrite remove_length_In_inf_no_dup.
-    + rewrite IHv.
-      lia.
-    + apply In_inf_complementary2_inv; assumption.
-    + apply complementary_NoDup_inf.
-Qed.
-
-Lemma make_subsets_length : forall k,
-    length (make_subsets k) = pred (2 ^ k).
-Proof.
-  induction k; simpl; try lia.
-  rewrite app_length; rewrite map_length.
-  rewrite IHk.
-  assert (2 ^ k <> 0).
-  { apply pow_not_0; lia. }
-  lia.
-Qed.  
 
 (** Necessary definition *)
 Fixpoint nb_operator A :=
@@ -342,6 +132,220 @@ Definition degree_p_seq (T : p_sequent) := fold_right (fun x y => max (degree_FO
 
 Definition degree_p_hseq (G : p_hypersequent) := fold_right (fun x y => max (degree_p_seq x) y) 0 G.
 
+Lemma degree_sum_weight_p_seq_var : forall k T,
+    degree_FOL_R_term (sum_weight_p_seq_var k T) <= degree_p_seq T.
+Proof.
+  intros k; induction T; simpl; try lia.
+  destruct a as [r A].
+  destruct A; try lia.
+  case (k =? n); simpl; lia.
+Qed.
+
+Lemma degree_p_sum_weight_var_with_coeff : forall k i G L,
+    Forall_inf (fun x => degree_FOL_R_term x <= i) L ->
+    (degree_FOL_R_term (p_sum_weight_var_with_coeff k G L)) <= degree_p_hseq G + i.
+Proof.
+  intros k i.
+  induction G; intros L Hall; destruct L; simpl; try lia.
+  inversion Hall; subst.
+  specialize (IHG L X).
+  assert (H := degree_sum_weight_p_seq_var k a).
+  lia.
+Qed.
+
+Lemma degree_sum_weight_p_seq_covar : forall k T,
+    degree_FOL_R_term (sum_weight_p_seq_covar k T) <= degree_p_seq T.
+Proof.
+  intros k; induction T; simpl; try lia.
+  destruct a as [r A].
+  destruct A; try lia.
+  case (k =? n); simpl; lia.
+Qed.
+
+Lemma degree_p_sum_weight_covar_with_coeff : forall k i G L,
+    Forall_inf (fun x => degree_FOL_R_term x <= i) L ->
+    (degree_FOL_R_term (p_sum_weight_covar_with_coeff k G L)) <= degree_p_hseq G + i.
+Proof.
+  intros k i.
+  induction G; intros L Hall; destruct L; simpl; try lia.
+  inversion Hall; subst.
+  specialize (IHG L X).
+  assert (H := degree_sum_weight_p_seq_covar k a).
+  lia.
+Qed.
+Lemma degree_FOL_R_exists_vec : forall f v,
+    degree_FOL_R_formula (exists_vec v f) = degree_FOL_R_formula f.
+Proof.
+  intros f; induction v; simpl; auto.
+Qed.
+
+Lemma nb_pol_FOL_R_exists_vec : forall f v,
+    nb_pol_FOL_R_formula (exists_vec v f) = nb_pol_FOL_R_formula f.
+Proof.
+  intros f; induction v; simpl; auto.
+Qed.
+
+Lemma nb_exists_FOL_R_exists_vec : forall f v,
+    nb_exists_FOL_R_formula (exists_vec v f) = length v + nb_exists_FOL_R_formula f.
+Proof.
+  intros f; induction v; simpl; auto.
+Qed.
+
+Lemma degree_p_hseq_perm : forall G1 G2,
+    Permutation_Type G1 G2 ->
+    degree_p_hseq G1 = degree_p_hseq G2.
+Proof.
+  intros G1 G2 Hperm.
+  induction Hperm; simpl; try lia.
+Qed.
+
+Lemma degree_p_seq_perm : forall T1 T2,
+    Permutation_Type T1 T2 ->
+    degree_p_seq T1 = degree_p_seq T2.
+Proof.
+  intros T1 T2 Hperm.
+  induction Hperm; simpl; try lia.
+Qed.
+
+Lemma nbMin_p_seq_perm : forall T1 T2,
+    Permutation_Type T1 T2 ->
+    nbMin_p_seq T1 = nbMin_p_seq T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; simpl; lia.
+Qed.
+
+Lemma nbMax_p_seq_perm : forall T1 T2,
+    Permutation_Type T1 T2 ->
+    nbMax_p_seq T1 = nbMax_p_seq T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; simpl; lia.
+Qed.
+
+Lemma nbMin_p_hseq_perm : forall G H,
+    Permutation_Type G H ->
+    nbMin_p_hseq G = nbMin_p_hseq H.
+Proof.
+  intros G H Hperm; induction Hperm; simpl; try lia.
+Qed.
+
+Lemma nbMax_p_hseq_perm : forall G H,
+    Permutation_Type G H ->
+    nbMax_p_hseq G = nbMax_p_hseq H.
+Proof.
+  intros G H Hperm; induction Hperm; simpl; try lia.
+Qed.
+
+Lemma le_nbMin_nb_op_term : forall A,
+    nbMin_term A <= nb_operator A.
+Proof.
+  induction A; simpl; lia.
+Qed.
+
+Lemma le_nbMax_nb_op_term : forall A,
+    nbMax_term A <= nb_operator A.
+Proof.
+  induction A; simpl; lia.
+Qed.
+
+Lemma le_nbMin_nb_op_p_seq : forall T,
+    nbMin_p_seq T <= nb_op_p_seq T.
+Proof.
+  induction T; simpl; try lia.
+  destruct a as [a A].
+  destruct A; simpl; try (assert (H := le_nbMin_nb_op_term A));
+    try (assert (H1 := le_nbMin_nb_op_term A1));
+    try (assert (H2 := le_nbMin_nb_op_term A2)); lia.
+Qed.
+
+Lemma le_nbMax_nb_op_p_seq : forall T,
+    nbMax_p_seq T <= nb_op_p_seq T.
+Proof.
+  induction T; simpl; try lia.
+  destruct a as [a A].
+  destruct A; simpl; try (assert (H := le_nbMax_nb_op_term A));
+    try (assert (H1 := le_nbMax_nb_op_term A1));
+    try (assert (H2 := le_nbMax_nb_op_term A2)); lia.
+Qed.
+
+Lemma le_nbMax_nbMin_nb_op_term : forall A,
+    nbMax_term A + nbMin_term A <= nb_operator A.
+Proof.
+  induction A; simpl; lia.
+Qed.
+
+Lemma le_nbMax_nbMin_nb_op_p_seq : forall T,
+    nbMax_p_seq T + nbMin_p_seq T <= nb_op_p_seq T.
+Proof.
+  induction T; simpl; try lia.
+  destruct a as [a A].
+  destruct A; simpl; try (assert (H := le_nbMax_nbMin_nb_op_term A));
+    try (assert (H1 := le_nbMax_nbMin_nb_op_term A1));
+    try (assert (H2 := le_nbMax_nbMin_nb_op_term A2));try lia.
+Qed.
+  
+Lemma le_nbMin_nb_op_p_hseq : forall G,
+    G <> nil ->
+    nbMin_p_hseq G <= pow2 (nb_op_p_hseq G + nb_p_seq G).
+Proof.
+  induction G; simpl; try lia; intros _.
+  assert (Hmin := le_nbMin_nb_op_p_seq a).
+  assert (Hmax := le_nbMax_nb_op_p_seq a).
+  assert (Hmax_min := le_nbMax_nbMin_nb_op_p_seq a).
+  case_eq (nb_op_p_seq a =? 0); intros H; (apply Nat.eqb_eq in H + apply Nat.eqb_neq in H).
+  { replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (S (nb_op_p_hseq G + nb_p_seq G)) by lia.
+    rewrite pow2_S.
+    destruct G; try (simpl; lia).
+    assert (p :: G <> nil) by (intros H'; inversion H').
+    specialize (IHG H0).
+    lia. }
+  etransitivity; [ apply Nat.add_le_mono;
+                   [ apply Nat.mul_le_mono; [ reflexivity | apply id_le_pow2 ]
+                   | ] | ].
+  { destruct G.
+    apply (Nat.le_0_l (pow2 (nb_op_p_hseq nil + nb_p_seq nil))).
+    apply IHG.
+    intros H'; inversion H'. }
+  unfold pow2; rewrite <-Nat.pow_add_r.
+  replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (nb_op_p_seq a + S (nb_op_p_hseq G + nb_p_seq G)) by lia.
+  etransitivity; [ | apply le_pow2_add; lia].
+  apply Nat.add_le_mono; apply pow2_le_mono; lia.
+Qed.
+
+Lemma le_nbMax_nb_op_p_hseq : forall G,
+    G <> nil ->
+    nbMax_p_hseq G <= pow2 (nb_op_p_hseq G + nb_p_seq G).
+Proof.
+  induction G; simpl; try lia.
+  assert (Hmin := le_nbMin_nb_op_p_seq a).
+  assert (Hmax := le_nbMax_nb_op_p_seq a).
+  assert (Hmax_min := le_nbMax_nbMin_nb_op_p_seq a).
+  case_eq (nb_op_p_seq a =? 0); intros H; (apply Nat.eqb_eq in H + apply Nat.eqb_neq in H).
+  { intros _.
+    replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (S (nb_op_p_hseq G + nb_p_seq G)) by lia.
+    rewrite pow2_S.
+    destruct G.
+    { replace (nbMax_p_seq a) with 0 by lia.
+      simpl; lia. }
+    assert (p :: G <> nil) by (intros H'; inversion H').
+    specialize (IHG H0).
+    replace (nbMax_p_seq a) with 0 by lia.
+    change (pow2 0) with 1.
+    assert (H' := le_1_pow2 (nb_op_p_hseq (p :: G) + nb_p_seq (p :: G))).
+    unfold Nat.mul; fold Nat.mul.
+    unfold pow2.
+    rewrite Nat.add_0_r.
+    apply Nat.add_le_mono; assumption. }
+  intros _.
+  replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (nb_op_p_seq a + S (nb_op_p_hseq G + nb_p_seq G)) by lia.
+  etransitivity; [ | apply le_pow2_add; lia].
+  apply Nat.add_le_mono; [apply pow2_le_mono; lia | ].
+  destruct G.
+  { simpl; lia. }
+  etransitivity ; [ apply IHG ; intros H'; inversion H' | ].
+  apply pow2_le_mono.
+  lia.
+Qed.
+
 (** Size of the formula return by the decidability algorithm *)
 Lemma degree_FOL_R_all_zero : forall k v,
     degree_FOL_R_formula (FOL_R_all_zero k v) <= 1.
@@ -384,48 +388,6 @@ Lemma nb_exists_FOL_R_all_gtz : forall k v,
 Proof.
   intros k; induction v; simpl; lia.
 Qed.
-
-Lemma degree_sum_weight_p_seq_var : forall k T,
-    degree_FOL_R_term (sum_weight_p_seq_var k T) <= degree_p_seq T.
-Proof.
-  intros k; induction T; simpl; try lia.
-  destruct a as [r A].
-  destruct A; try lia.
-  case (k =? n); simpl; lia.
-Qed.
-
-Lemma degree_p_sum_weight_var_with_coeff : forall k i G L,
-    Forall_inf (fun x => degree_FOL_R_term x <= i) L ->
-    (degree_FOL_R_term (p_sum_weight_var_with_coeff k G L)) <= degree_p_hseq G + i.
-Proof.
-  intros k i.
-  induction G; intros L Hall; destruct L; simpl; try lia.
-  inversion Hall; subst.
-  specialize (IHG L X).
-  assert (H := degree_sum_weight_p_seq_var k a).
-  lia.
-Qed.
-
-Lemma degree_sum_weight_p_seq_covar : forall k T,
-    degree_FOL_R_term (sum_weight_p_seq_covar k T) <= degree_p_seq T.
-Proof.
-  intros k; induction T; simpl; try lia.
-  destruct a as [r A].
-  destruct A; try lia.
-  case (k =? n); simpl; lia.
-Qed.
-
-Lemma degree_p_sum_weight_covar_with_coeff : forall k i G L,
-    Forall_inf (fun x => degree_FOL_R_term x <= i) L ->
-    (degree_FOL_R_term (p_sum_weight_covar_with_coeff k G L)) <= degree_p_hseq G + i.
-Proof.
-  intros k i.
-  induction G; intros L Hall; destruct L; simpl; try lia.
-  inversion Hall; subst.
-  specialize (IHG L X).
-  assert (H := degree_sum_weight_p_seq_covar k a).
-  lia.
-Qed.  
 
 Lemma degree_FOL_R_all_atoms_eq : forall G k,
     degree_FOL_R_formula (FOL_R_all_atoms_eq G k) <= 1 + degree_p_hseq G.
@@ -491,25 +453,6 @@ Proof.
   assert (H2 := nb_exists_FOL_R_all_gtz (S (max_var_weight_p_hseq G)) v).
   assert (H3 := nb_exists_FOL_R_all_atoms_eq G (max_var_p_hseq G)).
   lia.
-Qed.
-
-Lemma degree_FOL_R_exists_vec : forall f v,
-    degree_FOL_R_formula (exists_vec v f) = degree_FOL_R_formula f.
-Proof.
-  intros f; induction v; simpl; auto.
-Qed.
-
-
-Lemma nb_pol_FOL_R_exists_vec : forall f v,
-    nb_pol_FOL_R_formula (exists_vec v f) = nb_pol_FOL_R_formula f.
-Proof.
-  intros f; induction v; simpl; auto.
-Qed.
-
-Lemma nb_exists_FOL_R_exists_vec : forall f v,
-    nb_exists_FOL_R_formula (exists_vec v f) = length v + nb_exists_FOL_R_formula f.
-Proof.
-  intros f; induction v; simpl; auto.
 Qed.
 
 Lemma degree_FOL_R_exists_phi : forall G v,
@@ -630,22 +573,6 @@ Proof.
   apply nb_exists_FOL_R_atomic_case_aux.
 Qed.
 
-Lemma degree_p_hseq_perm : forall G1 G2,
-    Permutation_Type G1 G2 ->
-    degree_p_hseq G1 = degree_p_hseq G2.
-Proof.
-  intros G1 G2 Hperm.
-  induction Hperm; simpl; try lia.
-Qed.
-
-Lemma degree_p_seq_perm : forall T1 T2,
-    Permutation_Type T1 T2 ->
-    degree_p_seq T1 = degree_p_seq T2.
-Proof.
-  intros T1 T2 Hperm.
-  induction Hperm; simpl; try lia.
-Qed.
-
 Lemma p_hseq_put_non_atomic_fst_degree : forall G,
     fst (HR_complexity_p_hseq G) <> 0 ->
     degree_p_hseq (p_hseq_put_non_atomic_fst G) = degree_p_hseq G.
@@ -702,21 +629,6 @@ Proof.
   destruct A; inversion Heq; subst; auto.
 Qed.
 
-Lemma max_var_p_hseq_perm : forall G H,
-    Permutation_Type G H ->
-    max_var_p_hseq G = max_var_p_hseq H.
-Proof.
-  intros G H Hperm.
-  induction Hperm; simpl; lia.
-Qed.
-
-Lemma max_var_p_seq_perm : forall T1 T2,
-    Permutation_Type T1 T2 ->
-    max_var_p_seq T1 = max_var_p_seq T2.
-Proof.
-  intros T1 T2 Hperm; induction Hperm; simpl; try destruct x; try destruct y; try lia.
-Qed.
-
 Lemma nbVar_p_hseq_put_non_atomic_fst : forall G,
     fst (HR_complexity_p_hseq G) <> 0 ->
     nbVar_p_hseq (p_hseq_put_non_atomic_fst G) = nbVar_p_hseq G.
@@ -744,34 +656,6 @@ Proof.
   rewrite Permutation_Type_length with _ G (p_hseq_p_seq_max_complexity G :: p_hseq_without_max_complexity G); try reflexivity.
   apply p_hseq_put_max_complexity_fst.
   intros Hnil; destruct G; inversion Hnil; contradiction.
-Qed.
-
-Lemma nbMin_p_seq_perm : forall T1 T2,
-    Permutation_Type T1 T2 ->
-    nbMin_p_seq T1 = nbMin_p_seq T2.
-Proof.
-  intros T1 T2 Hperm; induction Hperm; simpl; lia.
-Qed.
-
-Lemma nbMax_p_seq_perm : forall T1 T2,
-    Permutation_Type T1 T2 ->
-    nbMax_p_seq T1 = nbMax_p_seq T2.
-Proof.
-  intros T1 T2 Hperm; induction Hperm; simpl; lia.
-Qed.
-
-Lemma nbMin_p_hseq_perm : forall G H,
-    Permutation_Type G H ->
-    nbMin_p_hseq G = nbMin_p_hseq H.
-Proof.
-  intros G H Hperm; induction Hperm; simpl; try lia.
-Qed.
-
-Lemma nbMax_p_hseq_perm : forall G H,
-    Permutation_Type G H ->
-    nbMax_p_hseq G = nbMax_p_hseq H.
-Proof.
-  intros G H Hperm; induction Hperm; simpl; try lia.
 Qed.
 
 Lemma nbMin_p_hseq_put_non_atomic_fst : forall G,
@@ -1053,146 +937,7 @@ Proof.
           try apply Nat.mul_le_mono; try apply pow2_le_mono; lia.
 Qed.
 
-Lemma le_1_pow2 : forall x, 1 <= 2^x.
-Proof.
-  induction x; simpl; try lia.
-Qed.
-
-Lemma id_le_pow2 : forall x, x <= 2^x.
-Proof.
-  induction x; simpl; try lia.
-  assert (H := le_1_pow2 x); lia.
-Qed.
-
-Lemma le_pow2_add : forall x y, x <> 0 -> y <> 0 ->2^x + 2^y <= 2^(x + y).
-Proof.
-  induction x; intros y Hxn0; simpl; try lia.
-  destruct x.
-  - clear.
-    induction y; simpl; try lia.
-    intros Hyn0.
-    destruct y; simpl; try lia.
-    simpl in *.
-    assert (S y <> 0) by auto.
-    specialize (IHy H).
-    lia.
-  - assert (S x <> 0) by auto.
-    intros Hyn0.
-    specialize (IHx y H Hyn0).
-    lia.
-Qed.
-
-Lemma le_nbMin_nb_op_term : forall A,
-    nbMin_term A <= nb_operator A.
-Proof.
-  induction A; simpl; lia.
-Qed.
-
-Lemma le_nbMax_nb_op_term : forall A,
-    nbMax_term A <= nb_operator A.
-Proof.
-  induction A; simpl; lia.
-Qed.
-
-Lemma le_nbMin_nb_op_p_seq : forall T,
-    nbMin_p_seq T <= nb_op_p_seq T.
-Proof.
-  induction T; simpl; try lia.
-  destruct a as [a A].
-  destruct A; simpl; try (assert (H := le_nbMin_nb_op_term A));
-    try (assert (H1 := le_nbMin_nb_op_term A1));
-    try (assert (H2 := le_nbMin_nb_op_term A2)); lia.
-Qed.
-
-Lemma le_nbMax_nb_op_p_seq : forall T,
-    nbMax_p_seq T <= nb_op_p_seq T.
-Proof.
-  induction T; simpl; try lia.
-  destruct a as [a A].
-  destruct A; simpl; try (assert (H := le_nbMax_nb_op_term A));
-    try (assert (H1 := le_nbMax_nb_op_term A1));
-    try (assert (H2 := le_nbMax_nb_op_term A2)); lia.
-Qed.
-
-Lemma le_nbMax_nbMin_nb_op_term : forall A,
-    nbMax_term A + nbMin_term A <= nb_operator A.
-Proof.
-  induction A; simpl; lia.
-Qed.
-
-Lemma le_nbMax_nbMin_nb_op_p_seq : forall T,
-    nbMax_p_seq T + nbMin_p_seq T <= nb_op_p_seq T.
-Proof.
-  induction T; simpl; try lia.
-  destruct a as [a A].
-  destruct A; simpl; try (assert (H := le_nbMax_nbMin_nb_op_term A));
-    try (assert (H1 := le_nbMax_nbMin_nb_op_term A1));
-    try (assert (H2 := le_nbMax_nbMin_nb_op_term A2));try lia.
-Qed.
-  
-Lemma le_nbMin_nb_op_p_hseq : forall G,
-    G <> nil ->
-    nbMin_p_hseq G <= pow2 (nb_op_p_hseq G + nb_p_seq G).
-Proof.
-  induction G; simpl; try lia; intros _.
-  assert (Hmin := le_nbMin_nb_op_p_seq a).
-  assert (Hmax := le_nbMax_nb_op_p_seq a).
-  assert (Hmax_min := le_nbMax_nbMin_nb_op_p_seq a).
-  case_eq (nb_op_p_seq a =? 0); intros H; (apply Nat.eqb_eq in H + apply Nat.eqb_neq in H).
-  { replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (S (nb_op_p_hseq G + nb_p_seq G)) by lia.
-    rewrite pow2_S.
-    destruct G; try (simpl; lia).
-    assert (p :: G <> nil) by (intros H'; inversion H').
-    specialize (IHG H0).
-    lia. }
-  etransitivity; [ apply Nat.add_le_mono;
-                   [ apply Nat.mul_le_mono; [ reflexivity | apply id_le_pow2 ]
-                   | ] | ].
-  { destruct G.
-    apply (Nat.le_0_l (pow2 (nb_op_p_hseq nil + nb_p_seq nil))).
-    apply IHG.
-    intros H'; inversion H'. }
-  unfold pow2; rewrite <-Nat.pow_add_r.
-  replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (nb_op_p_seq a + S (nb_op_p_hseq G + nb_p_seq G)) by lia.
-  etransitivity; [ | apply le_pow2_add; lia].
-  apply Nat.add_le_mono; apply pow2_le_mono; lia.
-Qed.
-
-Lemma le_nbMax_nb_op_p_hseq : forall G,
-    G <> nil ->
-    nbMax_p_hseq G <= pow2 (nb_op_p_hseq G + nb_p_seq G).
-Proof.
-  induction G; simpl; try lia.
-  assert (Hmin := le_nbMin_nb_op_p_seq a).
-  assert (Hmax := le_nbMax_nb_op_p_seq a).
-  assert (Hmax_min := le_nbMax_nbMin_nb_op_p_seq a).
-  case_eq (nb_op_p_seq a =? 0); intros H; (apply Nat.eqb_eq in H + apply Nat.eqb_neq in H).
-  { intros _.
-    replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (S (nb_op_p_hseq G + nb_p_seq G)) by lia.
-    rewrite pow2_S.
-    destruct G.
-    { replace (nbMax_p_seq a) with 0 by lia.
-      simpl; lia. }
-    assert (p :: G <> nil) by (intros H'; inversion H').
-    specialize (IHG H0).
-    replace (nbMax_p_seq a) with 0 by lia.
-    change (pow2 0) with 1.
-    assert (H' := le_1_pow2 (nb_op_p_hseq (p :: G) + nb_p_seq (p :: G))).
-    unfold Nat.mul; fold Nat.mul.
-    unfold pow2.
-    rewrite Nat.add_0_r.
-    apply Nat.add_le_mono; assumption. }
-  intros _.
-  replace (nb_op_p_seq a + nb_op_p_hseq G + S (nb_p_seq G)) with (nb_op_p_seq a + S (nb_op_p_hseq G + nb_p_seq G)) by lia.
-  etransitivity; [ | apply le_pow2_add; lia].
-  apply Nat.add_le_mono; [apply pow2_le_mono; lia | ].
-  destruct G.
-  { simpl; lia. }
-  etransitivity ; [ apply IHG ; intros H'; inversion H' | ].
-  apply pow2_le_mono.
-  lia.
-Qed.
-
+(** Implementation of Lemma 3.44 *)
 Lemma degree_HR_dec_formula_simpl : forall G x Heqx p Heqp acc,
     degree_FOL_R_formula (HR_dec_formula_aux G x Heqx p Heqp acc)  <= 1 + degree_p_hseq G.
 Proof.

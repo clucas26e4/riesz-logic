@@ -1018,6 +1018,21 @@ Proof.
   lia.
 Qed.
 
+Lemma max_var_p_hseq_perm : forall G H,
+    Permutation_Type G H ->
+    max_var_p_hseq G = max_var_p_hseq H.
+Proof.
+  intros G H Hperm.
+  induction Hperm; simpl; lia.
+Qed.
+
+Lemma max_var_p_seq_perm : forall T1 T2,
+    Permutation_Type T1 T2 ->
+    max_var_p_seq T1 = max_var_p_seq T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; simpl; try destruct x; try destruct y; try lia.
+Qed.
+
 (** ** well defined *)
 Lemma p_seq_well_defined_perm : forall val T D,
     Permutation_Type T D ->

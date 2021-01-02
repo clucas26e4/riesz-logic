@@ -430,217 +430,9 @@ Proof.
   exfalso.
   apply not_In_inf_seq with (S (max_var_weight_p_hseq G)) (length L) x; try lia.
   apply Hin.
-Qed.  
-
-(* return a list of all non empty subsets of [0..n] *)
-Fixpoint make_subsets n :=
-  match n with
-  | 0%nat => nil
-  | S n => (n :: nil) :: (map (cons n) (make_subsets n)) ++ make_subsets n
-  end.
-
-Lemma cond_is_in_make_subsets : forall n l,
-    l <> nil ->
-    (forall i, nth i l 0 < n)%nat ->
-    (forall i j, (j < length l)%nat -> (i < j)%nat -> (nth i l 0 > nth j l 0)%nat) ->
-    In_inf l (make_subsets n).
-Proof.
-  induction n; intros l Hnnil Hle Hlt.
-  - specialize (Hle 0%nat).
-    exfalso; destruct l; inversion Hle.
-  - destruct l; [exfalso; apply Hnnil; reflexivity | ].
-    case_eq (n0 =? n); intros Heq.
-    + apply Nat.eqb_eq in Heq; subst.
-      destruct l.
-      * left; reflexivity.
-      * right.
-        apply in_inf_or_app; left.
-        apply in_inf_map_cons.
-        apply IHn.
-        -- intros H'; inversion H'.
-        -- intros i.
-           case_eq (i <? length (n0 :: l))%nat; intros H.
-           ++ specialize (Hlt 0%nat (S i)).
-              simpl in Hlt.
-              change (match i with
-                      | 0 => n0
-                      | S m => nth m l 0
-                      end)%nat with (nth i (n0 :: l) 0)%nat in Hlt.
-              apply Nat.ltb_lt in H; simpl in H.
-              lia.
-           ++ apply Nat.ltb_nlt in H.
-              rewrite nth_overflow ; destruct n; try lia.
-              exfalso.
-              specialize (Hlt 0 1)%nat.
-              simpl in Hlt; lia.
-        -- intros i j Hlen' Hlt'.
-           assert (H' := Hlt (S i) (S j)).
-           change (nth (S i) (S n :: n0 :: l) 0%nat) with (nth i (n0 :: l) 0%nat) in *.
-           change (nth (S j) (S n :: n0 :: l) 0)%nat with (nth j (n0 :: l) 0%nat) in *.
-           apply H'; simpl in *; lia.
-    + right; apply in_inf_or_app; right.
-      apply IHn.
-      -- intros H'; inversion H'.
-      -- intros i.
-         destruct i; [ specialize (Hle 0%nat); apply Nat.eqb_neq in Heq; simpl in *; lia | ].
-         case_eq (S i <? length (n0 :: l))%nat; intros H; [ apply Nat.ltb_lt in H | apply Nat.ltb_nlt in H].
-         ++ specialize (Hle i).
-            specialize (Hlt i (S i)).
-            lia.
-         ++ rewrite nth_overflow; destruct n; try lia.
-            destruct n0; inversion Heq.
-            specialize (Hle 0)%nat.
-            simpl in Hle; lia.
-      -- intros i j Hlen' Hlt'.
-         specialize (Hle j); specialize (Hlt i j).
-         apply Hlt; lia.
 Qed.
 
-Lemma cond_is_in_make_subsets_inv : forall n l,
-    In_inf l (make_subsets n) ->
-    (l <> nil) * (forall i, nth i l 0 < n)%nat * (forall i j, (j < length l)%nat -> (i < j)%nat -> (nth i l 0 > nth j l 0)%nat).
-Proof.
-  induction n; intros l; [ intros Hin | intros [Heq | Hin]].
-  - inversion Hin.
-  - destruct l; [ | destruct l]; inversion Heq; subst.
-    repeat split.
-    + intros H; inversion H.
-    + intros i; destruct i; [ | destruct i]; simpl; lia.
-    + intros i j Hlen Hlt.
-      destruct j ; [inversion Hlt | ].
-      destruct j; try now inversion Hlen.
-  - destruct (in_inf_app_or _ _ _ Hin).
-    + destruct (in_inf_map_cons_inv _ _ _ _ i) as [l' [Heq Hin']]; subst.
-      destruct (IHn l' Hin') as [[Hnnil Hlen] Hlt].
-      clear i Hin.
-      repeat split.
-      * intros H; inversion H.
-      * intros i.
-        destruct i.
-        -- simpl; lia.
-        -- specialize (Hlen i).
-           simpl.
-           lia.
-      * intros i j Hlen' Hlt'.
-        destruct j; try now inversion Hlt'.
-        change (nth (S j) (S n :: l') 0)%nat with (nth j l' 0)%nat.
-        destruct i.
-        -- simpl.
-           specialize (Hlen j).
-           lia.
-        -- change (nth (S i) (S n :: l') 0)%nat with (nth i l' 0)%nat.
-           apply Hlt; simpl in *; lia.
-    + specialize (IHn l i).
-      clear Hin i.
-      destruct IHn as [[Hnil Hlen] Hlt].
-      repeat split; auto.
-      intro i; specialize (Hlen i); lia.
-Qed.    
-    
-(* return the complementary list of v *)
-Fixpoint complementary (v : list nat) n :=
-  match v with
-  | nil => seq 0%nat n
-  | i :: v => remove (Nat.eq_dec) i (complementary v n)
-  end.
-
-Lemma In_inf_complementary : forall v n i,
-    In_inf i v ->
-    In_inf i (complementary v n) ->
-    False.
-Proof.
-  induction v; intros n i Hin1 Hin2; [ inversion Hin1 | ].
-  simpl in Hin2.
-  case_eq (i =? a); intros H.
-  - apply Nat.eqb_eq in H; subst.
-    apply In_inf_remove_not in Hin2.
-    apply Hin2.
-  - inversion Hin1; [ apply Nat.eqb_neq in H; lia | ].
-    apply IHv with n i; auto.
-    apply In_inf_remove_In_inf in Hin2.
-    apply Hin2.
-Qed.
-
-Lemma In_inf_complementary_inv : forall v n i,
-    (i < n)%nat ->
-    (In_inf i (complementary v n) -> False) ->
-    In_inf i v.
-Proof.
-  induction v; intros n i Hlt H.
-  - exfalso; apply H.
-    replace i with (i + 0)%nat by lia.
-    apply In_inf_seq.
-    apply Hlt.
-  - simpl in *.
-    case_eq (a =? i); intros Heq.
-    + left.
-      apply Nat.eqb_eq in Heq; auto.
-    + right.
-      apply IHv with n; auto.
-      intros Hin.
-      apply H.
-      apply In_inf_remove_In_inf_inv.
-      apply Nat.eqb_neq in Heq; split; auto.    
-Qed.
-
-Lemma In_inf_complementary2 : forall v n i,
-    In_inf i (complementary v n) ->
-    In_inf i v ->
-    False.
-Proof.
-  induction v; intros n i Hin1 Hin2; [ inversion Hin2 | ].
-  simpl in Hin1.
-  case_eq (i =? a); intros H.
-  - apply Nat.eqb_eq in H; subst.
-    apply In_inf_remove_not in Hin1.
-    apply Hin1.
-  - inversion Hin2; [ apply Nat.eqb_neq in H; lia | ].
-    apply IHv with n i; auto.
-    apply In_inf_remove_In_inf in Hin1.
-    apply Hin1.
-Qed.
-
-Lemma In_inf_complementary2_inv : forall v n i,
-    (i < n)%nat ->
-    (In_inf i v -> False) ->
-    In_inf i (complementary v n).
-Proof.
-  induction v; intros n i Hlt H.
-  - replace i with (i + 0)%nat by lia.
-    apply In_inf_seq.
-    apply Hlt.
-  - simpl in *.
-    case_eq (a =? i); intros Heq.
-    + exfalso; apply H; left; apply Nat.eqb_eq; apply Heq.
-    + apply In_inf_remove_In_inf_inv.
-      apply Nat.eqb_neq in Heq; split; auto.    
-Qed.
-
-Lemma complementary_partition : forall v n i,
-    (i < n)%nat ->
-    (In_inf i v) + (In_inf i (complementary v n)).
-Proof.
-  intros v n i Hlt.
-  assert (Hin := in_inf_dec Nat.eq_dec i v).
-  inversion Hin.
-  - left; apply X.
-  - right.
-    apply In_inf_complementary2_inv; auto.
-Qed.  
-  
-Lemma In_inf_complementary_lt : forall L n i,
-    In_inf i (complementary L n) ->
-    (i < n)%nat.
-Proof.
-  induction L; intros n i Hin.
-  - simpl complementary in Hin.
-    replace n with (0 + n)%nat by lia.
-    apply In_inf_seq_lt.
-    apply Hin.
-  - simpl in Hin.
-    apply In_inf_remove_In_inf in Hin as [Hneq Hin].
-    apply IHL; auto.
-Qed.
+(* Put non basic formula first, i.e., G in the form H | |- T, r.A with A non basic. *)
 
 Fixpoint p_seq_fst_non_atomic_term (T : p_sequent) : (FOL_R_term * term) :=
   match T with
@@ -1540,6 +1332,8 @@ Qed.
 Definition FOL_R_atomic_case G  :=
   FOL_R_atomic_case_aux G (map (@rev nat) (make_subsets (length G))).
 
+
+(* auxiliary functions used to help Coq understands they terminate *)
 Fixpoint HR_dec_formula_aux (G : p_hypersequent) (x: nat) (Heqx : fst (HR_complexity_p_hseq G) = x) p (Heqp : apply_logical_rule_on_p_hypersequent (p_hseq_put_non_atomic_fst G) = p) (acc : Acc lt_nat2 (HR_complexity_p_hseq G)) : FOL_R_formula.
   - destruct acc as [acc].
     destruct x.
@@ -1808,117 +1602,146 @@ Lemma FOL_R_atomic_case_1
       val
       (G : p_hypersequent)
       (Hwd : p_hseq_well_defined val G)
-      (Hb : p_hseq_is_atomic G)
-      (pi : HR_T (map (eval_p_sequent val) G)) :
+      (Hb : p_hseq_is_atomic G) :
+  HR_T (map (eval_p_sequent val) G) ->
   FOL_R_formula_sem val (FOL_R_atomic_case G).
 Proof.
-  -  unfold FOL_R_atomic_case.
-     apply cond_FOL_R_atomic_case_aux_formula_sem.
-     apply HR_le_frag with _ (hr_frag_T_M) _ in pi ; [ | repeat split; auto].
-     assert (hseq_is_atomic (map (eval_p_sequent val) G)) as Hat.
-     { apply p_hseq_atomic_hseq_atomic.
-       apply Hb. }
-     destruct (lambda_prop _ Hat pi) as [L [Hlen [[Hex Hall] Hsum]]].
-     split with (pos_indexes L).
-     { rewrite<- (rev_involutive (pos_indexes L)).
-       apply in_inf_map.
-       apply cond_is_in_make_subsets.
-       - apply rev_not_nil.
-         clear - Hex.
-         induction L; [inversion Hex | ].
-         inversion Hex; subst.
-         + apply R_blt_lt in H0.
-           simpl; rewrite H0.
-           intros H; inversion H.
-         + case_eq (0 <? a); intros H; [ simpl; rewrite H; intros H'; inversion H' | ].
-           simpl; rewrite H.
-           intros H'; apply map_eq_nil in H'.
-           apply IHL; assumption.
-       - intros i.
-         apply rev_nth_all_lt.
-         clear i.
-         intros i.
-         case_eq (i <? length (pos_indexes L))%nat.
-         + intros Hlt; apply Nat.ltb_lt in Hlt.
-           apply Forall_inf_nth; try assumption.
-           rewrite map_length in Hlen.
-           rewrite <- Hlen.
-           apply pos_indexes_Forall_inf.
-         + intros Hlt; apply Nat.ltb_nlt in Hlt; rewrite nth_overflow; destruct G; simpl; try lia.
-           apply HR_not_empty in pi.
-           exfalso; auto.            
-       - intros i j Hlen' Hlt'.
-         apply rev_reverse_order_lt; try lia.
-         apply pos_indexes_order. }
-     apply cond_FOL_R_exists_phi_formula_sem.
-     split with L.
-     split; [ rewrite map_length in Hlen; apply Hlen | ].
-     repeat split.
-     * apply cond_FOL_R_all_zero_formula_sem.
-       intros n Hin.
-       rewrite map_length in Hlen; rewrite <- Hlen.
-       rewrite upd_val_vec_eq.
-       enough (nth n L (val (S (max_var_weight_p_hseq G) + n)%nat) <= 0).
-       { apply Forall_inf_nth with _ _ _ n (val ((S (max_var_weight_p_hseq G)) + n)%nat) in Hall; [ lra | ].
-         apply In_inf_complementary_lt with (pos_indexes L).
-         rewrite <- Hlen in Hin.
-         apply Hin. }
-       rewrite nth_indep with _ _ _ _ 0.
-       2:{ apply In_inf_complementary_lt with (pos_indexes L).
-           rewrite <- Hlen in Hin.
-           apply Hin. }
-       apply pos_indexes_not_In_inf.
-       -- apply In_inf_complementary_lt with (pos_indexes L).
-          rewrite <- Hlen in Hin.
-          apply Hin.
-       -- intros H'.
-          apply In_inf_complementary in Hin; auto.
-     * apply cond_FOL_R_all_gtz_formula_sem.
-       intros n Hin.
-       change (list (prod Rpos term)) with sequent.
-       rewrite map_length in Hlen; rewrite <- Hlen.
-       rewrite upd_val_vec_eq.
-       assert (n < length L)%nat as Hlt.
-       { apply (@Forall_inf_forall _ (fun x => x < length L)%nat) with (pos_indexes L); [ apply pos_indexes_Forall_inf | ].
-         apply Hin. }
-       rewrite nth_indep with _ _ _ _ 0; auto.
-       apply pos_indexes_nth.
-       apply Hin.        
-     * apply cond_FOL_R_all_atoms_eq_formula_sem.
-       intros n Hlen'.
-       rewrite map_length in Hlen; rewrite <- Hlen.
-       simpl.
-       specialize (Hsum n).
-       rewrite sum_weight_with_coeff_eq_var_covar in Hsum.
-       rewrite (sum_weight_with_coeff_eval_eq val n G L) in Hsum.
-       lra.
+  intros pi.
+  unfold FOL_R_atomic_case.
+  apply cond_FOL_R_atomic_case_aux_formula_sem.
+  apply HR_le_frag with _ (hr_frag_T_M) _ in pi ; [ | repeat split; auto].
+  assert (hseq_is_atomic (map (eval_p_sequent val) G)) as Hat.
+  { apply p_hseq_atomic_hseq_atomic.
+    apply Hb. }
+  destruct (lambda_prop _ Hat pi) as [L [Hlen [[Hex Hall] Hsum]]].
+  split with (pos_indexes L).
+  { rewrite<- (rev_involutive (pos_indexes L)).
+    apply in_inf_map.
+    apply cond_is_in_make_subsets.
+    - apply rev_not_nil.
+      clear - Hex.
+      induction L; [inversion Hex | ].
+      inversion Hex; subst.
+      + apply R_blt_lt in H0.
+        simpl; rewrite H0.
+        intros H; inversion H.
+      + case_eq (0 <? a); intros H; [ simpl; rewrite H; intros H'; inversion H' | ].
+        simpl; rewrite H.
+        intros H'; apply map_eq_nil in H'.
+        apply IHL; assumption.
+    - intros i.
+      apply rev_nth_all_lt.
+      clear i.
+      intros i.
+      case_eq (i <? length (pos_indexes L))%nat.
+      + intros Hlt; apply Nat.ltb_lt in Hlt.
+        apply Forall_inf_nth; try assumption.
+        rewrite map_length in Hlen.
+        rewrite <- Hlen.
+        apply pos_indexes_Forall_inf.
+      + intros Hlt; apply Nat.ltb_nlt in Hlt; rewrite nth_overflow; destruct G; simpl; try lia.
+        apply HR_not_empty in pi.
+        exfalso; auto.            
+    - intros i j Hlen' Hlt'.
+      apply rev_reverse_order_lt; try lia.
+      apply pos_indexes_order. }
+  apply cond_FOL_R_exists_phi_formula_sem.
+  split with L.
+  split; [ rewrite map_length in Hlen; apply Hlen | ].
+  repeat split.
+  - apply cond_FOL_R_all_zero_formula_sem.
+    intros n Hin.
+    rewrite map_length in Hlen; rewrite <- Hlen.
+    rewrite upd_val_vec_eq.
+    enough (nth n L (val (S (max_var_weight_p_hseq G) + n)%nat) <= 0).
+    { apply Forall_inf_nth with _ _ _ n (val ((S (max_var_weight_p_hseq G)) + n)%nat) in Hall; [ lra | ].
+      apply In_inf_complementary_lt with (pos_indexes L).
+      rewrite <- Hlen in Hin.
+      apply Hin. }
+    rewrite nth_indep with _ _ _ _ 0.
+    2:{ apply In_inf_complementary_lt with (pos_indexes L).
+        rewrite <- Hlen in Hin.
+        apply Hin. }
+    apply pos_indexes_not_In_inf.
+    -- apply In_inf_complementary_lt with (pos_indexes L).
+       rewrite <- Hlen in Hin.
+       apply Hin.
+    -- intros H'.
+       apply In_inf_complementary in Hin; auto.
+  - apply cond_FOL_R_all_gtz_formula_sem.
+    intros n Hin.
+    change (list (prod Rpos term)) with sequent.
+    rewrite map_length in Hlen; rewrite <- Hlen.
+    rewrite upd_val_vec_eq.
+    assert (n < length L)%nat as Hlt.
+    { apply (@Forall_inf_forall _ (fun x => x < length L)%nat) with (pos_indexes L); [ apply pos_indexes_Forall_inf | ].
+      apply Hin. }
+    rewrite nth_indep with _ _ _ _ 0; auto.
+    apply pos_indexes_nth.
+    apply Hin.        
+  - apply cond_FOL_R_all_atoms_eq_formula_sem.
+    intros n Hlen'.
+    rewrite map_length in Hlen; rewrite <- Hlen.
+    simpl.
+    specialize (Hsum n).
+    rewrite sum_weight_with_coeff_eq_var_covar in Hsum.
+    rewrite (sum_weight_with_coeff_eval_eq val n G L) in Hsum.
+    lra.
 Qed.
 
 Fixpoint HR_dec_formula_1
        val
        (G : p_hypersequent)
        (Hwd : p_hseq_well_defined val G)
-       (pi : HR_T (map (eval_p_sequent val) G))
        (acc : Acc lt_nat2 (HR_complexity_p_hseq G)) :
-       FOL_R_formula_sem val (HR_dec_formula G).
+  HR_T (map (eval_p_sequent val) G) ->
+  FOL_R_formula_sem val (HR_dec_formula G).
 Proof.
-  - destruct acc as [acc].
-    remember (fst (HR_complexity_p_hseq G)).
-    destruct n;
-      [ |
-        remember (apply_logical_rule_on_p_hypersequent (p_hseq_put_non_atomic_fst G)) ].
-    + apply cond_HR_dec_formula_atomic; auto.
-      apply FOL_R_atomic_case_1; auto.
-      apply p_hseq_is_atomic_complexity_0_inv.
-      auto.
-    + destruct s as [G1 | [G1 G2] ].
-      * apply (cond_HR_dec_formula_inl val G n (eq_sym Heqn) G1 (eq_sym Heqs)).
-        refine (HR_dec_formula_1 val G1 _ _ _).
-        -- eapply apply_logical_rule_on_p_hypersequent_inl_well_defined; [ symmetry; apply Heqs | ].
+  intros pi.
+  destruct acc as [acc].
+  remember (fst (HR_complexity_p_hseq G)).
+  destruct n;
+    [ |
+      remember (apply_logical_rule_on_p_hypersequent (p_hseq_put_non_atomic_fst G)) ].
+  - apply cond_HR_dec_formula_atomic; auto.
+    apply FOL_R_atomic_case_1; auto.
+    apply p_hseq_is_atomic_complexity_0_inv.
+    auto.
+  - destruct s as [G1 | [G1 G2] ].
+    + apply (cond_HR_dec_formula_inl val G n (eq_sym Heqn) G1 (eq_sym Heqs)).
+      refine (HR_dec_formula_1 val G1 _ _ _).
+      * eapply apply_logical_rule_on_p_hypersequent_inl_well_defined; [ symmetry; apply Heqs | ].
+        apply p_hseq_put_non_atomic_fst_well_defined; auto.
+        simpl in Heqn; rewrite <- Heqn; lia.
+      * apply acc.
+        apply (apply_logical_rule_on_p_hypersequent_correct_inl G G1 n (eq_sym Heqn) (eq_sym Heqs)).
+      * apply hrr_M_elim.
+        eapply apply_logical_rule_on_p_hypersequent_inl_HR; [ symmetry; apply Heqs | | ].
+        -- apply p_hseq_put_non_atomic_fst_well_defined; auto.
+           simpl in Heqn; rewrite <- Heqn; lia.
+        -- unfold p_hseq_put_non_atomic_fst.
+           rewrite map_cons.
+           apply hrr_ex_seq with (eval_p_sequent val (p_hseq_p_seq_max_complexity G)).
+           { apply Permutation_Type_eval_p_sequent.
+             apply p_seq_put_non_atomic_fst.
+             intros H.
+             apply p_seq_is_atomic_complexity_0 in H.
+             rewrite p_hseq_p_seq_max_complexity_correct in H.
+             simpl in *; lia. }
+           apply hrr_ex_hseq with (map (eval_p_sequent val) G); auto ; [ | eapply HR_le_frag ; [ | apply pi]; repeat split; auto ].
+           rewrite <- map_cons.
+           apply Permutation_Type_map.
+           apply p_hseq_put_max_complexity_fst.
+           intros H; rewrite H in Heqn; inversion Heqn.
+    + apply (cond_HR_dec_formula_inr val G n (eq_sym Heqn) G1 G2 (eq_sym Heqs)).
+      * refine (HR_dec_formula_1 val G1 _ _ _).
+        -- eapply apply_logical_rule_on_p_hypersequent_inr_l_well_defined; [ symmetry; apply Heqs | ].
            apply p_hseq_put_non_atomic_fst_well_defined; auto.
            simpl in Heqn; rewrite <- Heqn; lia.
+        -- apply acc.
+           apply (apply_logical_rule_on_p_hypersequent_correct_inr_l G G1 G2 n (eq_sym Heqn) (eq_sym Heqs)).
         -- apply hrr_M_elim.
-           eapply apply_logical_rule_on_p_hypersequent_inl_HR; [ symmetry; apply Heqs | | ].
+           eapply apply_logical_rule_on_p_hypersequent_inr_l_HR; [ symmetry; apply Heqs | | ].
            ++ apply p_hseq_put_non_atomic_fst_well_defined; auto.
               simpl in Heqn; rewrite <- Heqn; lia.
            ++ unfold p_hseq_put_non_atomic_fst.
@@ -1935,67 +1758,41 @@ Proof.
               apply Permutation_Type_map.
               apply p_hseq_put_max_complexity_fst.
               intros H; rewrite H in Heqn; inversion Heqn.
+      * refine (HR_dec_formula_1 val G2 _ _ _).
+        -- eapply apply_logical_rule_on_p_hypersequent_inr_r_well_defined; [ symmetry; apply Heqs | ].
+           apply p_hseq_put_non_atomic_fst_well_defined; auto.
+           simpl in Heqn; rewrite <- Heqn; lia.
         -- apply acc.
-           apply (apply_logical_rule_on_p_hypersequent_correct_inl G G1 n (eq_sym Heqn) (eq_sym Heqs)).
-      * apply (cond_HR_dec_formula_inr val G n (eq_sym Heqn) G1 G2 (eq_sym Heqs)).
-        -- refine (HR_dec_formula_1 val G1 _ _ _).
-           ++ eapply apply_logical_rule_on_p_hypersequent_inr_l_well_defined; [ symmetry; apply Heqs | ].
-              apply p_hseq_put_non_atomic_fst_well_defined; auto.
+           apply (apply_logical_rule_on_p_hypersequent_correct_inr_r G G1 G2 n (eq_sym Heqn) (eq_sym Heqs)).
+        -- apply hrr_M_elim.
+           eapply apply_logical_rule_on_p_hypersequent_inr_r_HR; [ symmetry; apply Heqs | | ].
+           ++ apply p_hseq_put_non_atomic_fst_well_defined; auto.
               simpl in Heqn; rewrite <- Heqn; lia.
-           ++ apply hrr_M_elim.
-              eapply apply_logical_rule_on_p_hypersequent_inr_l_HR; [ symmetry; apply Heqs | | ].
-              ** apply p_hseq_put_non_atomic_fst_well_defined; auto.
-                 simpl in Heqn; rewrite <- Heqn; lia.
-              ** unfold p_hseq_put_non_atomic_fst.
-                 rewrite map_cons.
-                 apply hrr_ex_seq with (eval_p_sequent val (p_hseq_p_seq_max_complexity G)).
-                 { apply Permutation_Type_eval_p_sequent.
-                   apply p_seq_put_non_atomic_fst.
-                   intros H.
-                   apply p_seq_is_atomic_complexity_0 in H.
-                   rewrite p_hseq_p_seq_max_complexity_correct in H.
-                   simpl in *; lia. }
-                 apply hrr_ex_hseq with (map (eval_p_sequent val) G); auto ; [ | eapply HR_le_frag ; [ | apply pi]; repeat split; auto ].
-                 rewrite <- map_cons.
-                 apply Permutation_Type_map.
-                 apply p_hseq_put_max_complexity_fst.
-                 intros H; rewrite H in Heqn; inversion Heqn.
-           ++ apply acc.
-              apply (apply_logical_rule_on_p_hypersequent_correct_inr_l G G1 G2 n (eq_sym Heqn) (eq_sym Heqs)).
-        -- refine (HR_dec_formula_1 val G2 _ _ _).
-           ++ eapply apply_logical_rule_on_p_hypersequent_inr_r_well_defined; [ symmetry; apply Heqs | ].
-              apply p_hseq_put_non_atomic_fst_well_defined; auto.
-              simpl in Heqn; rewrite <- Heqn; lia.
-           ++ apply hrr_M_elim.
-              eapply apply_logical_rule_on_p_hypersequent_inr_r_HR; [ symmetry; apply Heqs | | ].
-              ** apply p_hseq_put_non_atomic_fst_well_defined; auto.
-                 simpl in Heqn; rewrite <- Heqn; lia.
-              ** unfold p_hseq_put_non_atomic_fst.
-                 rewrite map_cons.
-                 apply hrr_ex_seq with (eval_p_sequent val (p_hseq_p_seq_max_complexity G)).
-                 { apply Permutation_Type_eval_p_sequent.
-                   apply p_seq_put_non_atomic_fst.
-                   intros H.
-                   apply p_seq_is_atomic_complexity_0 in H.
-                   rewrite p_hseq_p_seq_max_complexity_correct in H.
-                   simpl in *; lia. }
-                 apply hrr_ex_hseq with (map (eval_p_sequent val) G); auto ; [ | eapply HR_le_frag ; [ | apply pi]; repeat split; auto ].
-                 rewrite <- map_cons.
-                 apply Permutation_Type_map.
-                 apply p_hseq_put_max_complexity_fst.
-                 intros H; rewrite H in Heqn; inversion Heqn.
-           ++ apply acc.
-              apply (apply_logical_rule_on_p_hypersequent_correct_inr_r G G1 G2 n (eq_sym Heqn) (eq_sym Heqs)).
+           ++ unfold p_hseq_put_non_atomic_fst.
+              rewrite map_cons.
+              apply hrr_ex_seq with (eval_p_sequent val (p_hseq_p_seq_max_complexity G)).
+              { apply Permutation_Type_eval_p_sequent.
+                apply p_seq_put_non_atomic_fst.
+                intros H.
+                apply p_seq_is_atomic_complexity_0 in H.
+                rewrite p_hseq_p_seq_max_complexity_correct in H.
+                simpl in *; lia. }
+              apply hrr_ex_hseq with (map (eval_p_sequent val) G); auto ; [ | eapply HR_le_frag ; [ | apply pi]; repeat split; auto ].
+              rewrite <- map_cons.
+              apply Permutation_Type_map.
+              apply p_hseq_put_max_complexity_fst.
+              intros H; rewrite H in Heqn; inversion Heqn.
 Qed.
 
 Lemma FOL_R_atomic_case_2
       val
       (G : p_hypersequent)
       (Hwd : p_hseq_well_defined val G)
-      (Hb : p_hseq_is_atomic G)
-      (Hf : FOL_R_formula_sem val (FOL_R_atomic_case G)) :
+      (Hb : p_hseq_is_atomic G) :
+  FOL_R_formula_sem val (FOL_R_atomic_case G) ->
   HR_T_M (map (eval_p_sequent val) G).
 Proof.
+  intros Hf.
   unfold FOL_R_atomic_case in Hf.
   apply cond_FOL_R_atomic_case_aux_formula_sem_inv in Hf as [v Hin f].
   apply cond_FOL_R_exists_phi_formula_sem_inv in f as [vr [Hlen f]].
@@ -2067,59 +1864,60 @@ Fixpoint HR_dec_formula_2
          val
          (G : p_hypersequent)
          (Hwd : p_hseq_well_defined val G)
-         (Hf : FOL_R_formula_sem val (HR_dec_formula G))
          (acc : Acc lt_nat2 (HR_complexity_p_hseq G)) :
+  FOL_R_formula_sem val (HR_dec_formula G) ->
   HR_T_M (map (eval_p_sequent val) G).
 Proof.
-  - destruct acc as [acc].
-    remember (fst (HR_complexity_p_hseq G)).
-    destruct n.
-    { refine (FOL_R_atomic_case_2 val G Hwd _ _).
-      - apply p_hseq_is_atomic_complexity_0_inv.
-        simpl in Heqn; auto.
-      - apply cond_HR_dec_formula_atomic_inv in Hf; auto. }
-    apply hrr_ex_hseq with (eval_p_sequent val (p_hseq_p_seq_max_complexity G) :: map (eval_p_sequent val) (p_hseq_without_max_complexity G)).
-    { rewrite <- map_cons.
-      apply Permutation_Type_map.
-      symmetry; apply p_hseq_put_max_complexity_fst.
-      destruct G; [ inversion Heqn | intros H; inversion H]. }
-    apply hrr_ex_seq with (eval_p_sequent val (p_seq_fst_non_atomic_term (p_hseq_p_seq_max_complexity G) :: p_seq_without_fst_non_atomic_term (p_hseq_p_seq_max_complexity G))).
-    { apply Permutation_Type_eval_p_sequent.
-      symmetry; apply p_seq_put_non_atomic_fst.
-      intros Hb; apply p_seq_is_atomic_complexity_0 in Hb.
-      rewrite p_hseq_p_seq_max_complexity_correct in Hb.
-      simpl in *; lia. }
-    remember (apply_logical_rule_on_p_hypersequent (p_hseq_put_non_atomic_fst G)).
-    destruct s as [G1 | [G1 G2]].
-    + rewrite <- map_cons.
-      refine (apply_logical_rule_on_p_hypersequent_inl_HR_inv val _ G1 (eq_sym Heqs) _ _).
-      * apply p_hseq_put_non_atomic_fst_well_defined; auto.
+  intros Hf.
+  destruct acc as [acc].
+  remember (fst (HR_complexity_p_hseq G)).
+  destruct n.
+  { refine (FOL_R_atomic_case_2 val G Hwd _ _).
+    - apply p_hseq_is_atomic_complexity_0_inv.
+      simpl in Heqn; auto.
+    - apply cond_HR_dec_formula_atomic_inv in Hf; auto. }
+  apply hrr_ex_hseq with (eval_p_sequent val (p_hseq_p_seq_max_complexity G) :: map (eval_p_sequent val) (p_hseq_without_max_complexity G)).
+  { rewrite <- map_cons.
+    apply Permutation_Type_map.
+    symmetry; apply p_hseq_put_max_complexity_fst.
+    destruct G; [ inversion Heqn | intros H; inversion H]. }
+  apply hrr_ex_seq with (eval_p_sequent val (p_seq_fst_non_atomic_term (p_hseq_p_seq_max_complexity G) :: p_seq_without_fst_non_atomic_term (p_hseq_p_seq_max_complexity G))).
+  { apply Permutation_Type_eval_p_sequent.
+    symmetry; apply p_seq_put_non_atomic_fst.
+    intros Hb; apply p_seq_is_atomic_complexity_0 in Hb.
+    rewrite p_hseq_p_seq_max_complexity_correct in Hb.
+    simpl in *; lia. }
+  remember (apply_logical_rule_on_p_hypersequent (p_hseq_put_non_atomic_fst G)).
+  destruct s as [G1 | [G1 G2]].
+  - rewrite <- map_cons.
+    refine (apply_logical_rule_on_p_hypersequent_inl_HR_inv val _ G1 (eq_sym Heqs) _ _).
+    + apply p_hseq_put_non_atomic_fst_well_defined; auto.
+      simpl in Heqn; lia.
+    + refine (HR_dec_formula_2 val G1 _ _ _).
+      * apply apply_logical_rule_on_p_hypersequent_inl_well_defined with (p_hseq_put_non_atomic_fst G); auto.
+           apply p_hseq_put_non_atomic_fst_well_defined; auto.
+           simpl in Heqn; lia.
+      * apply acc.
+        apply apply_logical_rule_on_p_hypersequent_correct_inl with n; auto.
+      * apply (cond_HR_dec_formula_inl_inv val G n (eq_sym Heqn) G1) in Hf; auto.
+  - rewrite <- map_cons.
+    refine (apply_logical_rule_on_p_hypersequent_inr_HR_inv val _ G1 G2 (eq_sym Heqs) _ _ _).
+    + apply p_hseq_put_non_atomic_fst_well_defined; auto.
+      simpl in Heqn; lia.
+    + refine (HR_dec_formula_2 val G1 _ _ _).
+      * apply apply_logical_rule_on_p_hypersequent_inr_l_well_defined with (p_hseq_put_non_atomic_fst G) G2; auto.
+        apply p_hseq_put_non_atomic_fst_well_defined; auto.
         simpl in Heqn; lia.
-      * refine (HR_dec_formula_2 val G1 _ _ _).
-        -- apply apply_logical_rule_on_p_hypersequent_inl_well_defined with (p_hseq_put_non_atomic_fst G); auto.
-           apply p_hseq_put_non_atomic_fst_well_defined; auto.
-           simpl in Heqn; lia.
-        -- apply (cond_HR_dec_formula_inl_inv val G n (eq_sym Heqn) G1) in Hf; auto.
-        -- apply acc.
-           apply apply_logical_rule_on_p_hypersequent_correct_inl with n; auto.
-    + rewrite <- map_cons.
-      refine (apply_logical_rule_on_p_hypersequent_inr_HR_inv val _ G1 G2 (eq_sym Heqs) _ _ _).
-      * apply p_hseq_put_non_atomic_fst_well_defined; auto.
+      * apply acc.
+        apply apply_logical_rule_on_p_hypersequent_correct_inr_l with G2 n; auto.
+      * apply (cond_HR_dec_formula_inr_inv val G n (eq_sym Heqn) G1 G2) in Hf as [Hf1 _ ]; auto.
+    + refine (HR_dec_formula_2 val G2 _ _ _).
+      * apply apply_logical_rule_on_p_hypersequent_inr_r_well_defined with (p_hseq_put_non_atomic_fst G) G1; auto.
+        apply p_hseq_put_non_atomic_fst_well_defined; auto.
         simpl in Heqn; lia.
-      * refine (HR_dec_formula_2 val G1 _ _ _).
-        -- apply apply_logical_rule_on_p_hypersequent_inr_l_well_defined with (p_hseq_put_non_atomic_fst G) G2; auto.
-           apply p_hseq_put_non_atomic_fst_well_defined; auto.
-           simpl in Heqn; lia.
-        -- apply (cond_HR_dec_formula_inr_inv val G n (eq_sym Heqn) G1 G2) in Hf as [Hf1 _ ]; auto.
-        -- apply acc.
-           apply apply_logical_rule_on_p_hypersequent_correct_inr_l with G2 n; auto.
-      * refine (HR_dec_formula_2 val G2 _ _ _).
-        -- apply apply_logical_rule_on_p_hypersequent_inr_r_well_defined with (p_hseq_put_non_atomic_fst G) G1; auto.
-           apply p_hseq_put_non_atomic_fst_well_defined; auto.
-           simpl in Heqn; lia.
-        -- apply (cond_HR_dec_formula_inr_inv val G n (eq_sym Heqn) G1 G2) in Hf as [_ Hf2]; auto.
-        -- apply acc.
-           apply apply_logical_rule_on_p_hypersequent_correct_inr_r with G1 n; auto.
+      * apply acc.
+        apply apply_logical_rule_on_p_hypersequent_correct_inr_r with G1 n; auto.
+      * apply (cond_HR_dec_formula_inr_inv val G n (eq_sym Heqn) G1 G2) in Hf as [_ Hf2]; auto.
 Qed.
 
 (** there exists a formula \phi_G such that \phi_G(\vec r) has a proof if and only if G[\vec r /\vec x] has a proof *) 

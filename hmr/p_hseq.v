@@ -1084,6 +1084,66 @@ Proof.
   - apply IHG; assumption.
 Qed.
 
+Lemma p_seq_is_atomic_app : forall T1 T2,
+    p_seq_is_atomic T1 ->
+    p_seq_is_atomic T2 ->
+    p_seq_is_atomic (T1 ++ T2).
+Proof.
+  induction T1; intros T2 Hat1 Hat2; inversion Hat1; subst; auto.
+  simpl; apply Forall_inf_cons; auto.
+  apply IHT1; auto.
+Qed.
+
+Lemma p_seq_is_atomic_seq_mul : forall r T,
+    p_seq_is_atomic T ->
+    p_seq_is_atomic (seq_mul r T).
+Proof.
+  intros r; induction T; intros Hat; inversion Hat; subst; auto.
+  destruct a as [a A]; simpl; apply Forall_inf_cons; auto.
+  apply IHT.
+  apply X0.
+Qed.
+
+Lemma p_hseq_is_atomic_flat_map :
+  forall k G l,
+    p_hseq_is_atomic G ->
+    p_hseq_is_atomic (flat_map (fun i : nat => seq_mul (FOL_R_var (k + i)) (nth i G nil)) l :: nil).
+Proof.
+  intros k G l Hat; revert k; induction l; intros k; apply Forall_inf_cons; try apply Forall_inf_nil.
+  simpl.
+  apply p_seq_is_atomic_app.
+  - apply p_seq_is_atomic_seq_mul.
+    case_eq (a <? length G)%nat; intros H; (apply Nat.ltb_lt in H + apply Nat.ltb_nlt in H); [ | rewrite nth_overflow; try lia; apply Forall_inf_nil].
+    apply Forall_inf_forall with G; auto.
+    apply nth_In_inf; assumption.
+  - specialize (IHl k).
+    inversion IHl; assumption.
+Qed.
+
+Lemma p_seq_is_atomic_perm :
+  forall T1 T2,
+    Permutation_Type T1 T2 ->
+    p_seq_is_atomic T1 ->
+    p_seq_is_atomic T2.
+Proof.
+  intros T1 T2 Hperm; induction Hperm; intros Hat1; try destruct x; try destruct y; repeat apply Forall_inf_cons; try inversion Hat1; try inversion X0; subst; auto.
+  - apply IHHperm; apply Forall_inf_nil.
+  - apply IHHperm.
+    apply Forall_inf_cons; assumption.
+Qed.
+
+Lemma p_hseq_is_atomic_perm :
+  forall G1 G2,
+    Permutation_Type G1 G2 ->
+    p_hseq_is_atomic G1 ->
+    p_hseq_is_atomic G2.
+Proof.
+  intros G1 G2 Hperm; induction Hperm; intros Hat1; repeat apply Forall_inf_cons; try inversion Hat1; try inversion X0; subst; auto.
+  - apply IHHperm; apply Forall_inf_nil.
+  - apply IHHperm.
+    apply Forall_inf_cons; assumption.
+Qed.
+
 Lemma p_hseq_is_basic_complexity_0 :
   forall G,
     p_hseq_is_basic G ->
