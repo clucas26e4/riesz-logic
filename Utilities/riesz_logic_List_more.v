@@ -602,7 +602,17 @@ Proof.
       destruct IHn as [[Hnil Hlen] Hlt].
       repeat split; auto.
       intro i; specialize (Hlen i); lia.
-Qed.    
+Qed.
+
+Lemma Forall_inf_seq_gt : forall i j k,
+    k < i ->
+    Forall_inf (fun x => k < x) (seq i j).
+Proof.
+  intros i j; revert i; induction j; intros i k Hlt; [ apply Forall_inf_nil | ].
+  simpl; apply Forall_inf_cons; try assumption.
+  apply IHj.
+  lia.
+Qed.
     
 (* return the complementary list of v *)
 Fixpoint complementary (v : list nat) n :=
@@ -767,4 +777,40 @@ Proof.
       lia.
     + apply In_inf_complementary2_inv; assumption.
     + apply complementary_NoDup_inf.
+Qed.
+
+Fixpoint replace {A} (l : list A) (a : A) i :=
+  match l, i with
+  | nil, _ => nil
+  | l0 :: l, 0%nat => a :: l
+  | l0 :: l, S i => l0 :: (replace l a i)
+  end.
+
+Lemma replace_nth_neq {A} : forall (l : list A) a i j d,
+    i <> j ->
+    nth j (replace l a i) d = nth j l d.
+Proof.
+  induction l; intros a' i j d Hneq.
+  { destruct j; simpl; reflexivity. }
+  destruct i; destruct j; try contradiction; simpl; try reflexivity.
+  apply IHl.
+  lia.
+Qed.
+
+Lemma replace_nth_eq {A} : forall (l : list A) a i d,
+    (i < length l)%nat ->
+    nth i (replace l a i) d = a.
+Proof.
+  induction l; intros a' i d Hlt.
+  { simpl in Hlt; exfalso; lia. }
+  destruct i; simpl; try reflexivity.
+  apply IHl.
+  simpl in Hlt; lia.
+Qed.
+
+Lemma replace_length {A} : forall (l : list A) a i,
+    length (replace l a i) = length l.
+Proof.
+  induction l; intros a' i; destruct i; simpl; try reflexivity.
+  rewrite IHl; reflexivity.
 Qed.

@@ -16,6 +16,26 @@ Proof.
   case (Rle_dec b a); [intros Hle'; left; nra | intros Hnle; right; nra].
 Qed.
 
+Definition R_eqb (a b : R) :=
+  match Req_dec a b with
+  | left _ => true
+  | right _ => false
+  end.
+
+Lemma R_eqb_eq : forall a b, R_eqb a b = true -> a = b.
+Proof.
+  intros a b.
+  unfold R_eqb.
+  case (Req_dec a b); intros; now auto.
+Qed.
+
+Lemma R_eqb_neq : forall a b, R_eqb a b = false -> a <> b.
+Proof.
+  intros a b.
+  unfold R_eqb.
+  case (Req_dec a b); intros; now auto.
+Qed.
+
 Lemma INR_S_n_pos : forall n, 0 < INR (S n).
 Proof.
   intros n; rewrite S_INR; apply Rle_lt_0_plus_1.

@@ -14,25 +14,29 @@ Require Import RL.OLlibs.Permutation_Type.
 Require Import RL.OLlibs.Permutation_Type_more.
 Require Import RL.OLlibs.Permutation_Type_solve.
 
+Variable v0 v1 : term.V.
+
 (** F is a Riesz space term. *)
-Definition F := (((plus_pos One One) *S HMR_var 0) +S ((plus_pos One One) *S HMR_covar 1)) \/S (HMR_var 1 +S HMR_covar 0).
+Definition F := (((plus_pos One One) *S HMR_var v0) +S ((plus_pos One One) *S HMR_covar v1)) \/S (HMR_var v1 +S HMR_covar v0).
 
 (** A proof that F is positive using equational reasonning. The proof uses some lemmas defined in soundness, but the derived tree is actually quite big. *)
 Lemma F_is_pos : HMR_zero <== F.
 Proof.
   unfold F.
-  rewrite <- mul_distri_term.
-  rewrite leq_pos_max_mul_l_inv; auto.
-  rewrite commu_plus.
+  eapply leq_cong_r; [ symmetry; apply max_left; apply mul_distri_term | ].
+  apply leq_pos_max_mul_l_inv.
+  eapply leq_cong_r; [ apply max_right; apply commu_plus | ].
   apply zero_leq_abs.
 Qed.
 
-(** A proof that the sequent |- 1.F is derivable using the soundness of the HMR and the positivity of F. *)
-Lemma F_is_provable_from_soundness : HMR_full (((One, F) :: nil) :: nil).
+(** A proof that the sequent |- 1.F is derivable using the completeness of the HMR and the positivity of F. *)
+Lemma F_is_provable_from_completeness : HMR_full (((One, F) :: nil) :: nil).
 Proof.
   apply HMR_le_frag with hmr_frag_M_can; [ repeat split; auto | ].
   apply hmr_complete; [intros  H; inversion H | ].
-  simpl; rewrite mul_1; rewrite neutral_plus.
+  simpl.
+  eapply leq_cong_r; [ apply neutral_plus | ].
+  eapply leq_cong_r; [ apply mul_1 | ].
   apply F_is_pos.
 Qed.
 
@@ -55,7 +59,7 @@ Proof.
   apply hmrr_S.
   rewrite ? seq_mul_app.
   rewrite ? seq_mul_vec_mul_vec.
-  apply hmrr_ex_seq with (vec (time_pos (plus_pos One One) One :: nil) (HMR_covar 0) ++ vec (time_pos (plus_pos One One) One :: nil) (HMR_var 0) ++ vec (time_pos (plus_pos One One) One :: nil) (HMR_covar 1) ++ vec (time_pos (plus_pos One One) One :: nil) (HMR_var 1) ++ nil).
+  apply hmrr_ex_seq with (vec (time_pos (plus_pos One One) One :: nil) (HMR_covar v0) ++ vec (time_pos (plus_pos One One) One :: nil) (HMR_var v0) ++ vec (time_pos (plus_pos One One) One :: nil) (HMR_covar v1) ++ vec (time_pos (plus_pos One One) One :: nil) (HMR_var v1) ++ nil).
   { simpl.
     Permutation_Type_solve. }
   apply hmrr_ID ; [ reflexivity | ].
@@ -68,7 +72,8 @@ Lemma F_is_pos_from_soundness : HMR_zero <== F.
 Proof.
   apply leq_cong_r with (sem_hseq (((One, F) :: nil) :: nil)).
   { simpl.
-    rewrite mul_1; rewrite neutral_plus; reflexivity. }
+    etransitivity ; [ | symmetry ; apply neutral_plus ].
+    symmetry; apply mul_1. }
   apply hmr_sound with hmr_frag_full.
   apply F_is_provable.
 Qed.

@@ -17,8 +17,8 @@ Inductive context : Type :=
 | HMR_hole : context
 | HMR_cohole : context
 | HMR_TC : term -> context
-| HMR_varC : nat -> context
-| HMR_covarC : nat -> context
+| HMR_varC : term.V -> context
+| HMR_covarC : term.V -> context
 | HMR_zeroC : context
 | HMR_minC : context -> context -> context
 | HMR_maxC : context -> context -> context
@@ -231,7 +231,13 @@ Hint Resolve plus_left plus_right max_left max_right min_left min_right minus_co
 Lemma evalContext_cong : forall c t1 t2, t1 === t2 -> evalContext c t1 === evalContext c t2.
 Proof.
   induction c; simpl; auto.
-  all:intros t1 t2 eq; specialize (IHc1 t1 t2 eq); specialize (IHc2 t1 t2 eq); rewrite IHc1; now rewrite IHc2.
+  all:intros t1 t2 eq; specialize (IHc1 t1 t2 eq); specialize (IHc2 t1 t2 eq).
+  - etransitivity; [apply (@ctxt (HMR_minC HMR_hole (HMR_TC (evalContext c2 t1)))); apply IHc1 |]; simpl.
+    apply (@ctxt (HMR_minC (HMR_TC (evalContext c1 t2)) HMR_hole)); apply IHc2.
+  - etransitivity; [apply (@ctxt (HMR_maxC HMR_hole (HMR_TC (evalContext c2 t1)))); apply IHc1 |]; simpl.
+    apply (@ctxt (HMR_maxC (HMR_TC (evalContext c1 t2)) HMR_hole)); apply IHc2.
+  - etransitivity; [apply (@ctxt (HMR_plusC HMR_hole (HMR_TC (evalContext c2 t1)))); apply IHc1 |]; simpl.
+    apply (@ctxt (HMR_plusC (HMR_TC (evalContext c1 t2)) HMR_hole)); apply IHc2.
 Qed.
 
 Global Instance evalContext_cong_instance c : Proper (eqMALG ==> eqMALG) (evalContext c) | 10.
@@ -321,9 +327,11 @@ Qed.
 Hint Resolve max_min min_max : MGA_solver.
 
 Lemma leq_refl_cong : forall A B, ((A /\S A) /\S B) === A /\S B.
-Proof with auto with *.
+Proof with auto.
   intros A B.
   apply trans with (A /\S (A /\S B))...
+  apply max_min.
+  apply abso_max.
 Qed.
 
 Lemma leq_refl : forall A , A /\S A === A.
@@ -858,9 +866,9 @@ Proof with auto with MGA_solver.
       { apply trans with ((time_pos (inv_pos r) r) *S B)...
         replace (time_pos (inv_pos r) r) with One.
         2:{ apply Rpos_eq; destruct r; simpl; apply R_blt_lt in e; rewrite Rinv_l; try auto; try nra. }
-        rewrite mul_1; reflexivity. }
+        symmetry; apply mul_1. }
       apply mul_compa.
-      rewrite commu_max; apply leq_max.
+      eapply leq_cong_r ; [ apply commu_max | apply leq_max].
   - apply max_leq; apply mul_compa...
     apply leq_cong_r with (B \/S A)...
 Qed.
@@ -933,7 +941,10 @@ Lemma decomp_abs : forall A , abs A === pos A +S neg A.
 Proof with auto with MGA_solver.
   intro A.
   apply trans with ((A +S HMR_zero) \/S (-S A))...
-  rewrite <-(opp_plus A) at 1.
+  etransitivity.
+  { apply (@ctxt (HMR_maxC (HMR_plusC (HMR_TC A) HMR_hole) (HMR_TC (-S A)))).
+    symmetry; apply (@opp_plus A). }
+  simpl.
   apply trans with (((A +S A) -S A) \/S (-S A))...
   apply trans with (((A +S A) -S A) \/S ((-S A) +S HMR_zero))...
   apply trans with (((A +S A) -S A) \/S (HMR_zero -S A))...
@@ -1040,8 +1051,8 @@ Hint Resolve neg_subdistri_plus : MGA_solver.
 Lemma Rpos_mul_neg : forall t A, t *S neg A === neg (t *S A).
 Proof with auto with MGA_solver.
   intros t A.
-  rewrite mul_distri_max_pos.
-  rewrite mul_0...
+  etransitivity; [ apply mul_distri_max_pos | ].
+  auto using mul_0.
 Qed.
 
 Hint Resolve Rpos_mul_neg : MGA_solver.
@@ -1056,10 +1067,12 @@ Hint Resolve mul_leq : MGA_solver.
 Lemma mul_leq_inv : forall t A B, t *S A <== t *S B -> A <== B.
 Proof with auto with MGA_solver.
   intros t A B Hle.
-  rewrite <-(mul_1 A); rewrite <-(mul_1 B).
+  apply leq_cong_r with (One *S B); try auto.
+  apply leq_cong_l with (One *S A); try auto.
   replace One with (time_pos (inv_pos t) t).
   2:{ destruct t; apply Rpos_eq; simpl; clear Hle; apply R_blt_lt in e; rewrite Rinv_l; nra. }
-  rewrite <- 2 mul_assoc...
+  eapply leq_cong_r; [ symmetry; apply mul_assoc | ].
+  eapply leq_cong_l; [ symmetry; apply mul_assoc | ]...
 Qed.
 
 
@@ -1082,9 +1095,9 @@ Qed.
 
 Lemma eq_subs_minus : forall A B n, subs (-S A) n B = -S (subs A n B).
 Proof with try reflexivity.
-  induction A ; intros B n'; try (simpl; constructor; assumption); try (simpl; rewrite IHA1; rewrite IHA2; auto with MGA_solver; fail)...
-  - simpl; case (n' =? n)...
-  - simpl; case (n' =? n)...
+  induction A ; intros B v'; try (simpl; constructor; assumption); try (simpl; rewrite IHA1; rewrite IHA2; auto with MGA_solver; fail)...
+  - simpl; case (term.V_eq v' v)...
+  - simpl; case (term.V_eq v' v)...
     rewrite minus_minus...
   - simpl; rewrite IHA...
   - simpl; rewrite IHA...
@@ -1092,8 +1105,8 @@ Qed.
 
 Lemma diamond_zero : <S> HMR_zero === HMR_zero.
 Proof.
-  rewrite <- (opp_plus HMR_zero) at 1.
-  rewrite diamond_linear.
+  etransitivity; [ apply (@ctxt (HMR_diamondC HMR_hole)); symmetry; apply (opp_plus HMR_zero) | ].
+  etransitivity; [ apply diamond_linear | ].
   apply opp_plus.
 Qed.
 
@@ -1103,7 +1116,7 @@ Proof.
   apply leq_cong_r with (<S> (A \/S HMR_zero)).
   2:{ apply diamond_pos. }
   apply diamond_cong.
-  symmetry; rewrite commu_max; apply min_max.
+  symmetry; etransitivity; [ apply commu_max | ]; apply min_max.
   apply Hleq.
 Qed.
 
@@ -1117,51 +1130,70 @@ Proof.
   apply cond_zero_leq_max_2.
   apply leq_antisym.
   - case (Rlt_dec 1 r); intros Hlt; [ | case (Rlt_dec r 1); intros Hnlt].
-    + rewrite <-Hleq at 3.
+    + eapply leq_cong_r; [ symmetry; apply Hleq | ].
       apply leq_min.
       * apply leq_trans with (neg A); [ apply min_leq | ].
-        rewrite <-(neutral_plus (neg A)) at 1 2.
-        rewrite commu_plus.
+        apply leq_cong_l with (HMR_zero +S neg A).
+        { etransitivity; [ | apply commu_plus ].
+         symmetry; apply neutral_plus. }
         apply leq_plus_left.
-        rewrite <-(mul_1 (neg A)).
-        rewrite <-(mul_minus One).
-        rewrite <- Rpos_mul_neg.
         change (1%R) with (projT1 One) in Hlt.
         replace r with (projT1 t) in Hlt by now rewrite Heqt.
-        rewrite (minus_ax _ _ _ Hlt).
+        eapply leq_cong_r.
+        { etransitivity.
+          { apply (@ctxt (HMR_plusC HMR_hole (HMR_TC (-S neg A)))).
+            symmetry; apply Rpos_mul_neg. }
+          simpl evalContext.
+          etransitivity.
+          { change ((-S (-S A)) /\S HMR_zero) with (-S neg A).
+            apply (@ctxt (HMR_plusC (HMR_TC (t *S neg A)) HMR_cohole)).
+            etransitivity; [ symmetry; apply mul_1 | ].
+            reflexivity. }
+          simpl.
+          change (One *S ((-S (-S A)) /\S HMR_zero)) with (-S (One *S neg A)).
+          etransitivity; [apply (minus_ax _ _ _ Hlt) | ].
+          reflexivity. }
         apply leq_cong_r with (minus_pos Hlt *S (pos (neg A))).
-        { rewrite (commu_max (neg A)).
-          rewrite (@min_max _ (neg A)); auto with MGA_solver. }
+        { etransitivity.
+          2:{ apply (@ctxt (HMR_mulC (minus_pos Hlt) HMR_hole)).
+              symmetry; apply (commu_max (neg A)). }
+          simpl.
+          apply (@ctxt (HMR_mulC (minus_pos Hlt) HMR_hole)).
+          symmetry.
+          apply min_max.
+          auto with MGA_solver. }
         apply compa_mul_ax.
-      * rewrite (commu_min (neg A) (neg B)).
+      * eapply leq_cong_l; [apply commu_min | ].
         apply min_leq.
     + apply (@mul_leq_inv t).
-      rewrite mul_distri_min_pos.
-      rewrite mul_0.
-      rewrite <-Hleq at 3.
-      rewrite <- Rpos_mul_neg.
+      eapply leq_cong_l; [ apply mul_distri_min_pos | ].
+      eapply leq_cong_r; [ apply mul_0 | ].
+      eapply leq_cong_r; [ symmetry; apply Hleq | ].
+      apply leq_cong_r with ((t *S neg A) /\S neg B); [auto with MGA_solver | ].
       apply leq_min; [apply min_leq | ].
-      rewrite (commu_min (t *S neg A) (t *S neg B)).
+      eapply leq_cong_l; [ apply commu_min | ].
       apply leq_trans with (t *S neg B) ; [ apply min_leq | ].
-      rewrite <-(neutral_plus (t *S neg B)).
-      rewrite commu_plus.
+      eapply leq_cong_l; [ symmetry; apply neutral_plus | ].
+      eapply leq_cong_l; [ apply commu_plus | ].
       apply leq_plus_left.
-      rewrite <-(mul_1 (neg B)) at 1.
-      rewrite <-mul_minus.
+      apply leq_cong_r with ((One *S neg B) -S (t *S neg B)); [ auto | ].
+      apply leq_cong_r with ((One *S neg B) +S (t *S (-S neg B))); [auto | ].
       change (1%R) with (projT1 One) in Hnlt.
       replace r with (projT1 t) in Hnlt by now rewrite Heqt.
-      rewrite (minus_ax _ _ _ Hnlt).
-      eapply leq_cong_r with (minus_pos Hnlt *S (pos (neg B))).
-      { rewrite (commu_max (neg B)).
-        rewrite (@min_max _ (neg B)); auto with MGA_solver. }
+      eapply leq_cong_r; [ apply (minus_ax _ _ _ Hnlt) | ].
+      apply leq_cong_r with (minus_pos Hnlt *S (pos (neg B))).
+      { transitivity (minus_pos Hnlt *S (HMR_zero \/S neg B)) ; [ | auto].
+        apply (@ctxt (HMR_mulC (minus_pos Hnlt) HMR_hole)).
+        symmetry.
+        apply min_max; auto with MGA_solver. }
       apply compa_mul_ax.
     + assert (t = One) as Heq.
       { apply Rpos_eq; rewrite Heqt;simpl; nra. }
-      rewrite <-Hleq at 3.
+      eapply leq_cong_r; [ symmetry; apply Hleq | ].
       rewrite Heq.
-      rewrite mul_1.
-      apply leq_refl.       
-  - apply leq_min; rewrite commu_max; apply leq_max.
+      eapply leq_cong_r ; [ | apply leq_refl ].
+      auto.
+  - apply leq_min; (eapply leq_cong_r ; [ apply commu_max | ]); apply leq_max.
 Qed.
 
 Lemma leq_pos_max_mul_l_inv : forall A B r,
@@ -1170,8 +1202,44 @@ Lemma leq_pos_max_mul_l_inv : forall A B r,
 Proof.
   intros A B r Hleq.
   apply leq_pos_max_mul_l with (inv_pos r).
-  rewrite mul_assoc.
+  apply leq_cong_r with ((time_pos (inv_pos r) r) *S A \/S B); [ auto | ].
   rewrite inv_pos_l.
-  rewrite mul_1.
+  apply leq_cong_r with (A \/S B); [ auto | ].
   apply Hleq.
+Qed.
+
+Lemma plus_pos_min : forall A B C, HMR_zero <== A -> HMR_zero <== B -> HMR_zero <== C -> A +S B /\S C <== (A /\S C) +S (B /\S C).
+Proof.
+  intros A B C H1 H2 H3.
+  apply leq_plus_right.
+  apply leq_min.
+  - apply leq_minus_left.
+    eapply leq_cong_r; [ apply commu_plus | ].
+    apply leq_plus_right.
+    apply leq_min.
+    + apply leq_minus_left.
+      eapply leq_cong_r; [ apply commu_plus | ].
+      apply min_leq.
+    + apply leq_trans with (A +S B /\S C).
+      * apply leq_minus_left.
+        eapply leq_cong_l ; [ symmetry; apply neutral_plus | ].
+        apply leq_plus_cong; try assumption.
+        apply leq_refl.
+      * eapply leq_cong_l; [ apply commu_min | ].
+        apply min_leq.
+  - apply leq_minus_left.
+    eapply leq_cong_r; [apply commu_plus | ].
+    apply leq_plus_right.
+    apply leq_min.
+    + apply leq_minus_left.
+      eapply leq_cong_r; [ apply commu_plus | ].
+      eapply leq_cong_l; [ symmetry; apply neutral_plus | ].
+      apply leq_plus_cong; try assumption.
+      eapply leq_cong_l; [ apply commu_min | ].
+      apply min_leq.
+    + apply leq_minus_left.
+      eapply leq_cong_l ; [ symmetry; apply neutral_plus | ].
+      apply leq_plus_cong; try assumption.
+      eapply leq_cong_l; [ apply commu_min | ].
+      apply min_leq.
 Qed.

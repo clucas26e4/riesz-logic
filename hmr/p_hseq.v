@@ -1,10 +1,15 @@
-Require Import Rpos.
-Require Import FOL_R.
+Require Import RL.Utilities.Rpos.
+Require Import RL.Utilities.polynomials.
 Require Import RL.Utilities.riesz_logic_Nat_more.
+Require Import RL.Archimedean.Lim_seq_US.
+Require Import RL.Archimedean.pol_continuous.
+Require Import RL.Archimedean.R_complements.
 Require Import riesz_logic_List_more.
 Require Import RL.hmr.term.
 Require Import RL.hmr.semantic.
 Require Import RL.hmr.hseq.
+Require Import Coquelicot.Continuity.
+Require Import Coquelicot.Hierarchy.
 
 Require Import CMorphisms.
 Require Import Lra.
@@ -22,13 +27,13 @@ Local Open Scope R_scope.
 Ltac sem_is_pos_decomp val a :=
   let H := fresh "H" in
   let HeqH := fresh "HeqH" in
-  assert {H & R_order_dec (FOL_R_term_sem val a) = H} as [H HeqH] by (split with (R_order_dec (FOL_R_term_sem val a)); reflexivity); destruct H as [H | H | H];
+  assert {H & R_order_dec (eval_Poly val a) = H} as [H HeqH] by (split with (R_order_dec (eval_Poly val a)); reflexivity); destruct H as [H | H | H];
   rewrite ? HeqH; revert H HeqH.
 
 
 (** * Definitions *)
                                                 
-Definition p_sequent : Set := list (FOL_R_term * term).
+Definition p_sequent : Type := list (Poly * term).
 Definition p_seq_diamond (T : p_sequent) := map (fun x => (fst x, <S> (snd x))) T.
 
 Definition p_seq_is_basic (T : p_sequent) := Forall_inf (fun x => match x with (a , A) => is_basic A end) T.
@@ -38,22 +43,22 @@ Definition p_seq_is_atomic (T : p_sequent) := Forall_inf (fun x => match x with 
 Fixpoint eval_p_sequent (val : nat -> R) (T : p_sequent) : sequent :=
   match T with
   | nil => nil
-  | (a , A) :: T => match R_order_dec (FOL_R_term_sem val a) with
-                    | R_is_gt _ H => (existT (fun x => 0 <? x = true) (FOL_R_term_sem val a) H, A) :: (eval_p_sequent val T)
-                    | R_is_lt _ H => (existT (fun x => 0 <? x = true) (-(FOL_R_term_sem val a)) H, -S A) :: (eval_p_sequent val T)
-                    | R_is_null _ H => eval_p_sequent val T
+  | (a , A) :: T => match R_order_dec (eval_Poly val a) with
+                    | R_is_gt H => (existT (fun x => 0 <? x = true) (eval_Poly val a) H, A) :: (eval_p_sequent val T)
+                    | R_is_lt H => (existT (fun x => 0 <? x = true) (-(eval_Poly val a)) H, -S A) :: (eval_p_sequent val T)
+                    | R_is_null H => eval_p_sequent val T
                     end
   end.
 
 Fixpoint to_p_sequent (T : sequent) : p_sequent :=
   match T with
   | nil => nil
-  | (a, A) :: T => (FOL_R_cst (projT1 a), A) :: (to_p_sequent T)
+  | (a, A) :: T => (Poly_cst (projT1 a), A) :: (to_p_sequent T)
   end.
   
 Definition Permutation_Type_p_seq val (T1 T2 : p_sequent) := Permutation_Type (eval_p_sequent val T1) (eval_p_sequent val T2).
 
-Definition p_hypersequent : Set := list p_sequent.
+Definition p_hypersequent : Type := list p_sequent.
 
 Definition p_hseq_is_basic G := Forall_inf p_seq_is_basic G.
 
@@ -96,7 +101,7 @@ Fixpoint max_diamond_p_hseq G :=
 
 Definition modal_complexity_p_hseq G := (max_diamond_p_hseq G, fst (HMR_complexity_p_hseq G), snd (HMR_complexity_p_hseq G)).
 
-(** ** Max variable appearing in a term of a hypersequent *)
+(* ** Max variable appearing in a term of a hypersequent 
 Fixpoint max_var_p_seq (T : p_sequent) :=
   match T with
   | nil => 0%nat
@@ -107,13 +112,13 @@ Fixpoint max_var_p_hseq G :=
   match G with
   | nil => 0%nat
   | T :: G => Nat.max (max_var_p_seq T) (max_var_p_hseq G)
-  end.
+  end. *)
 
-(** ** Man variable appearing in a weight of a hypersequent *)
+(** ** Max variable appearing in a weight of a hypersequent *)
 Fixpoint max_var_weight_p_seq (T : p_sequent) :=
   match T with
   | nil => 0%nat
-  | (r, A) :: T => Nat.max (max_var_FOL_R_term r) (max_var_weight_p_seq T)
+  | (r, A) :: T => Nat.max (max_var_Poly r) (max_var_weight_p_seq T)
   end.
 
 Fixpoint max_var_weight_p_hseq (G : p_hypersequent) :=
@@ -131,15 +136,15 @@ Fixpoint subs_p_seq (D : p_sequent) n t :=
 
 (** ** Definitions and properties of \vec{r}.A *)
 
-Fixpoint vec (l : list FOL_R_term) (A : term) :=
+Fixpoint vec (l : list Poly) (A : term) :=
   match l with
   | nil => nil
   | r :: l => (r , A) :: (vec l A)
   end.
 
-Fixpoint sum_vec (l : list FOL_R_term) :=
+Fixpoint sum_vec (l : list Poly) :=
   match l with
-  | nil => FOL_R_cst 0
+  | nil => Poly_cst 0
   | r :: l => r +R (sum_vec l)
   end.
 
@@ -149,16 +154,16 @@ Fixpoint copy_p_seq n (T : p_sequent) :=
   | S n => (copy_p_seq n T) ++ T
   end.
 
-Fixpoint seq_mul (r : FOL_R_term) (T : p_sequent) :=
+Fixpoint seq_mul (r : Poly) (T : p_sequent) :=
   match T with
   | nil => nil
-  | ((a , A) :: T) => (FOL_R_mul r a, A) :: (seq_mul r T)
+  | ((a , A) :: T) => (Poly_mul r a, A) :: (seq_mul r T)
   end.
 
-Fixpoint mul_vec r (l : list FOL_R_term) :=
+Fixpoint mul_vec r (l : list Poly) :=
   match l with
   | nil => nil
-  | r0 :: l => (FOL_R_mul r r0) :: (mul_vec r l)
+  | r0 :: l => (Poly_mul r r0) :: (mul_vec r l)
   end.
 
 Fixpoint vec_mul_vec l1 l2 :=
@@ -168,50 +173,30 @@ Fixpoint vec_mul_vec l1 l2 :=
   end.
 
 (** ** Sum of the weights *)
-Fixpoint sum_weight_p_seq_var n (T : p_sequent) :=
+Fixpoint sum_weight_var_p_seq n (T : p_sequent) :=
   match T with
-  | nil => FOL_R_cst 0
-  | ((r , HMR_var n0) :: T) => if n =? n0 then r +R (sum_weight_p_seq_var n T) else sum_weight_p_seq_var n T
-  | ( _ :: T) => sum_weight_p_seq_var n T
-  end.
-Fixpoint sum_weight_p_seq_covar n (T : p_sequent) :=
-  match T with
-  | nil => FOL_R_cst 0
-  | ((r , HMR_covar n0) :: T) => if n =? n0 then r +R (sum_weight_p_seq_covar n T) else sum_weight_p_seq_covar n T
-  | ( _ :: T) => sum_weight_p_seq_covar n T
+  | nil => Poly_cst 0
+  | ((r , HMR_var n0) :: T) => if (term.V_eq n n0) then r +R (sum_weight_var_p_seq n T) else sum_weight_var_p_seq n T
+  | ((r , HMR_covar n0) :: T) => if (term.V_eq n n0) then ((Poly_cst (-1)) *R r) +R (sum_weight_var_p_seq n T) else sum_weight_var_p_seq n T
+  | ( _ :: T) => sum_weight_var_p_seq n T
   end.
 Fixpoint p_sum_weight_var n G :=
   match G with
-  | nil => FOL_R_cst 0
-  | T :: G => (sum_weight_p_seq_var n T) +R (p_sum_weight_var n G)
-  end.
-Fixpoint p_sum_weight_covar n G :=
-  match G with
-  | nil => FOL_R_cst 0
-  | T :: G => (sum_weight_p_seq_covar n T) +R (p_sum_weight_covar n G)
+  | nil => Poly_cst 0
+  | T :: G => (sum_weight_var_p_seq n T) +R (p_sum_weight_var n G)
   end.
 
-Fixpoint sum_weight_p_seq_one (T : p_sequent) :=
+Fixpoint sum_weight_one_p_seq (T : p_sequent) :=
   match T with
-  | nil => FOL_R_cst 0
-  | ((r , HMR_one) :: T) => r +R (sum_weight_p_seq_one T)
-  | ( _ :: T) => sum_weight_p_seq_one T
-  end.
-Fixpoint sum_weight_p_seq_coone (T : p_sequent) :=
-  match T with
-  | nil => FOL_R_cst 0
-  | ((r , HMR_coone) :: T) => r +R (sum_weight_p_seq_coone T)
-  | ( _ :: T) => sum_weight_p_seq_coone T
+  | nil => Poly_cst 0
+  | ((r , HMR_one) :: T) => r +R (sum_weight_one_p_seq T)
+  | ((r , HMR_coone) :: T) => ((Poly_cst (-1)) *R r) +R (sum_weight_one_p_seq T)
+  | ( _ :: T) => sum_weight_one_p_seq T
   end.
 Fixpoint p_sum_weight_one G :=
   match G with
-  | nil => FOL_R_cst 0
-  | T :: G => (sum_weight_p_seq_one T) +R (p_sum_weight_one G)
-  end.
-Fixpoint p_sum_weight_coone G :=
-  match G with
-  | nil => FOL_R_cst 0
-  | T :: G => (sum_weight_p_seq_coone T) +R (p_sum_weight_coone G)
+  | nil => Poly_cst 0
+  | T :: G => (sum_weight_one_p_seq T) +R (p_sum_weight_one G)
   end.
 
 (** keep only the diamonds formulas and (co)ones but remove the diamond operator *)
@@ -232,7 +217,7 @@ Fixpoint only_diamond_p_hseq G :=
 
 (** ** well defined hypersequent with regard to a valuation (i.e. all the weights of the hypersequent are strictly positive with this valuation) *)
 Definition p_seq_well_defined (val : nat -> R) (T : p_sequent) :=
-  Forall_inf (fun x => (0 <? FOL_R_term_sem val (fst x)) = true) T.
+  Forall_inf (fun x => (0 <= eval_Poly val (fst x))) T.
 
 Definition p_hseq_well_defined (val : nat -> R) G : Type :=
   Forall_inf (p_seq_well_defined val) G.
@@ -277,13 +262,13 @@ Proof.
     inversion HeqD.
   - destruct vr; inversion HeqD; subst.
     specialize (IHHperm vr A) as [vs [Heq Hperm']]; auto.
-    split with (f :: vs).
+    split with (p :: vs).
     repeat split.
     + rewrite Heq; reflexivity.
     + apply Permutation_Type_skip; auto.
   - destruct vr; inversion HeqD.
     destruct vr; inversion H1; subst.
-    split with (f0 :: f :: vr).
+    split with (p0 :: p :: vr).
     repeat split; auto.
     apply Permutation_Type_swap.
   - destruct (IHHperm2 vr A HeqD) as [vs [Heq' Hperm']].
@@ -333,7 +318,7 @@ Proof.
   induction vr1; intros vr2 A; simpl; try rewrite IHvr1; try reflexivity.
 Qed.
 
-Lemma sum_vec_app : forall vr1 vr2 val, FOL_R_pred_sem val ((sum_vec (vr1 ++ vr2)) =R ((sum_vec vr1) +R (sum_vec vr2))).
+Lemma sum_vec_app : forall vr1 vr2 val, eval_Poly val (sum_vec (vr1 ++ vr2)) = eval_Poly val ((sum_vec vr1) +R (sum_vec vr2)).
 Proof.
   induction vr1; intros vr2 val.
   - rewrite app_nil_l; simpl; nra.
@@ -349,7 +334,7 @@ Proof.
   intros r vr vs Hperm; induction Hperm; simpl; Permutation_Type_solve.
 Qed.
 
-Lemma mul_vec_sum_vec : forall r vr val, FOL_R_pred_sem val (sum_vec (mul_vec r vr) =R r *R (sum_vec vr)).
+Lemma mul_vec_sum_vec : forall r vr val, eval_Poly val (sum_vec (mul_vec r vr)) = eval_Poly val (r *R (sum_vec vr)).
 Proof.
   intro r; induction vr; intros val.
   - simpl; nra.
@@ -358,7 +343,7 @@ Proof.
     simpl; nra.
 Qed.
 
-Lemma sum_vec_vec_mul_vec : forall vr vs val, FOL_R_pred_sem val (sum_vec (vec_mul_vec vr vs) =R (sum_vec vr) *R (sum_vec vs)).
+Lemma sum_vec_vec_mul_vec : forall vr vs val, eval_Poly val (sum_vec (vec_mul_vec vr vs)) = eval_Poly val ((sum_vec vr) *R (sum_vec vs)).
 Proof.
   induction vr; intros vs val.
   - simpl; nra.
@@ -376,11 +361,11 @@ Proof with try reflexivity.
   simpl; rewrite IHvr...
 Qed.
 
-Lemma vec_mul_vec_cons_r : forall vr1 vr2 r val, Permutation_Type_FOL_R_term val (vec_mul_vec vr1 (r :: vr2)) (mul_vec r vr1 ++ vec_mul_vec vr1 vr2).
+Lemma vec_mul_vec_cons_r : forall vr1 vr2 r val, Permutation_Type_Poly val (vec_mul_vec vr1 (r :: vr2)) (mul_vec r vr1 ++ vec_mul_vec vr1 vr2).
 Proof.
-  unfold Permutation_Type_FOL_R_term.
+  unfold Permutation_Type_Poly.
   induction vr1; intros vr2 r val; simpl; try reflexivity.
-  replace (FOL_R_term_sem val a * FOL_R_term_sem val r) with (FOL_R_term_sem val r * FOL_R_term_sem val a) by (simpl; nra).
+  replace (eval_Poly val a * eval_Poly val r) with (eval_Poly val r * eval_Poly val a) by (simpl; nra).
   apply Permutation_Type_skip.
   rewrite ? map_app; rewrite app_assoc.
   etransitivity ; [ | apply Permutation_Type_app ; [ apply Permutation_Type_app_comm | reflexivity ] ].
@@ -388,9 +373,9 @@ Proof.
   rewrite <- map_app; apply IHvr1.
 Qed.
 
-Lemma vec_mul_vec_comm : forall vr1 vr2 val, Permutation_Type_FOL_R_term val (vec_mul_vec vr1 vr2) (vec_mul_vec vr2 vr1).
+Lemma vec_mul_vec_comm : forall vr1 vr2 val, Permutation_Type_Poly val (vec_mul_vec vr1 vr2) (vec_mul_vec vr2 vr1).
 Proof.
-  unfold Permutation_Type_FOL_R_term.
+  unfold Permutation_Type_Poly.
   induction vr1; intros vr2 val.
   - simpl; rewrite vec_mul_vec_nil_r; reflexivity.
   - simpl.
@@ -404,11 +389,11 @@ Proof.
   induction vr; intros vs r; simpl; try rewrite IHvr; try reflexivity.
 Qed.
 
-Lemma mul_vec_perm : forall vr vs r val, Permutation_Type_FOL_R_term val vr vs ->  Permutation_Type_FOL_R_term val (mul_vec r vr) (mul_vec r vs).
+Lemma mul_vec_perm : forall vr vs r val, Permutation_Type_Poly val vr vs ->  Permutation_Type_Poly val (mul_vec r vr) (mul_vec r vs).
 Proof.
-  unfold Permutation_Type_FOL_R_term.
+  unfold Permutation_Type_Poly.
   intros vr vs r val Hperm.
-  remember (map (FOL_R_term_sem val) vr) as lr; remember (map (FOL_R_term_sem val) vs) as ls.
+  remember (map (eval_Poly val) vr) as lr; remember (map (eval_Poly val) vs) as ls.
   revert vr vs Heqlr Heqls; induction Hperm; intros vr vs Heqlr Heqls.
   - symmetry in Heqlr; apply map_eq_nil in Heqlr; symmetry in Heqls; apply map_eq_nil in Heqls; subst.
     reflexivity.
@@ -417,7 +402,7 @@ Proof.
     apply IHHperm; reflexivity.
   - destruct vr; [ | destruct vr]; (destruct vs; [ | destruct vs]); inversion Heqlr; inversion Heqls; subst.
     simpl; rewrite H3; rewrite H4.
-    replace (map (FOL_R_term_sem val) (mul_vec r vs)) with (map (FOL_R_term_sem val) (mul_vec r vr)); [ apply Permutation_Type_swap | ].
+    replace (map (eval_Poly val) (mul_vec r vs)) with (map (eval_Poly val) (mul_vec r vr)); [ apply Permutation_Type_swap | ].
     clear - H5.
     revert vs H5; induction vr; intros vs H5.
     + destruct vs; try now inversion H5.
@@ -430,21 +415,21 @@ Proof.
 Qed.
 
 Lemma vec_perm : forall vr1 vr2 A val,
-    Permutation_Type_FOL_R_term val vr1 vr2 -> Permutation_Type_p_seq val (vec vr1 A) (vec vr2 A).
+    Permutation_Type_Poly val vr1 vr2 -> Permutation_Type_p_seq val (vec vr1 A) (vec vr2 A).
 Proof.
-  unfold Permutation_Type_FOL_R_term; unfold Permutation_Type_p_seq.
+  unfold Permutation_Type_Poly; unfold Permutation_Type_p_seq.
   intros vr1 vr2 A val Hperm.
-  remember (map (FOL_R_term_sem val) vr1) as l1; remember (map (FOL_R_term_sem val) vr2) as l2.
+  remember (map (eval_Poly val) vr1) as l1; remember (map (eval_Poly val) vr2) as l2.
   revert vr1 vr2 Heql1 Heql2; induction Hperm; intros vr1 vr2 Heql1 Heql2.
   - destruct vr1; destruct vr2; inversion Heql1; now inversion Heql2.
   - destruct vr1; destruct vr2; inversion Heql1; inversion Heql2; subst.
     simpl; rewrite H2.
-    sem_is_pos_decomp val f0; intros;
+    sem_is_pos_decomp val p0; intros;
       try apply Permutation_Type_skip;
       now apply IHHperm.
   - destruct vr1; [ | destruct vr1]; (destruct vr2; [ | destruct vr2]); inversion Heql1; inversion Heql2; simpl; subst.
     rewrite H3; rewrite H4.
-    replace (eval_p_sequent val (vec vr1 A)) with (eval_p_sequent val (vec vr2 A)) ; [ sem_is_pos_decomp val f1; sem_is_pos_decomp val f2 ;intros; now try apply Permutation_Type_swap | ].
+    replace (eval_p_sequent val (vec vr1 A)) with (eval_p_sequent val (vec vr2 A)) ; [ sem_is_pos_decomp val p1; sem_is_pos_decomp val p2 ;intros; now try apply Permutation_Type_swap | ].
     clear - H5.
     revert vr2 H5; induction vr1; intros vr2 H5; destruct vr2; inversion H5; subst; try reflexivity.
     simpl; rewrite H0; now rewrite IHvr1.
@@ -453,7 +438,7 @@ Proof.
     etransitivity; [apply IHHperm1 | apply IHHperm2]; auto.
 Qed.
 
-Lemma sum_mul_vec : forall val l r, FOL_R_pred_sem val (sum_vec (mul_vec r l) =R FOL_R_mul r (sum_vec l)).
+Lemma sum_mul_vec : forall val l r, eval_Poly val (sum_vec (mul_vec r l)) = eval_Poly val (Poly_mul r (sum_vec l)).
 Proof.
   intros val; induction l; intros r.
   - simpl; nra.
@@ -465,7 +450,7 @@ Qed.
 
 Lemma sum_vec_perm : forall val vr vs,
     Permutation_Type vr vs ->
-    FOL_R_pred_sem val (sum_vec vr =R sum_vec vs).
+    eval_Poly val (sum_vec vr) = eval_Poly val (sum_vec vs).
 Proof.
   intros val vr vs Hperm; induction Hperm; simpl in *; nra.
 Qed.
@@ -656,96 +641,80 @@ Proof.
   - apply Permutation_Type_trans with (only_diamond_p_seq l'); assumption.
 Qed.
 
+
+Lemma well_defined_only_diamond_p_seq : forall T val,
+    p_seq_well_defined val T ->
+    p_seq_well_defined val (only_diamond_p_seq T).
+Proof.
+  induction T; intros val Hwd; [ apply Forall_inf_nil | ].
+  inversion Hwd; subst.
+  destruct a as [a A].
+  destruct A; simpl; try apply Forall_inf_cons;
+    try (apply IHT; now apply X);
+    apply H0.
+Qed.
+
+Lemma well_defined_only_diamond_p_hseq : forall G val,
+    Forall_inf (p_seq_well_defined val) G ->
+    Forall_inf (p_seq_well_defined val) (only_diamond_p_hseq G).
+Proof.
+  induction G; intros val Hwd; [ apply Forall_inf_nil | ].
+  inversion Hwd; subst.
+  simpl; apply Forall_inf_cons; [ | apply IHG; apply X0].
+  apply well_defined_only_diamond_p_seq.
+  apply X.
+Qed.
+
 (** ** sum_weight_p_seq_(co)var and (co)one *)
-
-Lemma sum_weight_p_seq_var_lt_max_var : forall val n T1,
+(*
+Lemma sum_weight_var_p_seq_lt_max_var : forall val n T1,
     (max_var_p_seq T1 < n)%nat ->
-    FOL_R_term_sem val (sum_weight_p_seq_var n T1) = 0.
+    eval_Poly val (sum_weight_var_p_seq n T1) = 0.
 Proof.
   intros val n; induction T1; intros Hlt; auto.
   destruct a as [a A].
-  destruct A; simpl in *; try (apply IHT1; simpl ; lia).
-  replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia).
-  apply IHT1.
-  lia.
-Qed.
-
-Lemma sum_weight_p_seq_covar_lt_max_var : forall val n T1,
-    (max_var_p_seq T1 < n)%nat ->
-    FOL_R_term_sem val (sum_weight_p_seq_covar n T1) = 0.
-Proof.
-  intros val n; induction T1; intros Hlt; auto.
-  destruct a as [a A].
-  destruct A; simpl in *; try (apply IHT1 ; lia).
-  replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia).
-  apply IHT1.
-  lia.
-Qed. 
+  destruct A; simpl in *; try (apply IHT1; simpl ; lia);
+    replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia);
+    apply IHT1;
+    lia.
+Qed.*)
     
-Lemma sum_weight_p_seq_var_app : forall val n T1 T2,
-    FOL_R_pred_sem val (sum_weight_p_seq_var n (T1 ++ T2) =R sum_weight_p_seq_var n T1 +R sum_weight_p_seq_var n T2).
+Lemma sum_weight_var_p_seq_app : forall val n T1 T2,
+    eval_Poly val (sum_weight_var_p_seq n (T1 ++ T2)) = eval_Poly val (sum_weight_var_p_seq n T1 +R sum_weight_var_p_seq n T2).
 Proof.
   intros val n T1; induction T1; intros T2; simpl; try nra.
   destruct a as [a A]; simpl.
   specialize (IHT1 T2).
-  destruct A; try case (n =? n0); simpl in *; try nra.
+  destruct A; try case (term.V_eq n v); simpl in *; try nra.
 Qed.
 
-Lemma sum_weight_p_seq_covar_app : forall val n T1 T2,
-    FOL_R_pred_sem val (sum_weight_p_seq_covar n (T1 ++ T2) =R sum_weight_p_seq_covar n T1 +R sum_weight_p_seq_covar n T2).
-Proof.
-  intros val n T1; induction T1; intros T2; simpl; try nra.
-  destruct a as [a A]; simpl.
-  specialize (IHT1 T2).
-  destruct A; try case (n =? n0); simpl in *; try nra.
-Qed.
-
-Lemma sum_weight_p_seq_var_mul : forall val n T r,
-    FOL_R_pred_sem val (sum_weight_p_seq_var n (seq_mul r T) =R r *R sum_weight_p_seq_var n T).
+Lemma sum_weight_var_p_seq_mul : forall val n T r,
+    eval_Poly val (sum_weight_var_p_seq n (seq_mul r T)) = eval_Poly val (r *R sum_weight_var_p_seq n T).
 Proof.
   intros val n T r; induction T; simpl in *; try nra.
   destruct a as [a A]; simpl.
-  destruct A; try case (n =? n0); destruct a; destruct r; simpl in *; try nra.
+  destruct A; try case (term.V_eq n v); destruct a; destruct r; simpl in *; try nra.
 Qed.
 
-Lemma sum_weight_p_seq_covar_mul : forall val n T r,
-    FOL_R_pred_sem val (sum_weight_p_seq_covar n (seq_mul r T) =R r *R sum_weight_p_seq_covar n T).
+Lemma sum_weight_var_p_seq_vec_var_eq : forall val n r,
+    eval_Poly val (sum_weight_var_p_seq n (vec r (HMR_var n))) = eval_Poly val (sum_vec r).
 Proof.
-  intros val n T r; induction T; simpl in *; try nra.
-  destruct a as [a A]; simpl.
-  destruct A; try case (n =? n0); destruct a; destruct r; simpl in *; try nra.
+  intros val n; induction r; simpl in *; try reflexivity.
+  case (term.V_eq n n); intros H; try contradiction.
+  simpl; nra.
 Qed.
 
-Lemma sum_weight_p_seq_var_vec_var_eq : forall val n r,
-    FOL_R_pred_sem val (sum_weight_p_seq_var n (vec r (HMR_var n)) =R sum_vec r).
-Proof.
-  intros val n; induction r; simpl in *; try (rewrite Nat.eqb_refl; simpl; rewrite IHr); reflexivity.
-Qed.
-
-Lemma sum_weight_p_seq_covar_vec_covar_eq : forall val n r,
-    FOL_R_pred_sem val (sum_weight_p_seq_covar n (vec r (HMR_covar n)) =R sum_vec r).
-Proof.
-  intros val n; induction r; simpl; try (rewrite Nat.eqb_refl; simpl; rewrite IHr); nra.
-Qed.
-
-Lemma sum_weight_p_seq_var_vec_neq : forall val n A r,
+Lemma sum_weight_var_p_seq_vec_neq : forall val n A r,
     HMR_var n <> A ->
-    FOL_R_term_sem val (sum_weight_p_seq_var n (vec r A)) = 0.
-Proof.
-  intros val n A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; try (case_eq (n =? n0) ; [ intros H; exfalso; apply Nat.eqb_eq in H; now subst | ]); auto.
-Qed.
-
-Lemma sum_weight_p_seq_covar_vec_neq : forall val n A r,
     HMR_covar n <> A ->
-    FOL_R_term_sem val (sum_weight_p_seq_covar n (vec r A)) = 0.
+    eval_Poly val (sum_weight_var_p_seq n (vec r A)) = 0.
 Proof.
-  intros val n A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; try (case_eq (n =? n0) ; [ intros H; exfalso; apply Nat.eqb_eq in H; now subst | ]); auto.
+  intros val n A; induction r; intros Hneqv Hneqcv; simpl; try reflexivity.
+  destruct A; try (case_eq (term.V_eq n v) ; [ intros H; exfalso; now subst | ]); auto.
 Qed.
     
-Lemma sum_weight_p_seq_one_app : forall val T1 T2,
-    FOL_R_pred_sem val (sum_weight_p_seq_one (T1 ++ T2) =R sum_weight_p_seq_one T1 +R sum_weight_p_seq_one T2).
+Lemma sum_weight_one_p_seq_app : forall val T1 T2,
+    eval_Poly val (sum_weight_one_p_seq (T1 ++ T2)) = eval_Poly val (sum_weight_one_p_seq T1 +R sum_weight_one_p_seq T2).
 Proof.
   intros val T1; induction T1; intros T2; simpl; try nra.
   destruct a as [a A]; simpl.
@@ -753,59 +722,86 @@ Proof.
   destruct A;  simpl in *; try nra.
 Qed.
 
-Lemma sum_weight_p_seq_coone_app : forall val T1 T2,
-    FOL_R_pred_sem val (sum_weight_p_seq_coone (T1 ++ T2) =R sum_weight_p_seq_coone T1 +R sum_weight_p_seq_coone T2).
-Proof.
-  intros val T1; induction T1; intros T2; simpl; try nra.
-  destruct a as [a A]; simpl.
-  specialize (IHT1 T2).
-  destruct A; simpl in *; try nra.
-Qed.
-
-Lemma sum_weight_p_seq_one_mul : forall val T r,
-    FOL_R_pred_sem val (sum_weight_p_seq_one (seq_mul r T) =R r *R sum_weight_p_seq_one T).
+Lemma sum_weight_one_p_seq_mul : forall val T r,
+    eval_Poly val (sum_weight_one_p_seq (seq_mul r T)) = eval_Poly val (r *R sum_weight_one_p_seq T).
 Proof.
   intros val T r; induction T; simpl in *; try nra.
   destruct a as [a A]; simpl.
   destruct A; destruct a; destruct r; simpl in *; try nra.
 Qed.
 
-Lemma sum_weight_p_seq_coone_mul : forall val T r,
-    FOL_R_pred_sem val (sum_weight_p_seq_coone (seq_mul r T) =R r *R sum_weight_p_seq_coone T).
-Proof.
-  intros val T r; induction T; simpl in *; try nra.
-  destruct a as [a A]; simpl.
-  destruct A; destruct a; destruct r; simpl in *; try nra.
-Qed.
-
-Lemma sum_weight_p_seq_one_vec_one_eq : forall val r,
-    FOL_R_pred_sem val (sum_weight_p_seq_one (vec r HMR_one) =R sum_vec r).
+Lemma sum_weight_one_p_seq_vec_one_eq : forall val r,
+    eval_Poly val (sum_weight_one_p_seq (vec r HMR_one)) = eval_Poly val (sum_vec r).
 Proof.
   intros val; induction r; simpl in *; try (simpl; rewrite IHr); reflexivity.
 Qed.
 
 Lemma sum_weight_p_seq_coone_vec_coone_eq : forall val r,
-    FOL_R_pred_sem val (sum_weight_p_seq_coone (vec r HMR_coone) =R sum_vec r).
+    eval_Poly val (sum_weight_one_p_seq (vec r HMR_coone)) = eval_Poly val ((Poly_cst (-1)) *R sum_vec r).
 Proof.
-  intros val; induction r; simpl; try (simpl; rewrite IHr); nra.
+  intros val; induction r; simpl; try (simpl; rewrite IHr); simpl; nra.
 Qed.
 
-Lemma sum_weight_p_seq_one_vec_neq : forall val A r,
+Lemma sum_weight_one_p_seq_vec_neq : forall val A r,
     HMR_one <> A ->
-    FOL_R_term_sem val (sum_weight_p_seq_one (vec r A)) = 0.
+    HMR_coone <> A ->
+    eval_Poly val (sum_weight_one_p_seq (vec r A)) = 0.
 Proof.
-  intros val A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; simpl; auto.
-  contradiction.
+  intros val A; induction r; intros Hneqo Hneqco; simpl; try reflexivity.
+  destruct A; simpl; auto;
+    contradiction.
 Qed.
 
-Lemma sum_weight_p_seq_coone_vec_neq : forall val A r,
-    HMR_coone <> A ->
-    FOL_R_term_sem val (sum_weight_p_seq_coone (vec r A)) = 0.
+Lemma sum_weight_one_eval_p_sequent_seq_mul :
+  forall T r val,
+    sum_weight_one_seq (eval_p_sequent val (seq_mul r T)) = (eval_Poly val r) * sum_weight_one_seq (eval_p_sequent val T).
 Proof.
-  intros val A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; auto.
-  contradiction.
+  induction T; intros r val; [ simpl; lra | ].
+  specialize (IHT r val).
+  destruct a as [a A].
+  destruct A; simpl;
+    case (R_order_dec (eval_Poly val a)); intros H;
+      try (case (R_order_dec (eval_Poly val r * eval_Poly val a)); intros H');
+      simpl; try lra;
+        exfalso; (apply R_blt_lt in H' + apply R_blt_nlt in H'); nra.
+Qed.
+
+Lemma p_sum_weight_var_seq_sem :
+  forall T val n,
+    eval_Poly val (sum_weight_var_p_seq n T) = sum_weight_var_seq n (eval_p_sequent val T).
+Proof.
+  induction T; intros val n; try reflexivity.
+  specialize (IHT val n).
+  destruct a as [a A].
+  simpl; destruct A; case (R_order_dec (eval_Poly val a)); intros H;
+    simpl; try case (term.V_eq n v); simpl; try nra.
+Qed.
+
+Lemma p_sum_weight_var_sem :
+  forall G val n,
+    eval_Poly val (p_sum_weight_var n G) = sum_weight_var n (map (eval_p_sequent val) G).
+Proof.
+  induction G; intros val n; try reflexivity.
+  simpl; rewrite p_sum_weight_var_seq_sem; rewrite IHG; reflexivity.
+Qed.
+
+Lemma p_sum_weight_one_seq_sem :
+  forall T val,
+    eval_Poly val (sum_weight_one_p_seq T) = sum_weight_one_seq (eval_p_sequent val T).
+Proof.
+  induction T; intros val; try reflexivity.
+  specialize (IHT val).
+  destruct a as [a A].
+  simpl; destruct A; case (R_order_dec (eval_Poly val a)); intros H;
+    simpl; try nra.
+Qed.
+
+Lemma p_sum_weight_one_sem :
+  forall G val,
+    eval_Poly val (p_sum_weight_one G) = sum_weight_one (map (eval_p_sequent val) G).
+Proof.
+  induction G; intros val ; try reflexivity.
+  simpl; rewrite p_sum_weight_one_seq_sem; rewrite IHG; reflexivity.
 Qed.
 
 Lemma p_seq_non_basic_perm :
@@ -821,12 +817,12 @@ Proof.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, HMR_var n) :: D)); auto.
+    split with (A, ((a, HMR_var v) :: D)); auto.
     Permutation_Type_solve.
   - destruct IHT as [[A D] Hperm H].
     { intros Hat; apply Hnat; apply Forall_inf_cons; auto.
       apply I. }
-    split with (A, ((a, HMR_covar n) :: D)); auto.
+    split with (A, ((a, HMR_covar v) :: D)); auto.
     Permutation_Type_solve.
   - split with ((a, HMR_zero), T); auto.
   - split with ((a, A1 +S A2), T); auto.
@@ -1107,7 +1103,7 @@ Qed.
 Lemma p_hseq_is_atomic_flat_map :
   forall k G l,
     p_hseq_is_atomic G ->
-    p_hseq_is_atomic (flat_map (fun i : nat => seq_mul (FOL_R_var (k + i)) (nth i G nil)) l :: nil).
+    p_hseq_is_atomic (flat_map (fun i : nat => seq_mul (Poly_var (k + i)) (nth i G nil)) l :: nil).
 Proof.
   intros k G l Hat; revert k; induction l; intros k; apply Forall_inf_cons; try apply Forall_inf_nil.
   simpl.
@@ -1142,6 +1138,28 @@ Proof.
   - apply IHHperm; apply Forall_inf_nil.
   - apply IHHperm.
     apply Forall_inf_cons; assumption.
+Qed.
+
+Lemma p_seq_is_atomic_eval : forall T val,
+    p_seq_is_atomic T ->
+    seq_is_atomic (eval_p_sequent val T).
+Proof.
+  induction T; intros val Hat; inversion Hat; subst.
+  - apply Forall_inf_nil.
+  - destruct a as [a A].
+    simpl.
+    case_eq (R_order_dec (eval_Poly val a)); intros; simpl; try apply Forall_inf_cons; try (apply IHT; assumption); try assumption.
+    destruct A; inversion X; apply I.
+Qed.
+
+Lemma p_hseq_is_atomic_eval : forall G val,
+    p_hseq_is_atomic G ->
+    hseq_is_atomic (map (eval_p_sequent val) G).
+Proof.
+  induction G; intros val Hat; [ apply Forall_inf_nil | ]; simpl.
+  inversion Hat; subst; specialize (IHG val X0).
+  apply Forall_inf_cons; try assumption.
+  apply p_seq_is_atomic_eval; assumption.
 Qed.
 
 Lemma p_hseq_is_basic_complexity_0 :
@@ -1218,7 +1236,7 @@ Qed.
 
 Lemma max_diamond_seq_mul_nth :
   forall G v k,
-    max_diamond_p_seq (flat_map (fun i : nat => seq_mul (FOL_R_var (k + i)) (nth i G nil)) v) = max_diamond_p_seq (flat_map (fun i : nat => nth i G nil) v).
+    max_diamond_p_seq (flat_map (fun i : nat => seq_mul (Poly_var (k + i)) (nth i G nil)) v) = max_diamond_p_seq (flat_map (fun i : nat => nth i G nil) v).
 Proof.
   intros G; induction v; intros k; auto.
   simpl in *.
@@ -1235,7 +1253,7 @@ Qed.
 
 Lemma complexity_seq_mul_nth :
   forall G v k,
-    HMR_complexity_p_seq (flat_map (fun i : nat => seq_mul (FOL_R_var (k + i)) (nth i G nil)) v) = HMR_complexity_p_seq (flat_map (fun i : nat => nth i G nil) v).
+    HMR_complexity_p_seq (flat_map (fun i : nat => seq_mul (Poly_var (k + i)) (nth i G nil)) v) = HMR_complexity_p_seq (flat_map (fun i : nat => nth i G nil) v).
 Proof.
   intros G; induction v; intros k; auto.
   simpl in *.
@@ -1327,16 +1345,41 @@ Proof.
   - rewrite max_diamond_only_diamond_p_seq_eq_0; lia.
 Qed.
 
+Lemma Forall_inf_max_diamond_only_diamond_p_hseq : forall G,
+    (0 < max_diamond_p_hseq G)%nat ->
+  Forall_inf (fun x : p_sequent => (max_diamond_p_seq x < max_diamond_p_hseq G)%nat)
+             (only_diamond_p_hseq G).
+Proof.
+  enough (forall G k,
+             (0 < k)%nat ->
+             (max_diamond_p_hseq G <= k)%nat ->
+             Forall_inf (fun x : p_sequent => (max_diamond_p_seq x < k)%nat)
+                        (only_diamond_p_hseq G)).
+  { intros G Hlt.
+    apply X; lia. }
+  induction G; intros k Hlt Hle; [apply Forall_inf_nil | ].
+  simpl.
+  apply Forall_inf_cons; [ | apply IHG; simpl in*; lia].
+  case_eq (max_diamond_p_seq a =? 0); intros H.
+  + apply Nat.eqb_eq in H.
+    assert (H' := max_diamond_only_diamond_p_seq_eq_0 a H).
+    lia.
+  + apply Nat.lt_le_trans with (max_diamond_p_seq a); [ | simpl in *; lia].
+    apply max_diamond_only_diamond_p_seq_lt_0.
+    apply Nat.eqb_neq in H.
+    simpl in *; lia.
+Qed.
+
 Lemma modal_complexity_only_diamond_p_seq :
   forall G v n k ,
     max_diamond_p_hseq G = S n ->
-    (modal_complexity_p_hseq (flat_map (fun i : nat => seq_mul (FOL_R_var (k + i)) (only_diamond_p_seq (nth i G nil))) v :: nil) <3 modal_complexity_p_hseq G).
+    (modal_complexity_p_hseq (flat_map (fun i : nat => seq_mul (Poly_var (k + i)) (only_diamond_p_seq (nth i G nil))) v :: nil) <3 modal_complexity_p_hseq G).
 Proof.
   intros G v n k Heq.
   apply fst_lt3.
   apply Nat.le_lt_trans with (max_diamond_p_hseq (only_diamond_p_hseq G)).
   - simpl.
-    replace (fun i => seq_mul (FOL_R_var (k + i)) (only_diamond_p_seq (nth i G nil))) with (fun i => seq_mul (FOL_R_var (k + i)) (nth i (map only_diamond_p_seq G) (only_diamond_p_seq nil))).
+    replace (fun i => seq_mul (Poly_var (k + i)) (only_diamond_p_seq (nth i G nil))) with (fun i => seq_mul (Poly_var (k + i)) (nth i (map only_diamond_p_seq G) (only_diamond_p_seq nil))).
     2:{ apply functional_extensionality; intros x.
         rewrite map_nth; auto. }
     rewrite max_diamond_seq_mul_nth.
@@ -1445,11 +1488,11 @@ Qed.
 Lemma hmrr_mul_decrease_complexity : forall G T A r0 r,
     r <> nil ->
     HMR_complexity_p_seq (vec r (r0 *S A) ++ T) = fst (HMR_complexity_p_hseq ((vec r (r0 *S A) ++ T) :: G)) ->
-    HMR_complexity_p_hseq ((vec (mul_vec (FOL_R_cst (projT1 r0)) r) A ++ T) :: G) <2 HMR_complexity_p_hseq ((vec r (r0 *S A) ++ T) :: G).
+    HMR_complexity_p_hseq ((vec (mul_vec (Poly_cst (projT1 r0)) r) A ++ T) :: G) <2 HMR_complexity_p_hseq ((vec r (r0 *S A) ++ T) :: G).
 Proof.
   intros G T A r0 r Hnnil Heq.
   simpl.
-  case_eq (HMR_complexity_p_seq (vec (mul_vec (FOL_R_cst (projT1 r0)) r) A ++ T) =? fst (HMR_complexity_p_hseq G)); intros H1; case_eq (HMR_complexity_p_seq (vec r (r0 *S A) ++ T) =? fst (HMR_complexity_p_hseq G)); intros H2; rewrite complexity_p_seq_app in H1.
+  case_eq (HMR_complexity_p_seq (vec (mul_vec (Poly_cst (projT1 r0)) r) A ++ T) =? fst (HMR_complexity_p_hseq G)); intros H1; case_eq (HMR_complexity_p_seq (vec r (r0 *S A) ++ T) =? fst (HMR_complexity_p_hseq G)); intros H2; rewrite complexity_p_seq_app in H1.
   - exfalso.
     destruct r; [ apply Hnnil; reflexivity | ].
     apply Nat.eqb_eq in H1; apply Nat.eqb_eq in H2.
@@ -1470,7 +1513,7 @@ Proof.
     + apply fst_lt2.
       apply Nat.eqb_neq in H2; apply Nat.ltb_nlt in H3.
       lia.
-  - case_eq (HMR_complexity_p_seq (vec (mul_vec (FOL_R_cst (projT1 r0)) r) A ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H3.
+  - case_eq (HMR_complexity_p_seq (vec (mul_vec (Poly_cst (projT1 r0)) r) A ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H3.
     + apply snd_lt2.
       lia.
     + exfalso.
@@ -1479,7 +1522,7 @@ Proof.
       simpl in H2; rewrite ? complexity_p_seq_vec in *; simpl in H1,H2,H3.
       rewrite mul_vec_length in *; lia.
   - simpl in Heq; rewrite H2 in Heq.
-    case_eq (HMR_complexity_p_seq (vec (mul_vec (FOL_R_cst (projT1 r0)) r) A ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H3;
+    case_eq (HMR_complexity_p_seq (vec (mul_vec (Poly_cst (projT1 r0)) r) A ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H3;
       case_eq (HMR_complexity_p_seq (vec r (r0 *S A) ++ T) <? fst (HMR_complexity_p_hseq G))%nat; intros H4; rewrite H4 in Heq; simpl in Heq.
     + exfalso.
       apply Nat.eqb_neq in H2; apply H2; apply Heq.
@@ -1695,11 +1738,11 @@ Qed.
 Lemma hmrr_mul_decrease_modal_complexity : forall G T A r0 r,
     r <> nil ->
     HMR_complexity_p_seq (vec r (r0 *S A) ++ T) = fst (HMR_complexity_p_hseq ((vec r (r0 *S A) ++ T) :: G)) ->
-    modal_complexity_p_hseq ((vec (mul_vec (FOL_R_cst (projT1 r0)) r) A ++ T) :: G) <3 modal_complexity_p_hseq ((vec r (r0 *S A) ++ T) :: G).
+    modal_complexity_p_hseq ((vec (mul_vec (Poly_cst (projT1 r0)) r) A ++ T) :: G) <3 modal_complexity_p_hseq ((vec r (r0 *S A) ++ T) :: G).
 Proof.
   intros G T A r0 r Hnnil Heq.
   unfold modal_complexity_p_hseq.
-  replace (max_diamond_p_hseq ((vec r (r0 *S A) ++ T) :: G)) with (max_diamond_p_hseq ((vec (mul_vec (FOL_R_cst (projT1 r0)) r) A ++ T) :: G)).
+  replace (max_diamond_p_hseq ((vec r (r0 *S A) ++ T) :: G)) with (max_diamond_p_hseq ((vec (mul_vec (Poly_cst (projT1 r0)) r) A ++ T) :: G)).
   2:{ simpl; rewrite ? max_diamond_p_seq_app.
       rewrite ? max_diamond_p_seq_vec; simpl; auto.
       intros H; destruct r; [ now apply Hnnil | inversion H]. }
@@ -1767,7 +1810,7 @@ Proof.
 Qed.
 
 (** ** max_var *)
-
+(*
 Lemma max_var_seq_le_p_seq : forall val T,
     (max_var_seq (eval_p_sequent val T) <= max_var_p_seq T)%nat.
 Proof.
@@ -1784,7 +1827,7 @@ Proof.
   intros val; induction G; simpl; auto.
   assert (H := max_var_seq_le_p_seq val a).
   lia.
-Qed.
+Qed. *)
 
 Lemma max_var_weight_p_seq_app:
   forall T1 T2,
@@ -1809,10 +1852,10 @@ Proof.
   induction G; simpl in *; try (assert (H := max_var_weight_p_seq_only_diamond a)); lia.
 Qed.
 
-Lemma max_var_FOL_R_term_In_inf_p_seq :
+Lemma max_var_Poly_In_inf_p_seq :
   forall a A T,
     In_inf (a, A) T ->
-    (max_var_FOL_R_term a <= max_var_weight_p_seq T)%nat.
+    (max_var_Poly a <= max_var_weight_p_seq T)%nat.
 Proof.
   intros a A; induction T; intros Hin; try destruct a0 as [b B]; simpl in *; inversion Hin; try (inversion H; subst); try specialize (IHT X); lia.
 Qed.
@@ -1842,7 +1885,7 @@ Qed.
 Lemma max_var_weight_p_seq_seq_mul :
   forall r T,
     T <> nil ->
-    max_var_weight_p_seq (seq_mul r T) = Nat.max (max_var_FOL_R_term r) (max_var_weight_p_seq T).
+    max_var_weight_p_seq (seq_mul r T) = Nat.max (max_var_Poly r) (max_var_weight_p_seq T).
 Proof.
   intros r; induction T; intros Hnnil; [exfalso; apply Hnnil; reflexivity | ]; destruct a as [a A]; simpl.
   destruct T; [simpl; lia | ].
@@ -1872,7 +1915,7 @@ Proof.
 Qed.
 
 Lemma p_seq_well_defined_seq_mul : forall val T r,
-    0 < FOL_R_term_sem val r ->
+    0 <= eval_Poly val r ->
     p_seq_well_defined val T ->
     p_seq_well_defined val (seq_mul r T).
 Proof.
@@ -1880,7 +1923,6 @@ Proof.
   inversion Hwd; subst.
   destruct a as [a A].
   apply Forall_inf_cons; [ | apply (IHT r Hr); apply X ].
-  apply R_blt_lt; apply R_blt_lt in H0.
   simpl in *; nra.
 Qed.
 
@@ -1962,11 +2004,42 @@ Proof.
   apply p_hseq_well_defined_upd_val; auto.
 Qed.
 
+Lemma p_seq_well_defined_lim : forall T (val_n : nat -> val_UniformSpace) val_l,
+    is_lim_seq val_n val_l ->
+    (forall n, p_seq_well_defined (val_n n) T) ->
+    p_seq_well_defined val_l T.
+Proof.
+  induction T; intros val_n val_l Hlim Hwd_n; [ apply Forall_inf_nil | ].
+  apply Forall_inf_cons ;[ | apply IHT with val_n; try assumption ].
+  - apply is_lim_seq_lb with (fun n => eval_Poly (val_n n) (fst a)).
+    + apply Poly_lim; try assumption.
+    + intros n.
+      specialize (Hwd_n n).
+      inversion Hwd_n; subst.
+      apply H0.
+    + intro n.
+      specialize (Hwd_n n).
+      inversion Hwd_n; subst; assumption.
+Qed.
+
+Lemma p_hseq_well_defined_lim : forall G (val_n : nat -> val_UniformSpace) val_l,
+    is_lim_seq val_n val_l ->
+    (forall n, p_hseq_well_defined (val_n n) G) ->
+    p_hseq_well_defined val_l G.
+Proof.
+  induction G; intros val_n val_l Hlim Hwd_n; [ apply Forall_inf_nil | ].
+  apply Forall_inf_cons ;[ | apply IHG with val_n; try assumption ].
+  - apply p_seq_well_defined_lim with val_n; try assumption.
+    intros n.
+    specialize (Hwd_n n); inversion Hwd_n; subst; assumption.
+  - intros n.
+    specialize (Hwd_n n); inversion Hwd_n; subst; assumption.
+Qed.
 
 (** ** to_p_hypersequent and eval_p_sequent *)
 
 Lemma eval_p_sequent_cons : forall val r H A T,
-    (existT _ (FOL_R_term_sem val r) H, A) :: eval_p_sequent val T = eval_p_sequent val ((r, A) :: T).
+    (existT _ (eval_Poly val r) H, A) :: eval_p_sequent val T = eval_p_sequent val ((r, A) :: T).
 Proof.
   intros val r H A T.
   simpl in *.
@@ -1982,7 +2055,9 @@ Lemma to_p_sequent_well_defined : forall val T,
 Proof.
   intros val; induction T; [ apply Forall_inf_nil | ].
   destruct a as [[a Ha] A]; simpl.
-  apply Forall_inf_cons; assumption.
+  apply Forall_inf_cons; try assumption.
+  apply R_blt_lt in Ha.
+  simpl; lra.
 Qed.
 
 Lemma to_p_hypersequent_well_defined : forall val G,
@@ -2014,7 +2089,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma eval_p_sequent_upd_val_lt : forall val T x r,
+Lemma eval_p_sequent_upd_val_lt_max_var : forall val T x r,
     (max_var_weight_p_seq T < x)%nat ->
     eval_p_sequent (upd_val val x r) T = eval_p_sequent val T.
 Proof.
@@ -2025,7 +2100,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma eval_p_sequent_upd_val_vec_lt : forall val T vx vr,
+Lemma eval_p_sequent_upd_val_vec_lt_max_var : forall val T vx vr,
     Forall_inf (fun x => (max_var_weight_p_seq T < x)%nat) vx ->
     eval_p_sequent (upd_val_vec val vx vr) T = eval_p_sequent val T.
 Proof.
@@ -2033,20 +2108,20 @@ Proof.
   inversion Hall; subst.
   destruct vr; auto.
   simpl; rewrite IHvx; auto.
-  rewrite eval_p_sequent_upd_val_lt; auto.
+  rewrite eval_p_sequent_upd_val_lt_max_var; auto.
 Qed.
 
-Lemma eval_p_hseq_upd_val_lt : forall val G x r,
+Lemma eval_p_hseq_upd_val_lt_max_var : forall val G x r,
     (max_var_weight_p_hseq G < x)%nat ->
     map (eval_p_sequent (upd_val val x r)) G = map (eval_p_sequent val) G.
 Proof.
   intros val; induction G; intros x r Hlt; simpl in *; auto.
-  simpl; rewrite eval_p_sequent_upd_val_lt; try lia.
+  simpl; rewrite eval_p_sequent_upd_val_lt_max_var; try lia.
   rewrite IHG; try lia.
   reflexivity.
 Qed.
 
-Lemma eval_p_hseq_upd_val_vec_lt : forall val G vx vr,
+Lemma eval_p_hseq_upd_val_vec_lt_max_var : forall val G vx vr,
     Forall_inf (fun x => (max_var_weight_p_hseq G < x)%nat) vx ->
     map (eval_p_sequent (upd_val_vec val vx vr)) G = map (eval_p_sequent val) G.
 Proof.
@@ -2054,7 +2129,7 @@ Proof.
   inversion Hall; subst.
   destruct vr; auto.
   simpl; rewrite IHvx; auto.
-  rewrite eval_p_hseq_upd_val_lt; auto.
+  rewrite eval_p_hseq_upd_val_lt_max_var; auto.
 Qed.
    
 Lemma eval_p_sequent_app :
@@ -2106,4 +2181,90 @@ Proof.
   lia.
 Qed.
 
+Lemma concat_eval_p_sequent : forall G val,
+    concat (map (eval_p_sequent val) G)  = eval_p_sequent val (concat G).
+Proof.
+  induction G; intros val; try reflexivity.
+  simpl.
+  rewrite eval_p_sequent_app.
+  f_equal; apply IHG.
+Qed.
 
+Lemma eval_p_sequent_upd_val_lt :
+  forall T r val i,
+    (max_var_weight_p_seq T < i)%nat ->
+    eval_p_sequent (upd_val val i r) T = eval_p_sequent val T.
+Proof.
+  intros T; intros r val i Hlt.
+  change (upd_val val i r) with (upd_val_vec val (seq i (length (r :: nil))) (r :: nil)).
+  apply eval_p_sequent_upd_val_vec_lt_max_var.
+  simpl.
+  apply Forall_inf_cons; [ | apply Forall_inf_nil].
+  apply Hlt.
+Qed.
+
+Lemma eval_p_hseq_upd_val_lt :
+  forall G r val i,
+    (max_var_weight_p_hseq G < i)%nat ->
+    map (eval_p_sequent (upd_val val i r)) G = map (eval_p_sequent val) G.
+Proof.
+  intros G; intros r val i Hlti.
+  change (upd_val val i r) with (upd_val_vec val (seq i (length (r :: nil))) (r :: nil)).
+  apply eval_p_hseq_upd_val_vec_lt_max_var.
+  simpl.
+  apply Forall_inf_cons; [ | apply Forall_inf_nil].
+  apply Hlti.
+Qed.
+
+Lemma eval_p_sequent_seq_mul_0 :
+  forall T r val,
+    eval_Poly val r = 0 ->
+    eval_p_sequent val (seq_mul r T) = nil.
+Proof.
+  induction T; intros r val Heq; try reflexivity.
+  specialize (IHT r val Heq).
+  destruct a as [a A].
+  simpl.
+  case (R_order_dec (eval_Poly val r * eval_Poly val a)); intros e;
+    try (exfalso; clear - e Heq; apply R_blt_lt in e; nra).
+  apply IHT.
+Qed.
+
+Lemma eval_p_sequent_seq_mul_pos :
+  forall T r (rp : Rpos) val,
+    eval_Poly val r = projT1 rp ->
+    eval_p_sequent val (seq_mul r T) = hseq.seq_mul rp (eval_p_sequent val T).
+Proof.
+  induction T; intros r rp val Heq; try reflexivity.
+  destruct a as [a A].
+  specialize (IHT r rp val Heq).
+  simpl; rewrite IHT.
+  case (R_order_dec (eval_Poly val r * eval_Poly val a)); intros Hra;
+    case (R_order_dec (eval_Poly val a)); intros Ha; simpl;
+      try (exfalso; clear - r rp Hra Ha Heq; try apply R_blt_lt in Hra; try apply R_blt_lt in Ha; destruct rp as [rp Hrp]; simpl in Heq; apply R_blt_lt in Hrp;  nra);
+      do 2 f_equal;
+      apply Rpos_eq; destruct rp; simpl in *; nra.
+Qed.
+
+Lemma sum_weight_var_eval_p_sequent_seq_mul :
+  forall T r val n,
+    sum_weight_var_seq n (eval_p_sequent val (seq_mul r T)) = (eval_Poly val r) * sum_weight_var_seq n (eval_p_sequent val T).
+Proof.
+  induction T; intros r val n; [ simpl; lra | ].
+  specialize (IHT r val n).
+  destruct a as [a A].
+  destruct A; simpl;
+    case (R_order_dec (eval_Poly val a)); intros H;
+      try (case (R_order_dec (eval_Poly val r * eval_Poly val a)); intros H');
+      simpl; try (case (term.V_eq n v)); simpl;
+        try lra;
+        exfalso; (apply R_blt_lt in H' + apply R_blt_nlt in H'); nra.
+Qed.
+
+Lemma concat_eval_p_hseq : forall G val,
+    concat (map (eval_p_sequent val) G) :: nil  = map (eval_p_sequent val) (concat G :: nil).
+Proof.
+  intros G val.
+  simpl; f_equal.
+  apply concat_eval_p_sequent.
+Qed.

@@ -19,10 +19,10 @@ Local Open Scope R_scope.
 
 (** * Definitions *)
                                                 
-Definition sequent : Set := list (Rpos * term).
+Definition sequent : Type := list (Rpos * term).
 Definition seq_diamond (T : sequent) := map (fun x => (fst x, <S> (snd x))) T.
 
-Definition hypersequent : Set := list sequent.
+Definition hypersequent : Type := list sequent.
 
 (** ** Property stating whether or not a (hyper)sequent is atomic or basic *)
 
@@ -66,7 +66,7 @@ Fixpoint max_diamond_hseq G :=
 Definition modal_complexity_hseq G := (max_diamond_hseq G, fst (HMR_complexity_hseq G), snd (HMR_complexity_hseq G)).
 
 (** ** Max variable appearing in a hypersequent *)
-Fixpoint max_var_term A :=
+(* Fixpoint max_var_term A :=
   match A with
   | HMR_var n => n
   | HMR_covar n => n
@@ -78,7 +78,7 @@ Fixpoint max_var_term A :=
   | HMR_one => 0%nat
   | HMR_coone => 0%nat
   | <S> A => max_var_term A
-  end.
+  end. 
 
 Fixpoint max_var_seq (T : sequent) :=
   match T with
@@ -90,7 +90,7 @@ Fixpoint max_var_hseq G :=
   match G with
   | nil => 0%nat
   | T :: G => Nat.max (max_var_seq T) (max_var_hseq G)
-  end.
+  end. *)
 
 (** ** Substitution *)
 Fixpoint subs_seq (D : sequent) n t :=
@@ -150,59 +150,34 @@ Fixpoint seq_mul_vec vr T :=
   end.
 
 (** ** Sum of the weights of the atoms *)
-(** sum_weight_seq_var n T return the sum of the weights of the formula (HMR_var n) that appears in the sequent T. *)
-Fixpoint sum_weight_seq_var n (T : sequent) :=
+(** sum_weight_seq_var n T return the sum of the weights of the formula (HMR_var n) and (HMR_covar n) that appears in the sequent T. *)
+Fixpoint sum_weight_var_seq n (T : sequent) :=
   match T with
   | nil => 0
-  | ((r , HMR_var n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_var n T else sum_weight_seq_var n T
-  | ( _ :: T) => sum_weight_seq_var n T
+  | ((r , HMR_var n0) :: T) => if term.V_eq n n0 then (projT1 r) + sum_weight_var_seq n T else sum_weight_var_seq n T
+  | ((r , HMR_covar n0) :: T) => if term.V_eq n n0 then (- projT1 r) + sum_weight_var_seq n T else sum_weight_var_seq n T
+  | ( _ :: T) => sum_weight_var_seq n T
   end.
 
-(** sum_weight_seq_covar n T return the sum of the weights of the formula (HMR_covar n) that appears in the sequent T. *)
-Fixpoint sum_weight_seq_covar n (T : sequent) :=
+(** sum_weight_seq_one T return the sum of the weights of the formula HMR_one and HMR_coone that appears in the sequent T. *)
+Fixpoint sum_weight_one_seq (T : sequent) :=
   match T with
   | nil => 0
-  | ((r , HMR_covar n0) :: T) => if n =? n0 then (projT1 r) + sum_weight_seq_covar n T else sum_weight_seq_covar n T
-  | ( _ :: T) => sum_weight_seq_covar n T
-  end.
-
-(** sum_weight_seq_one T return the sum of the weights of the formula HMR_one that appears in the sequent T. *)
-Fixpoint sum_weight_seq_one (T : sequent) :=
-  match T with
-  | nil => 0
-  | ((r , HMR_one) :: T) => (projT1 r) + sum_weight_seq_one T
-  | ( _ :: T) => sum_weight_seq_one T
-  end.
-(** sum_weight_seq_coone T return the sum of the weights of the formula HMR_coone that appears in the sequent T. *)
-Fixpoint sum_weight_seq_coone (T : sequent) :=
-  match T with
-  | nil => 0
-  | ((r , HMR_coone) :: T) => (projT1 r) + sum_weight_seq_coone T
-  | ( _ :: T) => sum_weight_seq_coone T
+  | ((r , HMR_one) :: T) => (projT1 r) + sum_weight_one_seq T
+  | ((r, HMR_coone) :: T) => (- projT1 r) + sum_weight_one_seq T
+  | ( _ :: T) => sum_weight_one_seq T
   end.
 (** sum_weight_var n G return the sum of the weights of the formula (HMR_var n) that appears in the hypersequent G. *)
 Fixpoint sum_weight_var n G :=
   match G with
   | nil => 0
-  | T :: G => sum_weight_seq_var n T + sum_weight_var n G
-  end.
-(** sum_weight_covar n G return the sum of the weights of the formula (HMR_covar n) that appears in the hypersequent G. *)
-Fixpoint sum_weight_covar n G :=
-  match G with
-  | nil => 0
-  | T :: G => sum_weight_seq_covar n T + sum_weight_covar n G
+  | T :: G => sum_weight_var_seq n T + sum_weight_var n G
   end.
 (** sum_weight_one G return the sum of the weights of the formula HMR_one that appears in the hypersequent G. *)
 Fixpoint sum_weight_one G :=
   match G with
   | nil => 0
-  | T :: G => sum_weight_seq_one T + sum_weight_one G
-  end.
-(** sum_weight_coone G return the sum of the weights of the formula HMR_coone that appears in the hypersequent G. *)
-Fixpoint sum_weight_coone G :=
-  match G with
-  | nil => 0
-  | T :: G => sum_weight_seq_coone T + sum_weight_coone G
+  | T :: G => sum_weight_one_seq T + sum_weight_one G
   end.
 
 (** keep only the diamonds formulas and (co)HMR_ones but remove the diamond operator *)
@@ -972,90 +947,41 @@ Proof.
 Qed.
 
 (** ** sum_weight_seq_(co)var *)
-
-Lemma sum_weight_seq_var_pos : forall n T,
-    0 <= sum_weight_seq_var n T.
-Proof.
-  intros n; induction T; simpl; try nra.
-  destruct a as [a A].
-  destruct a as [a Ha].
-  destruct A; try nra.
-  case (n =? n0); simpl; apply R_blt_lt in Ha; nra.
-Qed.
-
-Lemma sum_weight_seq_covar_pos : forall n T,
-    0 <= sum_weight_seq_covar n T.
-Proof.
-  intros n; induction T; simpl; try nra.
-  destruct a as [a A].
-  destruct a as [a Ha].
-  destruct A; try nra.
-  case (n =? n0); simpl; apply R_blt_lt in Ha; nra.
-Qed.
-
-Lemma sum_weight_seq_var_lt_max_var : forall n T1,
+(*
+Lemma sum_weight_var_seq_lt_max_var : forall n T1,
     (max_var_seq T1 < n)%nat ->
-    sum_weight_seq_var n T1 = 0.
+    sum_weight_var_seq n T1 = 0.
 Proof.
   intros n; induction T1; intros Hlt; auto.
   destruct a as [a A].
-  destruct A; simpl in *; try (apply IHT1 ; lia).
-  replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia).
-  apply IHT1.
-  lia.
-Qed.
+  destruct A; simpl in *; try (apply IHT1 ; lia);
+    replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia);
+    apply IHT1;
+    lia.
+Qed. *)
 
-Lemma sum_weight_seq_covar_lt_max_var : forall n T1,
-    (max_var_seq T1 < n)%nat ->
-    sum_weight_seq_covar n T1 = 0.
-Proof.
-  intros n; induction T1; intros Hlt; auto.
-  destruct a as [a A].
-  destruct A; simpl in *; try (apply IHT1 ; lia).
-  replace (n =? n0) with false by (symmetry; apply Nat.eqb_neq; lia).
-  apply IHT1.
-  lia.
-Qed. 
-    
-Lemma sum_weight_seq_var_app : forall n T1 T2,
-    sum_weight_seq_var n (T1 ++ T2) = sum_weight_seq_var n T1 + sum_weight_seq_var n T2.
+Lemma sum_weight_var_seq_app : forall n T1 T2,
+    sum_weight_var_seq n (T1 ++ T2) = sum_weight_var_seq n T1 + sum_weight_var_seq n T2.
 Proof.
   intros n T1; induction T1; intros T2; simpl; try nra.
   destruct a as [a A]; simpl.
   specialize (IHT1 T2).
-  destruct A; try case (n =? n0); simpl; try nra.
+  destruct A; try case (term.V_eq n v); simpl; try nra.
 Qed.
 
-Lemma sum_weight_seq_covar_app : forall n T1 T2,
-    sum_weight_seq_covar n (T1 ++ T2) = sum_weight_seq_covar n T1 + sum_weight_seq_covar n T2.
-Proof.
-  intros n T1; induction T1; intros T2; simpl; try nra.
-  destruct a as [a A]; simpl.
-  specialize (IHT1 T2).
-  destruct A; try case (n =? n0); simpl; try nra.
-Qed.
-
-Lemma sum_weight_seq_var_mul : forall n T r,
-    sum_weight_seq_var n (seq_mul r T) = (projT1 r) * sum_weight_seq_var n T.
+Lemma sum_weight_var_seq_mul : forall n T r,
+    sum_weight_var_seq n (seq_mul r T) = (projT1 r) * sum_weight_var_seq n T.
 Proof.
   intros n T r; induction T; simpl; try nra.
   destruct a as [a A]; simpl.
-  destruct A; try case (n =? n0); destruct a; destruct r; simpl in *; try nra.
+  destruct A; try case (term.V_eq n v); destruct a; destruct r; simpl in *; try nra.
 Qed.
 
-Lemma sum_weight_seq_covar_mul : forall n T r,
-    sum_weight_seq_covar n (seq_mul r T) = (projT1 r) * sum_weight_seq_covar n T.
-Proof.
-  intros n T r; induction T; simpl; try nra.
-  destruct a as [a A]; simpl.
-  destruct A; try case (n =? n0); destruct a; destruct r; simpl in *; try nra.
-Qed.
-
-Lemma sum_weight_seq_var_copy : forall n T r,
-    sum_weight_seq_var n (copy_seq r T) = (INR r) * sum_weight_seq_var n T.
+Lemma sum_weight_var_seq_copy : forall n T r,
+    sum_weight_var_seq n (copy_seq r T) = (INR r) * sum_weight_var_seq n T.
 Proof.
   intros n T r; induction r; simpl in *; try nra.
-  rewrite sum_weight_seq_var_app; rewrite IHr.
+  rewrite sum_weight_var_seq_app; rewrite IHr.
   change (match r with
           | 0%nat => 1
           | S _ => INR r + 1
@@ -1063,60 +989,39 @@ Proof.
   rewrite S_INR; nra.
 Qed.
 
-Lemma sum_weight_seq_covar_copy : forall n T r,
-    sum_weight_seq_covar n (copy_seq r T) = (INR r) * sum_weight_seq_covar n T.
+Lemma sum_weight_var_seq_vec_var_eq : forall n r,
+    sum_weight_var_seq n (vec r (HMR_var n)) = sum_vec r.
 Proof.
-  intros n T r; induction r; simpl in *; try nra.
-  rewrite sum_weight_seq_covar_app; rewrite IHr.
-  change (match r with
-          | 0%nat => 1
-          | S _ => INR r + 1
-          end) with (INR (S r)).
-  rewrite S_INR; nra.
+  intros n; induction r; simpl; try reflexivity.
+  case (term.V_eq n n); intros H; [ rewrite IHr; reflexivity | ].
+  exfalso; apply H; reflexivity.
 Qed.
 
-Lemma sum_weight_seq_var_vec_var_eq : forall n r,
-    sum_weight_seq_var n (vec r (HMR_var n)) = sum_vec r.
+Lemma sum_weight_var_seq_vec_covar_eq : forall n r,
+    sum_weight_var_seq n (vec r (HMR_covar n)) = - sum_vec r.
 Proof.
-  intros n; induction r; simpl; try (rewrite Nat.eqb_refl; rewrite IHr); reflexivity.
+  intros n; induction r; simpl; try lra.
+  case (term.V_eq n n); intros H; [ rewrite IHr; lra | ].
+  exfalso; apply H; reflexivity.
 Qed.
 
-Lemma sum_weight_seq_covar_vec_covar_eq : forall n r,
-    sum_weight_seq_covar n (vec r (HMR_covar n)) = sum_vec r.
-Proof.
-  intros n; induction r; simpl; try (rewrite Nat.eqb_refl; rewrite IHr); nra.
-Qed.
-
-Lemma sum_weight_seq_var_vec_neq : forall n A r,
+Lemma sum_weight_var_seq_vec_neq : forall n A r,
     HMR_var n <> A ->
-    sum_weight_seq_var n (vec r A) = 0.
-Proof.
-  intros n A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; try (case_eq (n =? n0) ; [ intros H; exfalso; apply Nat.eqb_eq in H; now subst | ]); auto.
-Qed.
-
-Lemma sum_weight_seq_covar_vec_neq : forall n A r,
     HMR_covar n <> A ->
-    sum_weight_seq_covar n (vec r A) = 0.
+    sum_weight_var_seq n (vec r A) = 0.
 Proof.
-  intros n A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; try (case_eq (n =? n0) ; [ intros H; exfalso; apply Nat.eqb_eq in H; now subst | ]); auto.
+  intros n A; induction r; intros Hneqv Hneqcv; simpl; try reflexivity.
+  destruct A; try (case (term.V_eq n v) ; [ intros H; exfalso; now subst | ]); auto.
 Qed.
 
-Lemma sum_weight_seq_var_perm : forall n T1 T2,
+Lemma sum_weight_var_seq_perm : forall n T1 T2,
     Permutation_Type T1 T2 ->
-    sum_weight_seq_var n T1 = sum_weight_seq_var n T2.
+    sum_weight_var_seq n T1 = sum_weight_var_seq n T2.
 Proof.
-  intros n T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try case (n =? n0); try case (n =? n1); try nra.
+  intros n T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try case (term.V_eq n v); try case (term.V_eq n v0); try nra.
 Qed.
 
-Lemma sum_weight_seq_covar_perm : forall n T1 T2,
-    Permutation_Type T1 T2 ->
-    sum_weight_seq_covar n T1 = sum_weight_seq_covar n T2.
-Proof.
-  intros n T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try case (n =? n0); try case (n =? n1); try nra.
-Qed.
-
+(*
 Lemma sum_weight_var_lt_max_var : forall n G,
     (max_var_hseq G < n)%nat ->
     sum_weight_var n G = 0.
@@ -1124,20 +1029,9 @@ Proof.
   intros n; induction G; intros Hlt; auto.
   simpl in *.
   rewrite IHG; try lia.
-  rewrite sum_weight_seq_var_lt_max_var; try lia.
+  rewrite sum_weight_var_seq_lt_max_var; try lia.
   lra.
-Qed.
-
-Lemma sum_weight_covar_lt_max_var : forall n G,
-    (max_var_hseq G < n)%nat ->
-    sum_weight_covar n G = 0.
-Proof.
-  intros n; induction G; intros Hlt; auto.
-  simpl in *.
-  rewrite IHG; try lia.
-  rewrite sum_weight_seq_covar_lt_max_var; try lia.
-  lra.
-Qed. 
+Qed. *)
 
 Lemma sum_weight_var_perm : forall n G H,
     Permutation_Type G H ->
@@ -1146,69 +1040,75 @@ Proof.
   intros n G H Hperm; induction Hperm; simpl; nra.
 Qed.
 
-Lemma sum_weight_covar_perm : forall n G H,
-    Permutation_Type G H ->
-    sum_weight_covar n G = sum_weight_covar n H.
-Proof.
-  intros n G H Hperm; induction Hperm; simpl; nra.
-Qed.
-
 Lemma seq_decomp_basic :
   forall T n,
     {' (r,s,D) : _ &
-                    prod (sum_vec r = sum_weight_seq_var n T)
-                         ((sum_vec s = sum_weight_seq_covar n T) *
-                          (Permutation_Type T (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ D))) }.
+                    prod (sum_vec r - sum_vec s = sum_weight_var_seq n T)
+                         (Permutation_Type T (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ D)) }.
 Proof.
   induction T; intros n.
   - split with (nil, nil, nil).
-    repeat split; try reflexivity.
-  - destruct (IHT n) as [[[r s] D] [Hr [Hs Hperm]]].
+    repeat split; simpl; try reflexivity + lra.
+  - destruct (IHT n) as [[[r s] D] [Hsum Hperm]].
     destruct a as [a A].
     destruct A; try (esplit with (r , s, (a , _) :: D); repeat split; try assumption;
                      rewrite ? app_assoc; etransitivity ; [ | apply Permutation_Type_middle]; apply Permutation_Type_skip; rewrite <- app_assoc; now apply Hperm).
-    + case_eq (n =? n0); intros Heq.
+    + case_eq (term.V_eq n v); intros Heq He.
       * split with (a :: r, s, D).
         repeat split.
-        -- simpl; rewrite Hr.
-           rewrite Heq; reflexivity.
-        -- apply Hs.
-        -- simpl; apply Nat.eqb_eq in Heq; subst.
+        -- simpl; rewrite <- Hsum.
+           rewrite He; lra.
+        -- simpl; subst.
            Permutation_Type_solve.
-      * split with (r , s , (a, HMR_var n0) :: D).
+      * split with (r , s , (a, HMR_var v) :: D).
         repeat split.
-        -- simpl; rewrite Hr.
-           rewrite Heq; reflexivity.
-        -- apply Hs.
+        -- simpl; rewrite Hsum.
+           rewrite He; lra.
         -- simpl; Permutation_Type_solve.
-    + case_eq (n =? n0); intros Heq.
+    + case_eq (term.V_eq n v); intros Heq He.
       * split with (r, a :: s, D).
         repeat split.
-        -- apply Hr.
-        -- simpl; rewrite Hs.
-           rewrite Heq; reflexivity.
-        -- simpl; apply Nat.eqb_eq in Heq; subst.
+        -- simpl; rewrite <- Hsum.
+           rewrite He; lra.
+        -- simpl; subst.
            Permutation_Type_solve.
-      * split with (r , s , (a, HMR_covar n0) :: D).
+      * split with (r , s , (a, HMR_covar v) :: D).
         repeat split.
-        -- apply Hr.
-        -- simpl; rewrite Hs.
-           rewrite Heq; reflexivity.
+        -- simpl; rewrite Hsum.
+           rewrite He; reflexivity.
         -- simpl; Permutation_Type_solve.
+Qed.
+
+Lemma sum_weight_var_seq_no_atom : forall T n,
+    ((In_inf (HMR_var n) (map snd T) + In_inf (HMR_covar n) (map snd T)) -> False) ->
+    sum_weight_var_seq n T = 0.
+Proof.
+  induction T; intros n H; [reflexivity | ].
+  destruct a as [r A]; simpl.
+  assert ((In_inf (HMR_var n) (map snd T) + In_inf (HMR_covar n) (map snd T)) -> False).
+  { intros H'; apply H.
+    inversion H'; [left; right | right; right]; assumption. }
+  specialize (IHT n H0).
+  rewrite IHT.
+  destruct A; simpl; try reflexivity;
+    case_eq (term.V_eq n v); intros Heq He; try reflexivity;
+      exfalso; subst;
+        apply H; [left | right];
+          left; reflexivity.
 Qed.
            
 Lemma seq_basic_decomp_decr :
   forall T,
     seq_is_basic T ->
     {' (n, r,s,D) : _ &
-                    prod (sum_vec r = sum_weight_seq_var n T)
-                         ((sum_vec s = sum_weight_seq_covar n T) *
-                          (Permutation_Type T (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ D)) *
-                          ((length D < length T)%nat)) } + { forall n, prod (sum_weight_seq_var n T = 0) (sum_weight_seq_covar n T = 0) }.
+                    prod (sum_vec r - sum_vec s = sum_weight_var_seq n T)
+                         ((Permutation_Type T (vec s (HMR_covar n) ++ vec r (HMR_var n) ++ D)) *
+                          ((length D < length T)%nat)) } + { forall n, (In_inf (HMR_var n) (map snd T) + In_inf (HMR_covar n) (map snd T)) -> False }.
 Proof.
   induction T; intros Hat.
   - right.
-    intros n; split; reflexivity.
+    intros n.
+    intros [Hin | Hin]; inversion Hin.
   - inversion Hat; subst.
     specialize (IHT X0).
     destruct a as [a A].
@@ -1216,13 +1116,12 @@ Proof.
       destruct IHT as [[[[[nv r] s] D] H] | H].
     + left.
       clear r s D H.
-      destruct (seq_decomp_basic T n) as [[[r s] D] [Hr [Hs Hperm]]].
-      split with (n, a :: r, s , D).
+      destruct (seq_decomp_basic T v) as [[[r s] D] [Hr Hperm]].
+      split with (v, a :: r, s , D).
       repeat split.
       * simpl.
-        rewrite Nat.eqb_refl.
-        rewrite Hr; reflexivity.
-      * apply Hs.
+        case (term.V_eq v ); intros Heq; [ | contradiction].
+        rewrite<- Hr; lra.
       * Permutation_Type_solve.
       * simpl.
         apply Permutation_Type_length in Hperm.
@@ -1230,23 +1129,22 @@ Proof.
         rewrite ? app_length.
         lia.
     + left.
-      split with (n, a :: nil, nil, T); specialize (H n) as [HHMR_var HHMR_covar].
+      split with (v, a :: nil, nil, T); specialize (H v).
       repeat split.
-      * simpl; rewrite HHMR_var.
-        rewrite Nat.eqb_refl.
-        reflexivity.
-      * simpl; rewrite HHMR_covar; reflexivity.
+      * simpl.
+        case (term.V_eq v v); intros Heq; [ | contradiction].
+        rewrite sum_weight_var_seq_no_atom; try assumption.
+        lra.
       * auto.
       * simpl; lia.
     + left.
       clear r s D H.
-      destruct (seq_decomp_basic T n) as [[[r s] D] [Hr [Hs Hperm]]].
-      split with (n, r, a :: s , D).
+      destruct (seq_decomp_basic T v) as [[[r s] D] [Hr Hperm]].
+      split with (v, r, a :: s , D).
       repeat split.
-      * apply Hr.
       * simpl.
-        rewrite Nat.eqb_refl.
-        rewrite Hs; reflexivity.
+        case (term.V_eq v v); intros Heq; [ | contradiction].
+        rewrite <- Hr; lra.
       * Permutation_Type_solve.
       * simpl.
         apply Permutation_Type_length in Hperm.
@@ -1254,61 +1152,59 @@ Proof.
         rewrite ? app_length.
         lia.
     + left.
-      split with (n, nil , a :: nil, T); specialize (H n) as [HHMR_var HHMR_covar].
+      split with (v, nil , a :: nil, T); specialize (H v).
       repeat split.
-      * simpl; rewrite HHMR_var; reflexivity.
-      * simpl; rewrite HHMR_covar.
-        rewrite Nat.eqb_refl.
-        reflexivity.
+      * simpl.
+        case (term.V_eq v v); intros Heq; [ | contradiction].
+        rewrite sum_weight_var_seq_no_atom; try assumption.
+        lra.
       * auto.
       * simpl; lia.
     + left; split with (nv,r,s,((a, HMR_one) :: D)).
-      repeat split; destruct H as [HHMR_var [[HHMR_covar Hperm] Hlen]].
+      repeat split; destruct H as [HHMR_var [Hperm Hlen]].
       * simpl; rewrite HHMR_var; reflexivity.
-      * simpl; rewrite HHMR_covar; reflexivity.
       * Permutation_Type_solve.
       * simpl; lia.
     + right.
-      intros n; specialize (H n) as [HHMR_var HHMR_covar].
-      split; simpl; assumption.
+      intros n; simpl.
+      intros H'; apply H with n.
+      inversion H'; [left | right];
+        inversion X1; try assumption;
+          inversion H0.
     + left; split with (nv,r,s,((a, HMR_coone) :: D)).
-      repeat split; destruct H as [HHMR_var [[HHMR_covar Hperm] Hlen]].
+      repeat split; destruct H as [HHMR_var [Hperm Hlen]].
       * simpl; rewrite HHMR_var; reflexivity.
-      * simpl; rewrite HHMR_covar; reflexivity.
       * Permutation_Type_solve.
       * simpl; lia.
     + right.
-      intros n; specialize (H n) as [HHMR_var HHMR_covar].
-      split; simpl; assumption.
+      intros n; simpl.
+      intros H'; apply H with n.
+      inversion H'; [left | right];
+        inversion X1; try assumption;
+          inversion H0.
     + left; split with (nv,r,s,((a, <S> A) :: D)).
-      repeat split; destruct H as [HHMR_var [[HHMR_covar Hperm] Hlen]].
+      repeat split; destruct H as [HHMR_var [Hperm Hlen]].
       * simpl; rewrite HHMR_var; reflexivity.
-      * simpl; rewrite HHMR_covar; reflexivity.
       * Permutation_Type_solve.
       * simpl; lia.
     + right.
-      intros n; specialize (H n) as [HHMR_var HHMR_covar].
-      split; simpl; assumption.
+      intros n; simpl.
+      intros H'; apply H with n.
+      inversion H'; [left | right];
+        inversion X1; try assumption;
+          inversion H0.
 Qed.
 
-Lemma sum_weight_seq_var_seq_diamond :
+Lemma sum_weight_var_seq_seq_diamond :
   forall n T,
-    sum_weight_seq_var n (seq_diamond T) = 0.
+    sum_weight_var_seq n (seq_diamond T) = 0.
 Proof.
   intros n; induction T; auto.
 Qed.
-
-Lemma sum_weight_seq_covar_seq_diamond :
-  forall n T,
-    sum_weight_seq_covar n (seq_diamond T) = 0.
-Proof.
-  intros n; induction T; auto.
-Qed.
-
 (** ** sum_weight_seq_(co)one *)
 
-Lemma sum_weight_seq_one_app : forall T1 T2,
-    sum_weight_seq_one (T1 ++ T2) = sum_weight_seq_one T1 + sum_weight_seq_one T2.
+Lemma sum_weight_one_seq_app : forall T1 T2,
+    sum_weight_one_seq (T1 ++ T2) = sum_weight_one_seq T1 + sum_weight_one_seq T2.
 Proof.
   intros T1; induction T1; intros T2; simpl; try nra.
   destruct a as [a A]; simpl.
@@ -1316,36 +1212,19 @@ Proof.
   destruct A; simpl; try nra.
 Qed.
 
-Lemma sum_weight_seq_coone_app : forall T1 T2,
-    sum_weight_seq_coone (T1 ++ T2) = sum_weight_seq_coone T1 + sum_weight_seq_coone T2.
-Proof.
-  intros T1; induction T1; intros T2; simpl; try nra.
-  destruct a as [a A]; simpl.
-  specialize (IHT1 T2).
-  destruct A; simpl; try nra.
-Qed.
-
-Lemma sum_weight_seq_one_mul : forall T r,
-    sum_weight_seq_one (seq_mul r T) = (projT1 r) * sum_weight_seq_one T.
+Lemma sum_weight_one_seq_mul : forall T r,
+    sum_weight_one_seq (seq_mul r T) = (projT1 r) * sum_weight_one_seq T.
 Proof.
   intros T r; induction T; simpl; try nra.
   destruct a as [a A]; simpl.
   destruct A; destruct a; destruct r; simpl in *; try nra.
 Qed.
 
-Lemma sum_weight_seq_coone_mul : forall T r,
-    sum_weight_seq_coone (seq_mul r T) = (projT1 r) * sum_weight_seq_coone T.
-Proof.
-  intros T r; induction T; simpl; try nra.
-  destruct a as [a A]; simpl.
-  destruct A; destruct a; destruct r; simpl in *; try nra.
-Qed.
-
-Lemma sum_weight_seq_one_copy : forall T r,
-    sum_weight_seq_one (copy_seq r T) = (INR r) * sum_weight_seq_one T.
+Lemma sum_weight_one_seq_copy : forall T r,
+    sum_weight_one_seq (copy_seq r T) = (INR r) * sum_weight_one_seq T.
 Proof.
   intros T r; induction r; simpl in *; try nra.
-  rewrite sum_weight_seq_one_app; rewrite IHr.
+  rewrite sum_weight_one_seq_app; rewrite IHr.
   change (match r with
           | 0%nat => 1
           | S _ => INR r + 1
@@ -1353,56 +1232,30 @@ Proof.
   rewrite S_INR; nra.
 Qed.
 
-Lemma sum_weight_seq_coone_copy : forall T r,
-    sum_weight_seq_coone (copy_seq r T) = (INR r) * sum_weight_seq_coone T.
-Proof.
-  intros T r; induction r; simpl in *; try nra.
-  rewrite sum_weight_seq_coone_app; rewrite IHr.
-  change (match r with
-          | 0%nat => 1
-          | S _ => INR r + 1
-          end) with (INR (S r)).
-  rewrite S_INR; nra.
-Qed.
-
-Lemma sum_weight_seq_one_vec_one_eq : forall r,
-    sum_weight_seq_one (vec r (HMR_one)) = sum_vec r.
+Lemma sum_weight_one_seq_vec_one_eq : forall r,
+    sum_weight_one_seq (vec r (HMR_one)) = sum_vec r.
 Proof.
   intros; induction r; simpl; try (rewrite IHr); reflexivity.
 Qed.
 
-Lemma sum_weight_seq_coone_vec_coone_eq : forall r,
-    sum_weight_seq_coone (vec r (HMR_coone)) = sum_vec r.
+Lemma sum_weight_one_seq_vec_coone_eq : forall r,
+    sum_weight_one_seq (vec r (HMR_coone)) = - sum_vec r.
 Proof.
   intros; induction r; simpl; try (rewrite IHr); nra.
 Qed.
 
-Lemma sum_weight_seq_one_vec_neq : forall A r,
+Lemma sum_weight_one_seq_vec_neq : forall A r,
     HMR_one <> A ->
-    sum_weight_seq_one (vec r A) = 0.
+    HMR_coone <> A ->
+    sum_weight_one_seq (vec r A) = 0.
 Proof.
-  intros A; induction r; intros Hneq; simpl; try reflexivity.
+  intros A; induction r; intros Hneqo Hneqco; simpl; try reflexivity.
   destruct A ; now subst; auto.
 Qed.
 
-Lemma sum_weight_seq_coone_vec_neq : forall A r,
-    HMR_coone <> A ->
-    sum_weight_seq_coone (vec r A) = 0.
-Proof.
-  intros A; induction r; intros Hneq; simpl; try reflexivity.
-  destruct A; now subst; auto.
-Qed.
-
-Lemma sum_weight_seq_one_perm : forall T1 T2,
+Lemma sum_weight_one_seq_perm : forall T1 T2,
     Permutation_Type T1 T2 ->
-    sum_weight_seq_one T1 = sum_weight_seq_one T2.
-Proof.
-  intros T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try nra.
-Qed.
-
-Lemma sum_weight_seq_coone_perm : forall T1 T2,
-    Permutation_Type T1 T2 ->
-    sum_weight_seq_coone T1 = sum_weight_seq_coone T2.
+    sum_weight_one_seq T1 = sum_weight_one_seq T2.
 Proof.
   intros T1 T2 Hperm; induction Hperm; simpl; try destruct x as [a A]; try destruct y as [b B]; try destruct A; try destruct B; try nra.
 Qed.
@@ -1414,23 +1267,9 @@ Proof.
   intros G H Hperm; induction Hperm; simpl; nra.
 Qed.
 
-Lemma sum_weight_coone_perm : forall G H,
-    Permutation_Type G H ->
-    sum_weight_coone G = sum_weight_coone H.
-Proof.
-  intros G H Hperm; induction Hperm; simpl; nra.
-Qed.
-
-Lemma sum_weight_seq_one_seq_diamond :
+Lemma sum_weight_one_seq_seq_diamond :
   forall T,
-    sum_weight_seq_one (seq_diamond T) = 0.
-Proof.
-  induction T; auto.
-Qed.
-
-Lemma sum_weight_seq_coone_seq_diamond :
-  forall T,
-    sum_weight_seq_coone (seq_diamond T) = 0.
+    sum_weight_one_seq (seq_diamond T) = 0.
 Proof.
   induction T; auto.
 Qed.
@@ -1583,7 +1422,7 @@ Proof.
 Qed.
 
 Lemma seq_basic_no_atom : forall T, seq_is_basic T ->
-                                    (forall n : nat, (sum_weight_seq_var n T = 0) * (sum_weight_seq_covar n T = 0)) ->
+                                    (forall n : term.V, (In_inf (HMR_var n) (map snd T) + In_inf (HMR_covar n) (map snd T)) -> False) ->
                                     {' (r, s, D) : _ & Permutation_Type T (vec s HMR_coone ++ vec r HMR_one ++ seq_diamond D) }.
 Proof.
   induction T; intros Hb Hna.
@@ -1592,37 +1431,54 @@ Proof.
   - inversion Hb; subst.
     destruct (IHT X0) as [[[r s] D] Hperm].
     + intros n.
-      assert (Hvpos := sum_weight_seq_var_pos n T).
-      assert (Hcvpos := sum_weight_seq_covar_pos n T).
-      destruct a as [[a Ha] A].
+      destruct a as [r A].
       clear IHT Hb.
-      specialize (Hna n) as [Hvna Hcvna].
-      split; simpl in *;
-        destruct A; try (case_eq (n =? n0); intros Hnn0; rewrite Hnn0 in *);
-                         apply R_blt_lt in Ha;
-                         try nra.
+      intros [Hin | Hin];
+        apply Hna with n; [left | right]; right;
+          assumption.
     + destruct a as [a A].
       destruct A; try now inversion X.
       * exfalso; clear IHT Hb.
-        specialize (Hna n) as [Hna _]; simpl in Hna.
-        rewrite Nat.eqb_refl in Hna.
-        destruct a as [a Ha].
-        simpl in *; apply R_blt_lt in Ha.
-        assert (Hpos := sum_weight_seq_var_pos n T).
-        nra.
+        apply Hna with v.
+        left; left; reflexivity.
       * exfalso; clear IHT Hb.
-        specialize (Hna n) as [_ Hna]; simpl in Hna.
-        rewrite Nat.eqb_refl in Hna.
-        destruct a as [a Ha].
-        simpl in *; apply R_blt_lt in Ha.
-        assert (Hpos := sum_weight_seq_covar_pos n T).
-        nra.
+        apply Hna with v.
+        right; left; reflexivity.
       * split with (a :: r, s, D); simpl.
         Permutation_Type_solve.
       * split with (r, a :: s, D); simpl.
         Permutation_Type_solve.
       * split with (r , s, ((a , A) :: D)).
         Permutation_Type_solve.
+Qed.
+
+Lemma seq_is_atomic_only_diamond :
+  forall T,
+    seq_is_atomic T ->
+    only_diamond_seq T = nil.
+Proof.
+  induction T; intros Hat; inversion Hat; subst; try reflexivity.
+  destruct a as [a A].
+  destruct A; inversion X; simpl; apply IHT; assumption.
+Qed.
+
+Lemma seq_atomic_implies_basic :
+  forall T,
+    seq_is_atomic T ->
+    seq_is_basic T.
+Proof.
+  induction T; intros Hat; inversion Hat; subst; [ apply Forall_inf_nil | ].
+  destruct a as [a A].
+  destruct A; inversion X; simpl; (apply Forall_inf_cons; [ apply I | apply IHT; assumption]).
+Qed.
+
+Lemma hseq_atomic_implies_basic :
+  forall G,
+    hseq_is_atomic G ->
+    hseq_is_basic G.
+Proof.
+  induction G; intros Hat; inversion Hat; subst; [ apply Forall_inf_nil | ].
+  apply Forall_inf_cons; [apply seq_atomic_implies_basic; apply X | apply IHG; apply X0].
 Qed.
 
 

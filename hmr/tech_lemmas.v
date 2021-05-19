@@ -257,7 +257,7 @@ Proof.
   intros G T A; revert G T.
   induction A;intros G T r0 s Heq pi; unfold HMR_minus; fold HMR_minus.
   - apply hmrr_ID; assumption.
-  - apply hmrr_ex_seq with (vec r0 (HMR_covar n) ++ vec s (HMR_var n) ++ T); [ Permutation_Type_solve | ].
+  - apply hmrr_ex_seq with (vec r0 (HMR_covar v) ++ vec s (HMR_var v) ++ T); [ Permutation_Type_solve | ].
     apply hmrr_ID; try symmetry; assumption.
   - apply hmrr_Z; apply hmrr_Z; apply pi.
   - apply hmrr_plus.
@@ -343,7 +343,7 @@ Proof with try assumption; try reflexivity.
   induction pi;unfold subs_hseq in *; fold subs_hseq in *; try rewrite ? subs_seq_vec in *; try rewrite subs_seq_app in *; unfold subs in *; fold subs in *; try now constructor.
   - replace (subs_seq (seq_mul r T) n t) with (seq_mul r (subs_seq T n t)) in IHpi by (clear; induction T; try destruct a; simpl; try rewrite IHT; try reflexivity).
     apply hmrr_T with r...
-  - case (n =? n0).
+  - case (term.V_eq n n0); intros Heq.
     + apply hmrr_ID_gen...
     + apply hmrr_ID...
   - rewrite subs_seq_diamond.

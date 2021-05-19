@@ -1,12 +1,15 @@
 Require Import Rpos.
 
 Require Import RL.OLlibs.List_more.
+Context {V : Type}.
+Hypothesis V_eq : forall (x y : V), {x = y} + {x <> y}.
+
 (** * Definition of terms of Riesz spaces in Negative Normal Form (i.e. built over the signature (0,+,.) where . is the external multiplication by a positive real) *)
 (** ** Term *)
 
 Inductive term : Type :=
-| HMR_var : nat -> term
-| HMR_covar : nat -> term
+| HMR_var : V -> term
+| HMR_covar : V -> term
 | HMR_zero : term
 | HMR_plus : term -> term -> term
 | HMR_mul : Rpos -> term -> term
@@ -81,6 +84,7 @@ Proof.
   induction A; simpl; try rewrite IHA; try rewrite IHA1; try rewrite IHA2; reflexivity.
 Qed.
 
+(*
 Fixpoint max_var_term A :=
   match A with
   | HMR_var n => n
@@ -94,12 +98,13 @@ Fixpoint max_var_term A :=
   | A /\S B => Nat.max (max_var_term A) (max_var_term B)
   | A \/S B => Nat.max (max_var_term A) (max_var_term B)
   end.
+ *)
 
 (** Substitution *)
-Fixpoint subs (t1 : term) (x : nat) (t2 : term) : term :=
+Fixpoint subs (t1 : term) (x : V) (t2 : term) : term :=
   match t1 with
-  | HMR_var y => if (beq_nat x y) then t2 else HMR_var y
-  | HMR_covar y => if (beq_nat x y) then (HMR_minus t2) else HMR_covar y
+  | HMR_var y => if (V_eq x y) then t2 else HMR_var y
+  | HMR_covar y => if (V_eq x y) then (HMR_minus t2) else HMR_covar y
   | HMR_zero => HMR_zero
   | HMR_plus t t' => HMR_plus (subs t x t2) (subs t' x t2)
   | HMR_min t t' => HMR_min (subs t x t2) (subs t' x t2)
@@ -154,8 +159,10 @@ Qed.
 Lemma term_eq_dec : forall (A B : term) , { A = B } + { A <> B}.
 Proof.
   induction A; destruct B; try (right; intro H; now inversion H).
-  - case_eq (n =? n0); intro H; [ apply Nat.eqb_eq in H; rewrite H; now left | apply Nat.eqb_neq in H; right; intro H2; inversion H2; apply H; assumption ].
-  - case_eq (n =? n0); intro H; [ apply Nat.eqb_eq in H; rewrite H; now left | apply Nat.eqb_neq in H; right; intro H2; inversion H2; apply H; assumption ].
+  - case_eq (V_eq v v0); intro H; [left; subst; reflexivity | right].
+    intros H'; inversion H'; apply H; assumption.
+  - case_eq (V_eq v v0); intro H; [left; subst; reflexivity | right].
+    intros H'; inversion H'; apply H; assumption.
   - now left.
   - specialize (IHA1 B1); specialize (IHA2 B2).
     destruct IHA1 as [ Heq | Hneq] ; [ | right; intro H; inversion H; apply Hneq; assumption].

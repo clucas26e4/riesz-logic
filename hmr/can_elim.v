@@ -102,7 +102,7 @@ Proof.
       apply seq_mul_perm; assumption.
   - destruct L; inversion Hperm; subst.
     simpl.
-    case_eq (n =? n0); [intros Heqn; apply Nat.eqb_eq in Heqn | intros Hneqn; apply Nat.eqb_neq in Hneqn].
+    case (term.V_eq n n0); [intros Heqn | intros Hneqn].
     + subst.
       destruct p as [[[s1 r1] [s1' r1']] T1]; simpl in *.
       destruct (perm_decomp_vec_eq_2 T T1 r1 s1 r s (HMR_var n0) (HMR_covar n0)) as [[[[[[[[a1 b1] c1] a2] b2] c2] T'] D'] [H1' [[[[[H2' H3'] H4'] H5'] H6']]]]; [ now auto | apply X | ].
@@ -1004,8 +1004,8 @@ Lemma hmrr_can_2 : forall G T A r s,
     HMR_T (T :: G).
 Proof.
   intros G T A; revert G T; induction A; intros G T r1 s1 Heq pi.
-  - apply hmrr_atomic_can_elim with n r1 s1; try assumption.
-  - apply hmrr_atomic_can_elim with n s1 r1; try nra.
+  - apply hmrr_atomic_can_elim with v r1 s1; try assumption.
+  - apply hmrr_atomic_can_elim with v s1 r1; try nra.
     eapply hmrr_ex_seq ; [ | apply pi].
     Permutation_Type_solve.
   - apply hmrr_M_elim.

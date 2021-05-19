@@ -22,21 +22,24 @@ Fixpoint sem_seq (T1 : sequent) :=
 Lemma sem_seq_plus : forall T1 T2, sem_seq (T1 ++ T2) === sem_seq T1 +S sem_seq T2.
 Proof.
   induction T1; intros T2.
-  - rewrite commu_plus; now rewrite neutral_plus.
+  - etransitivity ; [ | apply commu_plus]; symmetry; apply neutral_plus.
   - specialize (IHT1 T2).
     destruct a as (r , A).
-    simpl; rewrite IHT1.
-    now auto with MGA_solver.
+    simpl.
+    etransitivity ; [ | apply asso_plus].
+    apply (@ctxt (HMR_plusC (HMR_TC (r *S A)) HMR_hole)).
+    apply IHT1.
 Qed.
 
 Lemma sem_seq_mul : forall T r, sem_seq (seq_mul r T) === r *S sem_seq T.
 Proof.
   induction T; intros r.
-  - now rewrite mul_0.
+  - symmetry; apply mul_0.
   - destruct a as [a Ha]; simpl.
-    rewrite IHT.
-    rewrite <-mul_assoc.
-    auto with MGA_solver.
+    etransitivity ; [ apply (@ctxt (HMR_plusC (HMR_TC (time_pos r a *S Ha)) HMR_hole)); apply IHT | ]; simpl.
+    etransitivity ; [ apply (@ctxt (HMR_plusC HMR_hole (HMR_TC (r *S sem_seq T)))) | ].
+    { symmetry ; apply mul_assoc. }
+    simpl; auto with MGA_solver.
 Qed.
 
 Lemma sem_seq_vec : forall r A (Hnnil : r <> nil), sem_seq (vec r A) === (existT _ (sum_vec r) (sum_vec_non_nil _ Hnnil)) *S A.
@@ -51,15 +54,16 @@ Proof.
     specialize (IHr A H).
     change (sem_seq (vec (a :: b :: r) A)) with (a *S A +S (sem_seq (vec (b :: r) A))).
     replace (existT (fun r0 : R => (0 <? r0) = true) (sum_vec (a :: b :: r)) (sum_vec_non_nil _ Hnnil)) with (plus_pos a (existT _ (sum_vec (b :: r)) (sum_vec_non_nil _ H))) by (destruct a; destruct  b; apply Rpos_eq; simpl; nra).
-    rewrite IHr.
+    etransitivity ; [ | symmetry; apply mul_distri_coeff].
     auto with MGA_solver.
 Qed.
 
 Lemma sem_seq_permutation : forall T1 T2, Permutation_Type T1 T2 -> sem_seq T1 === sem_seq T2.
 Proof.
   intros T1 T2 Hperm; induction Hperm; try destruct x; try destruct y; simpl; try auto with MGA_solver.
-  - rewrite 2? asso_plus.
-    rewrite (commu_plus (r0 *S t0)); reflexivity.
+  - etransitivity ; [ apply asso_plus | ].
+    etransitivity; [ apply plus_left; apply commu_plus | ].
+    auto.
   - transitivity (sem_seq l'); assumption.
 Qed.
 
@@ -68,21 +72,20 @@ Proof.
   induction T; try (symmetry; apply diamond_zero).
   destruct a as [r A].
   simpl.
-  rewrite diamond_linear.
-  rewrite diamond_mul.
-  rewrite IHT; reflexivity.
+  etransitivity ; [ | symmetry; apply diamond_linear].
+  etransitivity ; [ | apply plus_left; symmetry; apply diamond_mul].
+  auto.
 Qed.
 
 Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec r l) A) === r *S sem_seq (vec l A).
 Proof.
   intros A.
   induction l; intros r.
-  - simpl; rewrite mul_0; auto.
+  - simpl; symmetry; apply mul_0.
   - simpl.
-    rewrite IHl.
-    rewrite <-mul_assoc.
-    rewrite mul_distri_term.
-    reflexivity.
+    etransitivity; [ apply plus_right; apply IHl | ].
+    etransitivity; [ apply plus_left; symmetry; apply mul_assoc | ].
+    auto with MGA_solver.
 Qed.
 
 (** ** Interpretation of a hypersequent *)
@@ -104,9 +107,12 @@ Proof.
     + apply Permutation_Type_sym in Hperm.
       exfalso; apply (Permutation_Type_nil_cons Hperm).
     + unfold sem_hseq; fold (sem_hseq (s :: l)); fold (sem_hseq (s0 :: l')).
-      rewrite IHHperm; reflexivity.
+      auto with MGA_solver.
   - destruct l.
     + simpl; apply commu_max.
-    + unfold sem_hseq; fold (sem_hseq (s :: l)); rewrite ?asso_max; rewrite (commu_max (sem_seq y)); reflexivity.
+    + unfold sem_hseq; fold (sem_hseq (s :: l)).
+      etransitivity; [ apply asso_max | ].
+      etransitivity; [ | symmetry; apply asso_max ].
+      apply max_left; apply commu_max.
   - transitivity (sem_hseq l'); assumption.
 Qed.
