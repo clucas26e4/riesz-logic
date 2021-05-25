@@ -1,41 +1,41 @@
 -R . "RL"
 
 OLlibs/funtheory.v
-OLlibs/List_more.v
 OLlibs/List_Type.v
+OLlibs/List_more.v
+OLlibs/Permutation_Type.v
 OLlibs/Permutation_more.v
 OLlibs/Permutation_Type_more.v
 OLlibs/Permutation_Type_solve.v
-OLlibs/Permutation_Type.v
 OLlibs/wf_prod.v
 
-Utilities/polynomials.v
 Utilities/riesz_logic_Nat_more.v
 Utilities/riesz_logic_List_more.v
 Utilities/Rpos.v
+Utilities/polynomials.v
 
-hmr/can_elim.v
-hmr/completeness.v
-hmr/apply_logical_rule.v
-hmr_example.v
-hmr/hmr_perm_lemmas.v
-hmr/hmr.v
+hmr/term.v
+hmr/semantic.v
 hmr/hseq.v
-hmr/interpretation.v
-hmr/invertibility.v
-hmr/lambda_prop_tools.v
-hmr_main_results.v
-hmr/M_elim.v
+hmr/hmr.v
 hmr/p_hseq.v
 hmr/prederivation.v
-hmr/semantic.v
-hmr/soundness.v
 hmr/tactics.v
+hmr/hmr_perm_lemmas.v
 hmr/tech_lemmas.v
-hmr/term.v
+hmr/interpretation.v
+hmr/lambda_prop_tools.v
+hmr/soundness.v
+hmr/completeness.v
+hmr/invertibility.v
+hmr/M_elim.v
+hmr/can_elim.v
+hmr/apply_logical_rule.v
+hmr_example.v
+hmr_main_results.v
 
-Archimedean/Lim_seq_US.v
-Archimedean/pol_continuous.v
-Archimedean/R_complements.v
 Archimedean/lambda_prop_one.v
 Archimedean/archimedean.v
+Archimedean/Lim_seq_US.v
+Archimedean/R_complements.v
+Archimedean/pol_continuous.v

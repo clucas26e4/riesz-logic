@@ -1,8 +1,6 @@
 (** * Summary of the main results as in Section 4.1 *)
 Require Import RL.Utilities.Rpos.
-Require Import RL.hmr.Rterm.
 Require Import RL.hmr.term.
-Require Import RL.hmr.Rsemantic.
 Require Import RL.hmr.semantic.
 Require Import RL.hmr.hseq.
 Require Import RL.hmr.completeness.

@@ -105,7 +105,6 @@ Proof with try assumption.
       eapply leq_trans.
       * apply plus_pos_min; apply zero_leq_neg.
       * eapply leq_cong_r; [ symmetry; apply neutral_plus | ].
-        Check cond_min_neg_eq_zero.
         apply leq_plus_cong;
           (eapply leq_cong_r ; [ symmetry; apply cond_min_neg_eq_zero | apply leq_refl]);
           assumption.
@@ -362,7 +361,6 @@ Lemma min_sound : forall G T A  B r, sem_hseq ((vec r A ++ T) :: G) /\S sem_hseq
     unfold vec.
     apply leq_refl.
   - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
-    Search ((_ \/S _) /\S (_ \/S _)).
     etransitivity; [ symmetry; apply max_distri_min | ].
     apply max_left.
     assert ((r0 :: r) <> nil)as H by now auto.
