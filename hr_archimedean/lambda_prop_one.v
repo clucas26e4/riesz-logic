@@ -5,24 +5,24 @@ Require Import RL.OLlibs.Permutation_Type.
 Require Import RL.OLlibs.Permutation_Type_solve.
 Require Import List.
 
-Require Import RL.Archimedean.pol_continuous.
-Require Import RL.Archimedean.Lim_seq_US.
-Require Import RL.Archimedean.R_complements.
-Require Import RL.hmr.term.
-Require Import RL.hmr.hseq.
-Require Import RL.hmr.p_hseq.
-Require Import RL.hmr.apply_logical_rule.
-Require Import RL.hmr.lambda_prop_tools.
-Require Import RL.hmr.hmr.
-Require Import RL.hmr.semantic.
-Require Import RL.hmr.can_elim.
-Require Import RL.hmr.completeness.
-Require Import RL.hmr.soundness.
+Require Import RL.hr.term.
+Require Import RL.hr.hseq.
+Require Import RL.hr.p_hseq.
+Require Import RL.hr.apply_logical_rule.
+Require Import RL.hr.lambda_prop_tools.
+Require Import RL.hr.hr.
+Require Import RL.hr.semantic.
+Require Import RL.hr.can_elim.
+Require Import RL.hr.completeness.
+Require Import RL.hr.soundness.
 
 Require Import RL.Utilities.riesz_logic_List_more.
 Require Import RL.Utilities.riesz_logic_Nat_more.
 Require Import RL.Utilities.Rpos.
 Require Import RL.Utilities.polynomials.
+Require Import RL.Utilities.pol_continuous.
+Require Import RL.Utilities.Lim_seq_US.
+Require Import RL.Utilities.R_complements.
 
 Require Import Lra.
 Require Import Lia.
@@ -111,59 +111,6 @@ Proof.
   intros; apply eval_mul_p_hseq_new_var_aux; try assumption; lia.
 Qed.
 
-Lemma eval_mul_p_hseq_new_one_aux : forall G L val i,
-    length G = length L ->
-    (max_var_weight_p_hseq G < i)%nat ->
-    Forall_inf (fun x => prod (0 <= x) (x <= 1)) L ->
-    sum_weight_one (eval_p_hseq_with_coeff_aux G val L i) = sum_weight_one_with_coeff (map (eval_p_sequent val) G) (map R_to_oRpos L).
-Proof.
-  unfold eval_p_hseq_with_coeff_aux; unfold val_add_vec.
-  induction G; intros L val i Hlen Hlt Hborned; simpl; destruct L; simpl; try reflexivity; try now inversion Hlen.
-  inversion Hborned; subst.
-  unfold R_to_oRpos; fold R_to_oRpos.
-  case (R_order_dec r); intros H.
-  2:{ clear - H H0.
-      exfalso.
-      apply R_blt_lt in H.
-      destruct H0; lra. }
-  - simpl in Hlen.
-    apply eq_add_S in Hlen.
-    assert (max_var_weight_p_hseq G < S i)%nat.
-    { simpl in Hlt; lia. }
-    specialize (IHG L (upd_val val i r) (S i) Hlen H1 X).
-    rewrite IHG; simpl.
-    rewrite eval_p_hseq_upd_val_lt.
-    2:{ destruct a; simpl in *; lia. }
-    rewrite eval_p_sequent_upd_val_vec_lt_max_var.
-    2:{ destruct a; [ simpl; apply Forall_inf_seq_gt; lia | ].
-        rewrite max_var_weight_p_seq_seq_mul; simpl in *; try lia;
-          [ | intros H2; inversion H2].
-        destruct p; simpl in *; apply Forall_inf_seq_gt; lia. }
-    rewrite sum_weight_one_eval_p_sequent_seq_mul.
-    simpl.
-    rewrite upd_val_eq.
-    rewrite eval_p_sequent_upd_val_lt; try nra.
-    simpl in Hlt; lia.
-  - simpl in Hlen.
-    apply eq_add_S in Hlen.
-    assert (max_var_weight_p_hseq G < S i)%nat.
-    { simpl in Hlt; lia. }
-    subst; specialize (IHG L (upd_val val i 0) (S i) Hlen H1 X).
-    rewrite IHG; simpl.
-    rewrite eval_p_hseq_upd_val_lt.
-    2:{ destruct a; simpl in *; lia. }
-    rewrite eval_p_sequent_upd_val_vec_lt_max_var.
-    2:{ destruct a; [ simpl; apply Forall_inf_seq_gt; lia | ].
-        rewrite max_var_weight_p_seq_seq_mul; simpl in *; try lia;
-          [ | intros H2; inversion H2].
-        destruct p; simpl in *; apply Forall_inf_seq_gt; lia. }
-    rewrite sum_weight_one_eval_p_sequent_seq_mul.
-    simpl.
-    rewrite upd_val_eq.
-    rewrite eval_p_sequent_upd_val_lt; try nra.
-    simpl in Hlt; lia.
-Qed.
-
 Lemma well_defined_mul_new_var_aux : forall G L val i,
     (max_var_weight_p_hseq G < i)%nat ->
     length G = length L ->
@@ -210,30 +157,6 @@ Proof.
   lia.
 Qed.
 
-Lemma eval_mul_p_hseq_new_one : forall G L val,
-    length G = length L ->
-    Forall_inf (fun x => prod (0 <= x) (x <= 1)) L ->
-    sum_weight_one (eval_p_hseq_with_coeff G val L) = sum_weight_one_with_coeff (map (eval_p_sequent val) G) (map R_to_oRpos L).
-Proof.
-  intros; apply eval_mul_p_hseq_new_one_aux; try assumption; lia.
-Qed.
-
-Lemma max_diamond_p_hseq_mul_new_var_aux : forall G i,
-    max_diamond_p_hseq G = max_diamond_p_hseq (mul_p_hseq_new_var_aux G i).
-Proof.
-  induction G; intros i; try reflexivity.
-  simpl.
-  rewrite max_diamond_seq_mul.
-  rewrite IHG with (S i).
-  reflexivity.
-Qed.
-
-Lemma max_diamond_p_hseq_mul_new_var : forall G,
-    max_diamond_p_hseq G = max_diamond_p_hseq (mul_p_hseq_new_var G).
-Proof.
-  intros G; unfold mul_p_hseq_new_var; apply max_diamond_p_hseq_mul_new_var_aux.
-Qed.
-  
 Fixpoint max_list_oRpos (L : list (option Rpos)) :=
   match L with
   | nil => 0
@@ -433,17 +356,6 @@ Proof.
   destruct r0; destruct r; simpl in *; lra.
 Qed.
 
-Lemma list_oRpos_div_one_eq :
-  forall (L : list (option Rpos)) r G ,
-    sum_weight_one_with_coeff G (map (fun x => oRpos_div_Rpos x r) L) = (sum_weight_one_with_coeff G L) / (projT1 r).
-Proof.
-  intros L r G.
-  revert L; induction G; intros L; destruct L; simpl; try lra.
-  specialize (IHG L).
-  destruct o; simpl; try lra.
-  destruct r0; destruct r; simpl in *; lra.
-Qed.
-
 Lemma concat_with_coeff_div : forall G L r, concat_with_coeff_mul G (map (fun x : option Rpos => oRpos_div_Rpos x r) L) = hseq.seq_mul (inv_pos r) (concat_with_coeff_mul G L).
 Proof.
   induction G; intros L r; destruct L; try reflexivity.
@@ -454,16 +366,6 @@ Proof.
   rewrite hseq.seq_mul_twice.
   f_equal.
   destruct r; destruct r0; apply Rpos_eq; simpl; nra.
-Qed.
-
-Lemma only_diamond_p_hseq_mul_p_hseq_new_var_aux : forall G i,
-    only_diamond_p_hseq (mul_p_hseq_new_var_aux G i) = mul_p_hseq_new_var_aux (only_diamond_p_hseq G) i.
-Proof.
-  induction G; intros i; try reflexivity.
-  simpl.
-  rewrite (IHG (S i)).
-  f_equal.
-  symmetry; apply only_diamond_p_seq_mul.
 Qed.
 
 Lemma concat_with_coeff_mul_p_hseq_new_var_aux : forall G L i val,
@@ -506,341 +408,32 @@ Proof.
     lia.
 Qed.
       
-Lemma concat_with_coeff_mul_p_hseq_new_var_only_diamond : forall G L val,
-    length G = length L ->
-    concat (map (eval_p_sequent (val_add_vec val (S (max_var_weight_p_hseq G)) (map oRpos_to_R L))) (only_diamond_p_hseq (mul_p_hseq_new_var G))) = concat_with_coeff_mul (only_diamond_hseq (map (eval_p_sequent val) G)) L.
-Proof.
-  intros G L val Hlen.
-  unfold mul_p_hseq_new_var.
-  rewrite only_diamond_p_hseq_mul_p_hseq_new_var_aux.
-  rewrite only_diamond_eval_p_hseq.
-  apply concat_with_coeff_mul_p_hseq_new_var_aux.
-  - assert (H:= max_var_weight_p_hseq_only_diamond G); lia.
-  - replace (@length p_sequent (only_diamond_p_hseq G)) with (length G); try assumption.
-    clear; induction G; simpl in *; try lia.
-Qed.
 
-Lemma sum_weight_one_mul_p_hseq_new_var_aux : forall G L val i,
-    Forall_inf (fun x => 0 <= x) L ->
-    (max_var_weight_p_hseq G < i)%nat ->
-    length G = length L ->
-    sum_weight_one_with_coeff (map (eval_p_sequent val) G) (map R_to_oRpos L) = eval_Poly (val_add_vec val i L) (p_sum_weight_one (mul_p_hseq_new_var_aux G i)).
-Proof.
-  induction G; intros L val i Hall Hlt Hlen; destruct L;
-    simpl; try reflexivity; try now inversion Hlen.
-  simpl in Hlen; apply eq_add_S in Hlen.
-  unfold R_to_oRpos; fold R_to_oRpos.
-  case (R_order_dec r); intros e; simpl.
-  - rewrite sum_weight_one_p_seq_mul; simpl.
-    unfold val_add_vec; simpl.
-    rewrite upd_val_vec_not_in.
-    2:{ apply not_In_inf_seq; lia. }
-    rewrite upd_val_eq.
-    do 2 f_equal.
-    + rewrite p_sum_weight_one_seq_sem.
-      rewrite eval_p_sequent_upd_val_vec_lt_max_var.
-      2:{ simpl in *; apply Forall_inf_seq_gt; lia. }
-      rewrite eval_p_sequent_upd_val_lt; [ | simpl in *; lia ].
-      reflexivity.
-    + replace (map (eval_p_sequent val) G) with
-          (map (eval_p_sequent (upd_val val i r)) G).
-      2:{ rewrite eval_p_hseq_upd_val_lt; [ | simpl in *; lia ].
-          reflexivity. }
-      apply (IHG L (upd_val val i r) (S i)); try (simpl in * ; lia).
-      inversion Hall; assumption.
-  - inversion Hall; subst.
-    exfalso.
-    apply R_blt_lt in e; nra.
-  - subst.
-    rewrite sum_weight_one_p_seq_mul; simpl.
-    unfold val_add_vec; simpl.
-    rewrite upd_val_vec_not_in.
-    2:{ apply not_In_inf_seq; lia. }
-    rewrite upd_val_eq.
-    rewrite Rmult_0_l; rewrite Rplus_0_l.
-    replace (map (eval_p_sequent val) G) with
-        (map (eval_p_sequent (upd_val val i 0)) G).
-    2:{ rewrite eval_p_hseq_upd_val_lt; [ | simpl in *; lia ].
-        reflexivity. }
-    apply (IHG L (upd_val val i 0) (S i)); try (simpl in * ; lia).
-    inversion Hall; assumption.      
-Qed.
-
-Lemma sum_weight_one_mul_p_hseq_new_var : forall G L val,
-    Forall_inf (fun x => 0 <= x) L ->
-    length G = length L ->
-    sum_weight_one_with_coeff (map (eval_p_sequent val) G) (map R_to_oRpos L) = eval_Poly (val_add_vec val (S (max_var_weight_p_hseq G)) L) (p_sum_weight_one (mul_p_hseq_new_var G)).
-Proof.
-  intros G L val Hall Hlen.
-  unfold mul_p_hseq_new_var.
-  apply sum_weight_one_mul_p_hseq_new_var_aux; try assumption.
-  lia.  
-Qed.
 (* end hide *)
 
 (** * Lambda property *)
-(** Statement of the lambda property *)
+(** ** Different statements of the lambda property *)
+(** Lambda property *)
 Definition def_lambda_prop G :=
   { L &
     prod (length L = length G)
          ((Exists_inf (fun x => x <> None) L) *
-          (forall n, sum_weight_var_with_coeff n G L = 0) *
-          (0 <= sum_weight_one_with_coeff G L) *
-          (HMR_T_M ((concat_with_coeff_mul (only_diamond_hseq G) L) :: nil)))}.
+          (forall n, sum_weight_var_with_coeff n G L = 0))}.
 
-(** * Modal free case *)
-(** ** Different formulations of the atomic lambda property *)
-(** Atomic lambda property *)
-Definition def_lambda_prop_atomic G :=
-  { L &
-    prod (length L = length G)
-         ((Exists_inf (fun x => x <> None) L) *
-          (forall n, sum_weight_var_with_coeff n G L = 0) *
-          (0 <= sum_weight_one_with_coeff G L))}.
-
-(** Atomic lambda property where the t_i are in [0,1] and not only in R_{>0} *)
-Definition def_lambda_prop_atomic_one G :=
-  { L &
-    prod (length L = length G)
-         ((Exists_inf (fun x => x = Some One) L) *
-          (Forall_inf (fun x => {r & x <> None -> prod (x  = Some r) (projT1 r <= 1)}) L) *
-          (forall n, sum_weight_var_with_coeff n G L = 0) *
-          (0 <= sum_weight_one_with_coeff G L))}.
-
-(** Previous definition, but for parametrized hypersequent *)
-Definition p_def_lambda_prop_atomic_one G val := 
-  { L &
-    prod (length L = length G)
-         ((Exists_inf (fun x => x = 1) L) *
-          (Forall_inf (fun x => prod (0 <= x) (x <= 1)) L) *
-          (forall n, eval_Poly (val_add_vec val (S (max_var_weight_p_hseq G)) L) (p_sum_weight_var n (mul_p_hseq_new_var G)) = 0) *
-          (0 <= eval_Poly (val_add_vec val (S (max_var_weight_p_hseq G)) L) (p_sum_weight_one (mul_p_hseq_new_var G))))}.
-
-(** ** Proofs that those formulations are equivalent *)
-Lemma def_lambda_prop_atomic_one_implies_reg :
-  forall G,
-    def_lambda_prop_atomic_one G ->
-    def_lambda_prop_atomic G.
-Proof.
-  intros G [L [Hlen [[[Hex Hall] Hsum] Hstep]]].
-  split with L.
-  repeat split; try assumption.
-  clear - Hex.
-  induction L; inversion Hex; subst.
-  - left.
-    intros H; inversion H.
-  - specialize (IHL X).
-    right; apply IHL.
-Qed.
-
-Lemma def_lambda_prop_atomic_reg_implies_one :
-  forall G,
-    def_lambda_prop_atomic G ->
-    def_lambda_prop_atomic_one G.
-Proof.
-  intros G [L [Hlen [[Hex Hsum] Hone]]].
-  split with (map (fun x => oRpos_div_Rpos x (max_list_oRpos_Rpos L Hex)) L).
-  repeat split.
-  - rewrite map_length; apply Hlen.
-  - apply list_oRpos_div_max_exist_1.
-  - apply list_oRpos_div_max_all_le_1.
-    apply Rle_refl.
-  - intros n.
-    rewrite list_oRpos_div_sum_eq.
-    rewrite Hsum.
-    lra.
-  - rewrite list_oRpos_div_one_eq.
-    remember (max_list_oRpos_Rpos L Hex).
-    clear Heqs.
-    destruct s as [s H]; simpl; apply R_blt_lt in H.
-    rewrite <- Rmult_0_l with (/ s).
-    apply Rmult_le_compat_r; try lra.
-    apply Rlt_le.
-    apply Rinv_0_lt_compat; apply H.
-Qed.
-
-Lemma def_lambda_prop_atomic_one_reg_implies_p :
-  forall G val,
-    def_lambda_prop_atomic_one (map (eval_p_sequent val) G) ->
-    p_def_lambda_prop_atomic_one G val.
-Proof.
-  intros G val [L [Hlen [[[Hex Hall] Hsum] Hone]]].
-  split with (map oRpos_to_R L).
-  repeat split.
-  - rewrite map_length; rewrite map_length in Hlen; lia.
-  - apply Exists_inf_exists in Hex as [x Hinx Heqx].
-    apply (In_inf_nth _ _ None) in Hinx as [i Hlti Heqi].
-    apply exists_Exists_inf with (nth i (map oRpos_to_R L) 0).
-    + apply nth_In_inf.
-      rewrite map_length; lia.
-    + change 0 with (oRpos_to_R None).
-      rewrite map_nth.
-      rewrite Heqi; rewrite Heqx; reflexivity.
-  - clear - Hall.
-    induction L; [ apply Forall_inf_nil | ].
-    inversion Hall; subst.
-    specialize (IHL X).
-    simpl; apply Forall_inf_cons; try assumption.
-    destruct H0 as [r H0].
-    destruct a; [ | simpl; split; lra].
-    assert (Some r0 <> None) by now auto.
-    specialize (H0 H); clear H.
-    destruct H0 as [H0 H0'].
-    inversion H0; subst.
-    destruct r as [r Hr].
-    simpl in *.
-    split ; [ clear - Hr; apply R_blt_lt in Hr; lra | assumption ].
-  - replace L with (map R_to_oRpos (map oRpos_to_R L)) in Hsum.
-    2:{ rewrite map_map.
-        rewrite map_ext with _ _ _ (fun x => x) _; [ | apply R_to_oRpos_oRpos_to_R].
-        apply map_id. }
-    intros n; specialize (Hsum n);
-      rewrite <- eval_mul_p_hseq_new_var in Hsum.
-    + unfold val_add_vec.
-      rewrite p_sum_weight_var_sem.
-      apply Hsum.
-    + rewrite map_length; rewrite map_length in Hlen; lia.
-    + clear - Hall.
-      induction L; [ apply Forall_inf_nil | ].
-      inversion Hall; subst.
-      specialize (IHL X).
-      simpl; apply Forall_inf_cons; try assumption.
-      destruct H0 as [r H0].
-      destruct a; [ | simpl; split; lra].
-      assert (Some r0 <> None) by now auto.
-      specialize (H0 H); clear H.
-      destruct H0 as [H0 H0'].
-      inversion H0; subst.
-      destruct r as [r Hr].
-      simpl in *.
-      split ; [ clear - Hr; apply R_blt_lt in Hr; lra | assumption ].
-  - replace L with (map R_to_oRpos (map oRpos_to_R L)) in Hone.
-    2:{ rewrite map_map.
-        rewrite map_ext with _ _ _ (fun x => x) _; [ | apply R_to_oRpos_oRpos_to_R].
-        apply map_id. }
-    rewrite <- eval_mul_p_hseq_new_one in Hone.
-    + unfold val_add_vec.
-      rewrite p_sum_weight_one_sem.
-      apply Hone.
-    + rewrite map_length; rewrite map_length in Hlen; lia.
-    + clear - Hall.
-      induction L; [ apply Forall_inf_nil | ].
-      inversion Hall; subst.
-      specialize (IHL X).
-      simpl; apply Forall_inf_cons; try assumption.
-      destruct H0 as [r H0].
-      destruct a; [ | simpl; split; lra].
-      assert (Some r0 <> None) by now auto.
-      specialize (H0 H); clear H.
-      destruct H0 as [H0 H0'].
-      inversion H0; subst.
-      destruct r as [r Hr].
-      simpl in *.
-      split ; [ clear - Hr; apply R_blt_lt in Hr; lra | assumption ].
-Qed.
-
-Lemma def_lambda_prop_atomic_one_p_implies_reg :
-  forall G val,
-    p_def_lambda_prop_atomic_one G val ->
-    def_lambda_prop_atomic_one (map (eval_p_sequent val) G).
-Proof.
-  intros G val [L [Hlen [[[Hex Hall] Hsum] Hone]]].
-  split with (map R_to_oRpos L).
-  repeat split.
-  - rewrite ? map_length; lia.
-  - apply Exists_inf_exists in Hex as [x Hinx Heqx].
-    apply (In_inf_nth _ _ 0) in Hinx as [i Hlti Heqi].
-    apply exists_Exists_inf with (nth i (map R_to_oRpos L) None).
-    + apply nth_In_inf.
-      rewrite map_length; lia.
-    + replace None with (R_to_oRpos 0).
-      2:{ clear.
-          unfold R_to_oRpos.
-          case (R_order_dec 0); intros e; try reflexivity; exfalso; apply R_blt_lt in e; lra. }
-      rewrite map_nth.
-      rewrite Heqi; rewrite Heqx.
-      clear.
-      unfold R_to_oRpos.
-      case (R_order_dec 1); intros e; [ | exfalso; clear -e; apply R_blt_lt in e; lra | exfalso; lra ].
-      f_equal.
-      apply Rpos_eq; reflexivity.
-  - clear - Hall.
-    induction L; [ apply Forall_inf_nil | ].
-    inversion Hall; subst.
-    specialize (IHL X).
-    simpl; apply Forall_inf_cons; try assumption.
-    destruct H0 as [H0 H1].
-    remember (R_to_oRpos a).
-    revert Heqo.
-    unfold R_to_oRpos.
-    case (R_order_dec a); intros e; [ | exfalso; clear -e H0; apply R_blt_lt in e; lra | ]; intros Heqo;
-      [ | split with One; intros H'; subst; contradiction].
-    destruct o; inversion Heqo.
-    split with s; subst.
-    intros _; split; [f_equal; apply Rpos_eq; reflexivity | apply H1].
-  - intros n; specialize (Hsum n);
-      rewrite <- eval_mul_p_hseq_new_var.
-    + rewrite p_sum_weight_var_sem in Hsum.
-      apply Hsum.
-    + lia.
-    + apply Hall.
-  - rewrite <- eval_mul_p_hseq_new_one.
-    + rewrite p_sum_weight_one_sem in Hone.
-      apply Hone.
-    + lia.
-    + apply Hall.
-Qed.
-
-Lemma lambda_prop_atomic :
-  forall G,
-    hseq_is_basic G ->
-    max_diamond_hseq G = 0%nat ->
-    HMR_T_M G ->
-    def_lambda_prop_atomic G.
-Proof.
-  intros G Hat Hmax pi.
-  destruct (lambda_prop G Hat pi) as [L [Hlen [[[Hex Hsum] Hone] Hstep]]].
-  split with L.
-  repeat split; assumption.
-Qed.
-
-Lemma lambda_prop_atomic_inv :
-  forall G,
-    hseq_is_basic G ->
-    max_diamond_hseq G = 0%nat ->
-    def_lambda_prop_atomic G ->
-    HMR_T_M G.
-Proof.
-  intros G Hat Hmax [L [Hlen [[Hex Hsum] Hone]]].
-  apply lambda_prop_inv; try assumption.
-  split with L.
-  repeat split; try assumption.
-  destruct (concat_with_coeff_mul_only_diamond_no_diamond G L) as [[r s] [Hperm Hone']]; try assumption.
-  eapply hmrr_ex_seq; [ symmetry; apply Hperm | ].
-  rewrite <- (app_nil_r (hseq.vec r HMR_one)).
-  apply hmrr_one; [ | apply hmrr_INIT].
-  lra.
-Qed.
-
-(** * Modal case *)
-(** ** Different formulations of the lambda property *)
+(** lambda property with where the t_i are in [0,1] and not only in R_{>0} *)
 Definition def_lambda_prop_one G :=
   { L &
     prod (length L = length G)
          ((Exists_inf (fun x => x = Some One) L) *
           (Forall_inf (fun x => {r & x <> None -> prod (x  = Some r) (projT1 r <= 1)}) L) *
-          (forall n, sum_weight_var_with_coeff n G L = 0) *
-          (0 <= sum_weight_one_with_coeff G L) *
-          (HMR_T_M (concat_with_coeff_mul (only_diamond_hseq G) L :: nil)))}.
+          (forall n, sum_weight_var_with_coeff n G L = 0))}.
 
 Definition p_def_lambda_prop_one G val := 
   { L &
     prod (length L = length G)
          ((Exists_inf (fun x => x = 1) L) *
           (Forall_inf (fun x => prod (0 <= x) (x <= 1)) L) *
-          (forall n, eval_Poly (val_add_vec val (S (max_var_weight_p_hseq G)) L) (p_sum_weight_var n (mul_p_hseq_new_var G)) = 0) *
-          (0 <= eval_Poly (val_add_vec val (S (max_var_weight_p_hseq G)) L) (p_sum_weight_one (mul_p_hseq_new_var G))) *
-          (HMR_T_M ( concat (map (eval_p_sequent (val_add_vec val (S (max_var_weight_p_hseq G)) L)) (only_diamond_p_hseq (mul_p_hseq_new_var  G))) :: nil)))}.
+          (forall n, eval_Poly (val_add_vec val (S (max_var_weight_p_hseq G)) L) (p_sum_weight_var n (mul_p_hseq_new_var G)) = 0))}.
 
 (** ** Proofs that those formulations are equivalent *)
 Lemma def_lambda_prop_one_implies_reg :
@@ -848,7 +441,7 @@ Lemma def_lambda_prop_one_implies_reg :
     def_lambda_prop_one G ->
     def_lambda_prop G.
 Proof.
-  intros G [L [Hlen [[[[Hex Hall] Hsum] Hone ]Hstep]]].
+  intros G [L [Hlen [[Hex Hall] Hsum]]].
   split with L.
   repeat split; try assumption.
   clear - Hex.
@@ -864,7 +457,7 @@ Lemma def_lambda_prop_reg_implies_one :
     def_lambda_prop G ->
     def_lambda_prop_one G.
 Proof.
-  intros G [L [Hlen [[[Hex Hsum] Hone] Hstep]]].
+  intros G [L [Hlen [Hex Hsum]]].
   split with (map (fun x => oRpos_div_Rpos x (max_list_oRpos_Rpos L Hex)) L).
   repeat split.
   - rewrite map_length; apply Hlen.
@@ -875,23 +468,6 @@ Proof.
     rewrite list_oRpos_div_sum_eq.
     rewrite Hsum.
     lra.
-  - rewrite list_oRpos_div_one_eq.
-    remember (max_list_oRpos_Rpos L Hex).
-    clear Heqs.
-    destruct s as [s H]; simpl; apply R_blt_lt in H.
-    rewrite <- Rmult_0_l with (/ s).
-    apply Rmult_le_compat_r; try lra.
-    apply Rlt_le.
-    apply Rinv_0_lt_compat; apply H.
-  - rewrite concat_with_coeff_div.
-    apply hmrr_T with (max_list_oRpos_Rpos L Hex); try reflexivity.
-    rewrite hseq.seq_mul_twice.
-    replace (time_pos (max_list_oRpos_Rpos L Hex) (inv_pos (max_list_oRpos_Rpos L Hex))) with One.
-    { rewrite hseq.seq_mul_One; apply Hstep. }
-    remember (max_list_oRpos_Rpos L Hex); clear.
-    destruct s; apply Rpos_eq; simpl.
-    apply R_blt_lt in e.
-    apply Rinv_r_sym; lra.
 Qed.
 
 Lemma def_lambda_prop_one_reg_implies_p :
@@ -899,7 +475,7 @@ Lemma def_lambda_prop_one_reg_implies_p :
     def_lambda_prop_one (map (eval_p_sequent val) G) ->
     p_def_lambda_prop_one G val.
 Proof.
-  intros G val [L [Hlen [[[[Hex Hall] Hsum] Hone] Hstep]]].
+  intros G val [L [Hlen [[Hex Hall] Hsum]]].
   split with (map oRpos_to_R L).
   repeat split.
   - rewrite map_length; rewrite map_length in Hlen; lia.
@@ -949,32 +525,6 @@ Proof.
       destruct r as [r Hr].
       simpl in *.
       split ; [ clear - Hr; apply R_blt_lt in Hr; lra | assumption ].
-  - replace L with (map R_to_oRpos (map oRpos_to_R L)) in Hone.
-    2:{ rewrite map_map.
-        rewrite map_ext with _ _ _ (fun x => x) _; [ | apply R_to_oRpos_oRpos_to_R].
-        apply map_id. }
-    rewrite <- eval_mul_p_hseq_new_one in Hone.
-    + unfold val_add_vec.
-      rewrite p_sum_weight_one_sem.
-      apply Hone.
-    + rewrite map_length; rewrite map_length in Hlen; lia.
-    + clear - Hall.
-      induction L; [ apply Forall_inf_nil | ].
-      inversion Hall; subst.
-      specialize (IHL X).
-      simpl; apply Forall_inf_cons; try assumption.
-      destruct H0 as [r H0].
-      destruct a; [ | simpl; split; lra].
-      assert (Some r0 <> None) by now auto.
-      specialize (H0 H); clear H.
-      destruct H0 as [H0 H0'].
-      inversion H0; subst.
-      destruct r as [r Hr].
-      simpl in *.
-      split ; [ clear - Hr; apply R_blt_lt in Hr; lra | assumption ].
-  - rewrite concat_with_coeff_mul_p_hseq_new_var_only_diamond.
-    2:{ rewrite map_length in Hlen; lia. }
-    apply Hstep.
 Qed.
 
 Lemma def_lambda_prop_one_p_implies_reg :
@@ -982,7 +532,7 @@ Lemma def_lambda_prop_one_p_implies_reg :
     p_def_lambda_prop_one G val ->
     def_lambda_prop_one (map (eval_p_sequent val) G).
 Proof.
-  intros G val [L [Hlen [[[[Hex Hall] Hsum] Hone] Hstep]]].
+  intros G val [L [Hlen [[Hex Hall] Hsum]]].
   split with (map R_to_oRpos L).
   repeat split.
   - rewrite ? map_length; lia.
@@ -1022,21 +572,28 @@ Proof.
       apply Hsum.
     + lia.
     + apply Hall.
-  - rewrite <- eval_mul_p_hseq_new_one.
-    + rewrite p_sum_weight_one_sem in Hone.
-      apply Hone.
-    + lia.
-    + apply Hall.
-  - replace L with (map oRpos_to_R (map R_to_oRpos L)) in Hstep.
-    2:{ clear - Hall.
-        induction L; try reflexivity.
-        inversion Hall; subst.
-        destruct H0 as [Ha _].
-        specialize (IHL X).
-        simpl; rewrite IHL; f_equal.
-        unfold R_to_oRpos.
-        case (R_order_dec a); intros e; try (exfalso; try apply R_blt_lt in e; nra);
-          simpl; nra. }
-    rewrite concat_with_coeff_mul_p_hseq_new_var_only_diamond in Hstep; try assumption.
-    rewrite map_length; lia.
+Qed.
+
+Lemma lambda_prop :
+  forall G,
+    hseq_is_atomic G ->
+    HR_T_M G ->
+    def_lambda_prop G.
+Proof.
+  intros G Hat pi.
+  destruct (lambda_prop G Hat pi) as [L [Hlen [Hex Hsum]]].
+  split with L.
+  repeat split; assumption.
+Qed.
+
+Lemma lambda_prop_inv :
+  forall G,
+    hseq_is_atomic G ->
+    def_lambda_prop G ->
+    HR_T_M G.
+Proof.
+  intros G Hat [L [Hlen [Hex Hsum]]].
+  apply lambda_prop_inv; try assumption.
+  split with L.
+  repeat split; try assumption.
 Qed.

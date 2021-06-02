@@ -13,6 +13,9 @@ Utilities/riesz_logic_Nat_more.v
 Utilities/riesz_logic_List_more.v
 Utilities/Rpos.v
 Utilities/polynomials.v
+Utilities/Lim_seq_US.v
+Utilities/R_complements.v
+Utilities/pol_continuous.v
 
 hmr/term.v
 hmr/semantic.v
@@ -31,11 +34,26 @@ hmr/invertibility.v
 hmr/M_elim.v
 hmr/can_elim.v
 hmr/apply_logical_rule.v
-hmr_example.v
-hmr_main_results.v
 
-Archimedean/lambda_prop_one.v
-Archimedean/archimedean.v
-Archimedean/Lim_seq_US.v
-Archimedean/R_complements.v
-Archimedean/pol_continuous.v
+hmr_archimedean/lambda_prop_one.v
+hmr_archimedean/archimedean.v
+
+hr/term.v
+hr/semantic.v
+hr/hseq.v
+hr/hr.v
+hr/p_hseq.v
+hr/tactics.v
+hr/hr_perm_lemmas.v
+hr/tech_lemmas.v
+hr/interpretation.v
+hr/lambda_prop_tools.v
+hr/soundness.v
+hr/completeness.v
+hr/invertibility.v
+hr/M_elim.v
+hr/can_elim.v
+hr/apply_logical_rule.v
+
+hr_archimedean/lambda_prop_one.v
+hr_archimedean/archimedean.v

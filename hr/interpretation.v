@@ -1,8 +1,8 @@
 (** Interpretation of a hypersequent as a term in NNF *)
 Require Import Rpos.
-Require Import RL.hmr.term.
-Require Import RL.hmr.hseq.
-Require Import RL.hmr.semantic.
+Require Import RL.hr.term.
+Require Import RL.hr.hseq.
+Require Import RL.hr.semantic.
 
 Require Import List.
 Require Import Lra.
@@ -14,7 +14,7 @@ Local Open Scope R_scope.
 (** ** Interpretation of a sequent *)
 Fixpoint sem_seq (T1 : sequent) :=
   match T1 with
-  | nil => MRS_zero
+  | nil => RS_zero
   | ((r , A) :: T1) => (r *S A) +S (sem_seq T1)
   end.
 
@@ -27,7 +27,7 @@ Proof.
     destruct a as (r , A).
     simpl.
     etransitivity ; [ | apply asso_plus].
-    apply (@ctxt (MRS_plusC (MRS_TC (r *S A)) MRS_hole)).
+    apply (@ctxt (RS_plusC (RS_TC (r *S A)) RS_hole)).
     apply IHT1.
 Qed.
 
@@ -36,8 +36,8 @@ Proof.
   induction T; intros r.
   - symmetry; apply mul_0.
   - destruct a as [a Ha]; simpl.
-    etransitivity ; [ apply (@ctxt (MRS_plusC (MRS_TC (time_pos r a *S Ha)) MRS_hole)); apply IHT | ]; simpl.
-    etransitivity ; [ apply (@ctxt (MRS_plusC MRS_hole (MRS_TC (r *S sem_seq T)))) | ].
+    etransitivity ; [ apply (@ctxt (RS_plusC (RS_TC (time_pos r a *S Ha)) RS_hole)); apply IHT | ]; simpl.
+    etransitivity ; [ apply (@ctxt (RS_plusC RS_hole (RS_TC (r *S sem_seq T)))) | ].
     { symmetry ; apply mul_assoc. }
     simpl; auto with MGA_solver.
 Qed.
@@ -67,16 +67,6 @@ Proof.
   - transitivity (sem_seq l'); assumption.
 Qed.
 
-Lemma sem_seq_diamond : forall T, sem_seq (seq_diamond T) === <S> (sem_seq T).
-Proof.
-  induction T; try (symmetry; apply diamond_zero).
-  destruct a as [r A].
-  simpl.
-  etransitivity ; [ | symmetry; apply diamond_linear].
-  etransitivity ; [ | apply plus_left; symmetry; apply diamond_mul].
-  auto.
-Qed.
-
 Lemma mul_vec_eq : forall A l r, sem_seq (vec (mul_vec r l) A) === r *S sem_seq (vec l A).
 Proof.
   intros A.
@@ -91,7 +81,7 @@ Qed.
 (** ** Interpretation of a hypersequent *)
 Fixpoint sem_hseq G :=
   match G with
-  | nil => MRS_zero (* should not happen *)
+  | nil => RS_zero (* should not happen *)
   | T1 :: nil => sem_seq T1
   | T1 :: G => (sem_seq T1) \/S (sem_hseq G)
   end.

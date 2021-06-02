@@ -8,78 +8,78 @@ Hypothesis V_eq : forall (x y : V), {x = y} + {x <> y}.
 (** ** Term *)
 
 Inductive term : Type :=
-| HMR_var : V -> term
-| HMR_covar : V -> term
-| HMR_zero : term
-| HMR_plus : term -> term -> term
-| HMR_mul : Rpos -> term -> term
-| HMR_max : term -> term -> term
-| HMR_min : term -> term -> term
-| HMR_one : term
-| HMR_coone : term
-| HMR_diamond : term -> term.
+| MRS_var : V -> term
+| MRS_covar : V -> term
+| MRS_zero : term
+| MRS_plus : term -> term -> term
+| MRS_mul : Rpos -> term -> term
+| MRS_max : term -> term -> term
+| MRS_min : term -> term -> term
+| MRS_one : term
+| MRS_coone : term
+| MRS_diamond : term -> term.
 
-Fixpoint HMR_minus A :=
+Fixpoint MRS_minus A :=
   match A with
-  | HMR_var n => HMR_covar n
-  | HMR_covar n => HMR_var n
-  | HMR_zero => HMR_zero
-  | HMR_plus A B => HMR_plus (HMR_minus A) (HMR_minus B)
-  | HMR_mul r A => HMR_mul r (HMR_minus A)
-  | HMR_max A B => HMR_min (HMR_minus A) (HMR_minus B)
-  | HMR_min A B => HMR_max (HMR_minus A) (HMR_minus B)
-  | HMR_one => HMR_coone
-  | HMR_coone => HMR_one
-  | HMR_diamond A => HMR_diamond (HMR_minus A)
+  | MRS_var n => MRS_covar n
+  | MRS_covar n => MRS_var n
+  | MRS_zero => MRS_zero
+  | MRS_plus A B => MRS_plus (MRS_minus A) (MRS_minus B)
+  | MRS_mul r A => MRS_mul r (MRS_minus A)
+  | MRS_max A B => MRS_min (MRS_minus A) (MRS_minus B)
+  | MRS_min A B => MRS_max (MRS_minus A) (MRS_minus B)
+  | MRS_one => MRS_coone
+  | MRS_coone => MRS_one
+  | MRS_diamond A => MRS_diamond (MRS_minus A)
   end.
 
 (** Notations *)
-Notation "A +S B" := (HMR_plus A B) (at level 20, left associativity).
-Notation "A \/S B" := (HMR_max A B) (at level 40, left associativity).
-Notation "A /\S B" := (HMR_min A B) (at level 45, left associativity).
-Notation "-S A" := (HMR_minus A) (at level 15).
-Notation "A -S B" := (HMR_plus A (HMR_minus B)) (at level 10, left associativity).
-Notation "r *S A" := (HMR_mul r A) (at level 15).
-Notation "<S> A" := (HMR_diamond A) (at level 15).
+Notation "A +S B" := (MRS_plus A B) (at level 20, left associativity).
+Notation "A \/S B" := (MRS_max A B) (at level 40, left associativity).
+Notation "A /\S B" := (MRS_min A B) (at level 45, left associativity).
+Notation "-S A" := (MRS_minus A) (at level 15).
+Notation "A -S B" := (MRS_plus A (MRS_minus B)) (at level 10, left associativity).
+Notation "r *S A" := (MRS_mul r A) (at level 15).
+Notation "<S> A" := (MRS_diamond A) (at level 15).
 
 Fixpoint sum_term k A :=
   match k with
-  | 0 => HMR_zero
+  | 0 => MRS_zero
   | 1 => A
   | S n => A +S (sum_term n A)
   end.
 
 (** Complexity *)
-Fixpoint HMR_complexity_term A :=
+Fixpoint MRS_outer_complexity_term A :=
   match A with
-  | HMR_var n => 0
-  | HMR_covar n => 0
-  | HMR_one => 0
-  | HMR_coone => 0
+  | MRS_var n => 0
+  | MRS_covar n => 0
+  | MRS_one => 0
+  | MRS_coone => 0
   | <S> A => 0
-  | HMR_zero => 1
-  | HMR_plus A B => 1 + HMR_complexity_term A + HMR_complexity_term B
-  | HMR_min A B => 1 + HMR_complexity_term A + HMR_complexity_term B
-  | HMR_max A B => 1 + HMR_complexity_term A + HMR_complexity_term B
-  | HMR_mul r A => 1 + HMR_complexity_term A
+  | MRS_zero => 1
+  | MRS_plus A B => 1 + MRS_outer_complexity_term A + MRS_outer_complexity_term B
+  | MRS_min A B => 1 + MRS_outer_complexity_term A + MRS_outer_complexity_term B
+  | MRS_max A B => 1 + MRS_outer_complexity_term A + MRS_outer_complexity_term B
+  | MRS_mul r A => 1 + MRS_outer_complexity_term A
   end.
 
-Fixpoint max_diamond_term A :=
+Fixpoint modal_complexity_term A :=
   match A with
-  | HMR_var n => 0
-  | HMR_covar n => 0
-  | HMR_one => 0
-  | HMR_coone => 0
-  | <S> A => 1 + max_diamond_term A
-  | HMR_zero => 0
-  | HMR_plus A B => Nat.max (max_diamond_term A) (max_diamond_term B)
-  | HMR_min A B => Nat.max (max_diamond_term A) (max_diamond_term B)
-  | HMR_max A B => Nat.max (max_diamond_term A) (max_diamond_term B)
-  | HMR_mul r A => max_diamond_term A
+  | MRS_var n => 0
+  | MRS_covar n => 0
+  | MRS_one => 0
+  | MRS_coone => 0
+  | <S> A => 1 + modal_complexity_term A
+  | MRS_zero => 0
+  | MRS_plus A B => Nat.max (modal_complexity_term A) (modal_complexity_term B)
+  | MRS_min A B => Nat.max (modal_complexity_term A) (modal_complexity_term B)
+  | MRS_max A B => Nat.max (modal_complexity_term A) (modal_complexity_term B)
+  | MRS_mul r A => modal_complexity_term A
   end.
 
-Lemma max_diamond_minus :
-  forall A, max_diamond_term A = max_diamond_term (-S A).
+Lemma modal_complexity_minus :
+  forall A, modal_complexity_term A = modal_complexity_term (-S A).
 Proof.
   induction A; simpl; try rewrite IHA; try rewrite IHA1; try rewrite IHA2; reflexivity.
 Qed.
@@ -87,11 +87,11 @@ Qed.
 (*
 Fixpoint max_var_term A :=
   match A with
-  | HMR_var n => n
-  | HMR_covar n => n
-  | HMR_zero => 0%nat
-  | HMR_one => 0%nat
-  | HMR_coone => 0%nat
+  | MRS_var n => n
+  | MRS_covar n => n
+  | MRS_zero => 0%nat
+  | MRS_one => 0%nat
+  | MRS_coone => 0%nat
   | <S> A => max_var_term A
   | A +S B => Nat.max (max_var_term A) (max_var_term B)
   | r *S A => max_var_term A
@@ -103,55 +103,55 @@ Fixpoint max_var_term A :=
 (** Substitution *)
 Fixpoint subs (t1 : term) (x : V) (t2 : term) : term :=
   match t1 with
-  | HMR_var y => if (V_eq x y) then t2 else HMR_var y
-  | HMR_covar y => if (V_eq x y) then (HMR_minus t2) else HMR_covar y
-  | HMR_zero => HMR_zero
-  | HMR_plus t t' => HMR_plus (subs t x t2) (subs t' x t2)
-  | HMR_min t t' => HMR_min (subs t x t2) (subs t' x t2)
-  | HMR_max t t' => HMR_max (subs t x t2) (subs t' x t2)
-  | HMR_mul y t => HMR_mul y (subs t x t2)
-  | HMR_one => HMR_one
-  | HMR_coone => HMR_coone
-  | HMR_diamond t => HMR_diamond (subs t x t2)
+  | MRS_var y => if (V_eq x y) then t2 else MRS_var y
+  | MRS_covar y => if (V_eq x y) then (MRS_minus t2) else MRS_covar y
+  | MRS_zero => MRS_zero
+  | MRS_plus t t' => MRS_plus (subs t x t2) (subs t' x t2)
+  | MRS_min t t' => MRS_min (subs t x t2) (subs t' x t2)
+  | MRS_max t t' => MRS_max (subs t x t2) (subs t' x t2)
+  | MRS_mul y t => MRS_mul y (subs t x t2)
+  | MRS_one => MRS_one
+  | MRS_coone => MRS_coone
+  | MRS_diamond t => MRS_diamond (subs t x t2)
   end.
 
 (** Definition of positive part, negative part and absolute value *)
-Notation "'pos' A" := (A \/S HMR_zero) (at level 5).
-Notation "'neg' A" := ((-S A) \/S HMR_zero) (at level 5).
+Notation "'pos' A" := (A \/S MRS_zero) (at level 5).
+Notation "'neg' A" := ((-S A) \/S MRS_zero) (at level 5).
 Notation "'abs' A" := (A \/S (-S A)) (at level 5).
 
 (** Definition of atoms *)
 Definition is_atom A :=
   match A with
-  | HMR_var _ => True
-  | HMR_covar _ => True
+  | MRS_var _ => True
+  | MRS_covar _ => True
   | _ => False
   end.
 
 Definition is_basic A :=
   match A with
-  | HMR_var _ => True
-  | HMR_covar _ => True
-  | HMR_one => True
-  | HMR_coone => True
-  | HMR_diamond A => True
+  | MRS_var _ => True
+  | MRS_covar _ => True
+  | MRS_one => True
+  | MRS_coone => True
+  | MRS_diamond A => True
   | _ => False
   end.
 
-Lemma is_atom_complexity_0 : forall A,
-    is_atom A -> HMR_complexity_term A = 0.
+Lemma is_atom_outer_complexity_0 : forall A,
+    is_atom A -> MRS_outer_complexity_term A = 0.
 Proof.
   induction A; intros Hat; try now inversion Hat; reflexivity.
 Qed.
 
-Lemma is_basic_complexity_0 : forall A,
-    is_basic A -> HMR_complexity_term A = 0.
+Lemma is_basic_outer_complexity_0 : forall A,
+    is_basic A -> MRS_outer_complexity_term A = 0.
 Proof.
   induction A; intros Hat; try now inversion Hat; reflexivity.
 Qed.
 
-Lemma is_basic_complexity_0_inv : forall A,
-    HMR_complexity_term A = 0 -> is_basic A.
+Lemma is_basic_outer_complexity_0_inv : forall A,
+    MRS_outer_complexity_term A = 0 -> is_basic A.
 Proof.
   induction A; intros Hc0; now inversion Hc0.
 Qed.

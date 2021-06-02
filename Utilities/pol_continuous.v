@@ -5,8 +5,8 @@ Require Import Lra.
 Require Import RL.hmr.term.
 Require Import RL.Utilities.polynomials.
 Require Import RL.Utilities.Rpos.
-Require Import RL.Archimedean.Lim_seq_US.
-Require Import RL.Archimedean.R_complements.
+Require Import RL.Utilities.Lim_seq_US.
+Require Import RL.Utilities.R_complements.
 Require Import Coquelicot.Continuity.
 Require Import Coquelicot.Hierarchy.
 

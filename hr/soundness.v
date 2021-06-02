@@ -1,10 +1,9 @@
-(** * Implementation of Section 4.3 *)
 Require Import Rpos.
-Require Import RL.hmr.term.
-Require Import RL.hmr.hseq.
-Require Import RL.hmr.hmr.
-Require Import RL.hmr.semantic.
-Require Import RL.hmr.interpretation.
+Require Import RL.hr.term.
+Require Import RL.hr.hseq.
+Require Import RL.hr.hr.
+Require Import RL.hr.semantic.
+Require Import RL.hr.interpretation.
 
 Require Import List.
 Require Import Lra.
@@ -15,7 +14,7 @@ Local Open Scope R_scope.
 
 (** ** all rules are sound *)
 
-Lemma W_sound : forall G T, G <> nil ->  MRS_zero <== (sem_hseq G) -> MRS_zero <== sem_hseq (T :: G).
+Lemma W_sound : forall G T, G <> nil ->  RS_zero <== (sem_hseq G) -> RS_zero <== sem_hseq (T :: G).
 Proof with try assumption.
   intros G T notEmpty Hleq.
   destruct G; [ now exfalso | ].
@@ -36,7 +35,7 @@ Proof with try assumption.
     now auto with MGA_solver.
 Qed.
 
-Lemma S_sound : forall G T1 T2, MRS_zero <== sem_hseq ((T1 ++ T2) :: G) -> MRS_zero <== sem_hseq (T1 :: T2 :: G).
+Lemma S_sound : forall G T1 T2, RS_zero <== sem_hseq ((T1 ++ T2) :: G) -> RS_zero <== sem_hseq (T1 :: T2 :: G).
 Proof with try assumption.
   intros G T1 T2 Hleq.
   destruct G.
@@ -74,15 +73,15 @@ Proof with try assumption.
            eapply leq_cong_l.
            { apply min_left.
              apply max_left.
-             apply (@ctxt MRS_cohole).
+             apply (@ctxt RS_cohole).
              symmetry; apply sem_seq_plus. }
            eapply leq_cong_l; [apply Hleq | ].
            apply leq_refl.
     + apply leq_min; now auto with MGA_solver.
 Qed.
 
-Lemma M_sound : forall G T1 T2, MRS_zero <== sem_hseq (T1 :: G) -> MRS_zero <== sem_hseq (T2 :: G) ->
-                                MRS_zero <== sem_hseq ((T1 ++ T2) :: G).
+Lemma M_sound : forall G T1 T2, RS_zero <== sem_hseq (T1 :: G) -> RS_zero <== sem_hseq (T2 :: G) ->
+                                RS_zero <== sem_hseq ((T1 ++ T2) :: G).
 Proof with try assumption.
   intros [ | T3 G ] T1 T2 Hleq1 Hleq2.
   - simpl in *.
@@ -116,8 +115,8 @@ Proof with try assumption.
 Qed.
 
 Lemma T_sound :  forall G T r,
-    MRS_zero <== sem_hseq (seq_mul r T :: G) ->
-    MRS_zero <== sem_hseq (T :: G).
+    RS_zero <== sem_hseq (seq_mul r T :: G) ->
+    RS_zero <== sem_hseq (T :: G).
 Proof with try assumption.
   intros [ | T2 G] T [r Hpos]; 
     remember (existT (fun r : R => (0 <? r)%R = true) r Hpos) as t; intros Hleq.
@@ -207,7 +206,7 @@ Proof.
       symmetry; apply neutral_plus.
 Qed.
 
-Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r MRS_zero ++ T) :: G).
+Lemma Z_sound : forall G T r, sem_hseq (T :: G) === sem_hseq ((vec r RS_zero ++ T) :: G).
 Proof.
   intros [ | T2 G] T [ | r0 r].
   - reflexivity.
@@ -375,203 +374,25 @@ Lemma min_sound : forall G T A  B r, sem_hseq ((vec r A ++ T) :: G) /\S sem_hseq
     symmetry; apply min_plus.
 Qed.
 
-Lemma one_sound : forall G T r s, sum_vec s <= sum_vec r -> sem_hseq (T :: G) <== sem_hseq ((vec s MRS_coone ++ vec r MRS_one ++ T) :: G).
-Proof.
-  intros [ | T2 G] T r s H.
-  - simpl.
-    eapply leq_cong_r.
-    { etransitivity; [ apply sem_seq_plus | ].
-      apply plus_right; apply sem_seq_plus. }
-    destruct r; destruct s.
-    + simpl.
-      eapply leq_cong_r; [ | apply leq_refl].
-      etransitivity; [ apply commu_plus | ].
-      etransitivity; [ apply neutral_plus | ].
-      etransitivity; [ apply commu_plus | ].
-      apply neutral_plus.
-    + simpl in *.
-      destruct r as [r Hr].
-      exfalso; simpl in *.
-      assert (0 <= sum_vec s).
-      { clear; induction s as [ | [s Hs] vs]; simpl; try apply R_blt_lt in Hs; try nra. }
-      apply R_blt_lt in Hr; nra.
-    + assert (r :: r0 <> nil) as Hnnil by now auto.
-      eapply leq_cong_r; [ apply plus_right; apply plus_left; apply (sem_seq_vec _ _ Hnnil) | ].
-      eapply leq_cong_r.
-      { etransitivity; [ apply commu_plus | ].
-        apply neutral_plus. }
-      eapply leq_cong_l ; [ symmetry; apply neutral_plus | ].
-      eapply leq_cong_l ; [ apply commu_plus | ].
-      apply leq_plus_cong; try apply leq_refl.
-      eapply leq_cong_l; [ symmetry; apply mul_0 | ].
-      apply mul_leq.
-      apply one_pos.
-    + assert (r :: r0 <> nil) as Hnnilr by now auto.
-      assert (r1 :: s <> nil) as Hnnils by now auto.
-      eapply leq_cong_r.
-      { etransitivity.
-        - apply plus_left.
-          apply (sem_seq_vec _ _ Hnnils).
-        - apply plus_right.
-          apply plus_left.
-          apply (sem_seq_vec _ _ Hnnilr). }
-      eapply leq_cong_r; [ apply commu_plus | ].
-      eapply leq_cong_r; [ apply plus_left; apply commu_plus | ].
-      eapply leq_cong_r; [ symmetry; apply asso_plus | ].
-      case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1; [ | apply R_blt_nlt in H1].
-      * change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
-        change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
-        apply R_blt_lt in H1.
-        change MRS_coone with (-S MRS_one).
-        eapply leq_cong_r ; [ apply plus_right; apply (minus_ax _ _ _ H1) | ].
-        eapply leq_cong_l; [ symmetry; apply neutral_plus | ].
-        apply leq_plus_cong; try apply leq_refl.
-        eapply leq_cong_l ; [ symmetry; apply mul_0 | ].
-        apply mul_leq; apply one_pos.
-      * replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr)).
-        2:{ apply Rpos_eq; simpl in *.
-            nra. }
-        eapply leq_cong_r ; [ apply plus_right; apply opp_plus | ].
-        eapply leq_cong_r; [ apply neutral_plus | ].
-        apply leq_refl.
-  - unfold sem_hseq; fold (sem_hseq (T2 :: G)).
-    apply max_leq.
-    2:{ eapply leq_cong_r ; [ apply commu_max | ].
-        apply leq_max. }
-    eapply leq_trans; [ | apply leq_max ].
-    eapply leq_cong_r.
-    { etransitivity; [ apply sem_seq_plus | ].
-      apply plus_right; apply sem_seq_plus. }
-    destruct r; destruct s.
-    + simpl.
-      eapply leq_cong_r; [ | apply leq_refl].
-      etransitivity; [ apply commu_plus | ].
-      etransitivity; [ apply neutral_plus | ].
-      etransitivity; [ apply commu_plus | ].
-      apply neutral_plus.
-    + simpl in *.
-      destruct r as [r Hr].
-      exfalso; simpl in *.
-      assert (0 <= sum_vec s).
-      { clear; induction s as [ | [s Hs] vs]; simpl; try apply R_blt_lt in Hs; try nra. }
-      apply R_blt_lt in Hr; nra.
-    + assert (r :: r0 <> nil) as Hnnil by now auto.
-      eapply leq_cong_r; [ apply plus_right; apply plus_left; apply (sem_seq_vec _ _ Hnnil) | ].
-      eapply leq_cong_r.
-      { etransitivity; [ apply commu_plus | ].
-        apply neutral_plus. }
-      eapply leq_cong_l ; [ symmetry; apply neutral_plus | ].
-      eapply leq_cong_l ; [ apply commu_plus | ].
-      apply leq_plus_cong; try apply leq_refl.
-      eapply leq_cong_l; [ symmetry; apply mul_0 | ].
-      apply mul_leq.
-      apply one_pos.
-    + assert (r :: r0 <> nil) as Hnnilr by now auto.
-      assert (r1 :: s <> nil) as Hnnils by now auto.
-      eapply leq_cong_r.
-      { etransitivity.
-        - apply plus_left.
-          apply (sem_seq_vec _ _ Hnnils).
-        - apply plus_right.
-          apply plus_left.
-          apply (sem_seq_vec _ _ Hnnilr). }
-      eapply leq_cong_r; [ apply commu_plus | ].
-      eapply leq_cong_r; [ apply plus_left; apply commu_plus | ].
-      eapply leq_cong_r; [ symmetry; apply asso_plus | ].
-      case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1; [ | apply R_blt_nlt in H1].
-      * change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
-        change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
-        apply R_blt_lt in H1.
-        change MRS_coone with (-S MRS_one).
-        eapply leq_cong_r ; [ apply plus_right; apply (minus_ax _ _ _ H1) | ].
-        eapply leq_cong_l; [ symmetry; apply neutral_plus | ].
-        apply leq_plus_cong; try apply leq_refl.
-        eapply leq_cong_l ; [ symmetry; apply mul_0 | ].
-        apply mul_leq; apply one_pos.
-      * replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr)).
-        2:{ apply Rpos_eq; simpl in *.
-            nra. }
-        eapply leq_cong_r ; [ apply plus_right; apply opp_plus | ].
-        eapply leq_cong_r; [ apply neutral_plus | ].
-        apply leq_refl.
-Qed.
-  
-Lemma diamond_sound : forall T r s, sum_vec s <= sum_vec r -> MRS_zero <== sem_hseq ((vec s MRS_coone ++ vec r MRS_one ++ T) :: nil) -> MRS_zero <== sem_hseq ((vec s MRS_coone ++ vec r MRS_one ++ seq_diamond T) :: nil).
-Proof.
-  intros T r s H Hleq.
-  simpl in *.
-  apply leq_trans with (<S> (sem_seq (vec s MRS_coone ++ vec r MRS_one ++ T))).
-  { apply leq_diamond; apply Hleq. }
-  eapply leq_cong_l; [ symmetry; apply sem_seq_diamond | ].
-  rewrite ? seq_diamond_app.
-  rewrite <- ? vec_diamond.
-  eapply leq_cong_l; [ apply sem_seq_plus | ].
-  eapply leq_cong_l; [ apply plus_right; apply sem_seq_plus | ].
-  eapply leq_cong_l ; [ apply asso_plus | ].
-  eapply leq_cong_r; [ apply sem_seq_plus | ].
-  eapply leq_cong_r; [ apply plus_right; apply sem_seq_plus | ].
-  eapply leq_cong_r ; [ apply asso_plus | ].
-  apply leq_plus_cong; try apply leq_refl.
-  destruct r; destruct s.
-  - apply leq_refl.
-  - simpl in *.
-    destruct r as [r Hr].
-    exfalso; simpl in *.
-    assert (0 <= sum_vec s).
-    { clear; induction s as [ | [s Hs] vs]; simpl; try apply R_blt_lt in Hs; try nra. }
-    clear Hleq; apply R_blt_lt in Hr; nra.
-  - apply leq_plus_cong; try apply leq_refl.
-    assert (r :: r0 <> nil) as Hnnil by now auto.
-    eapply leq_cong_r; [ apply (sem_seq_vec _ _ Hnnil) | ].
-    eapply leq_cong_l; [ apply (sem_seq_vec _ _ Hnnil) | ].
-    apply mul_leq.
-    apply diamond_one.
-  - assert (r :: r0 <> nil) as Hnnilr by now auto.
-    assert (r1 :: s <> nil) as Hnnils by now auto.
-    eapply leq_cong_r ; [ apply plus_left; apply (sem_seq_vec _ _ Hnnils) | ].
-    eapply leq_cong_r ; [ apply plus_right; apply (sem_seq_vec _ _ Hnnilr) | ].
-    eapply leq_cong_l ; [ apply plus_left; apply (sem_seq_vec _ _ Hnnils) | ].
-    eapply leq_cong_l ; [ apply plus_right; apply (sem_seq_vec _ _ Hnnilr) | ].
-    eapply leq_cong_r; [ apply commu_plus | ].
-    eapply leq_cong_l; [ apply commu_plus | ].
-    case_eq (sum_vec (r1 :: s) <? sum_vec (r :: r0)); intros H1 ; [ apply R_blt_lt in H1 | apply R_blt_nlt in H1].
-    + change (sum_vec (r :: r0)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr))) in H1.
-      change (sum_vec (r1 :: s)) with (projT1 (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils))) in H1.
-      change (MRS_coone) with (-S MRS_one).
-      change (<S> (-S MRS_one)) with (-S (<S> MRS_one)).
-      eapply leq_cong_l ; [ apply (minus_ax _ _ _ H1) | ].
-      eapply leq_cong_r ; [ apply (minus_ax _ _ _ H1) | ].
-      apply mul_leq.
-      apply diamond_one.
-    + replace (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r1 :: s)) (sum_vec_non_nil (r1 :: s) Hnnils)) with (existT (fun r2 : R => (0 <? r2) = true) (sum_vec (r :: r0)) (sum_vec_non_nil (r :: r0) Hnnilr)).
-      2:{ apply Rpos_eq; simpl in *; nra. }
-      eapply leq_cong_r; [ apply opp_plus | ].
-      eapply leq_cong_l; [ apply opp_plus | ].
-      apply leq_refl.
-Qed.
-
-(** ** HMR is sound *)
-Lemma hmr_sound b : forall G, HMR b G -> MRS_zero <== sem_hseq G.
+(** ** HR is sound *)
+Lemma hr_sound b : forall G, HR b G -> RS_zero <== sem_hseq G.
 Proof with try assumption.
   intros G pi.
   induction pi.
   - apply leq_refl.
-  - apply W_sound ; [now apply (@HMR_not_empty b) | ]...
+  - apply W_sound ; [now apply (@HR_not_empty b) | ]...
   - eapply leq_cong_r; [ symmetry; apply C_sound | ].
     apply IHpi.
   - now apply S_sound.
   - now apply M_sound.
   - now apply T_sound with r.
-  - change (MRS_covar n) with (-S (MRS_var n)); eapply leq_cong_r; [ symmetry; apply ext_ID_sound | ]; try assumption.
+  - change (RS_covar n) with (-S (RS_var n)); eapply leq_cong_r; [ symmetry; apply ext_ID_sound | ]; try assumption.
   - eapply leq_cong_r; [ symmetry; apply Z_sound | ]; try assumption.
   - eapply leq_cong_r; [ symmetry; apply plus_sound | ]; try assumption.
   - eapply leq_cong_r; [ symmetry; apply mul_sound | ]; try assumption.
   - eapply leq_cong_r; [ symmetry; apply max_sound | ]; try assumption.
   - eapply leq_cong_r; [ symmetry; apply min_sound | ].
     now apply leq_min.
-  - eapply leq_trans ; [ apply IHpi | ].
-    now apply one_sound.
-  - now apply diamond_sound.
   - destruct G.
     + simpl in *; eapply leq_cong_r; [ symmetry; apply (sem_seq_permutation _ _ p)| ]; try assumption.
     + unfold sem_hseq in *; fold (sem_hseq (l :: G)) in *.

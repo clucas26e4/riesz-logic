@@ -101,15 +101,15 @@ Inductive HMR P : hypersequent -> Type :=
 | hmrr_S : forall G T1 T2, HMR P ((T1 ++ T2) :: G) -> HMR P (T1 :: T2 :: G)
 | hmrr_M {f : hmr_M P = true} : forall G T1 T2, HMR P (T1 :: G) -> HMR P (T2 :: G) -> HMR P ((T1 ++ T2) :: G)
 | hmrr_T {f : hmr_T P = true} : forall G T r, HMR P (seq_mul r T :: G) -> HMR P (T :: G)
-| hmrr_ID : forall G T n r s, sum_vec r = sum_vec s -> HMR P (T :: G) -> HMR P ((vec s (HMR_covar n) ++ vec r (HMR_var n) ++ T) :: G)
-| hmrr_Z : forall G T r, HMR P (T :: G) -> HMR P ((vec r HMR_zero ++ T) :: G)
+| hmrr_ID : forall G T n r s, sum_vec r = sum_vec s -> HMR P (T :: G) -> HMR P ((vec s (MRS_covar n) ++ vec r (MRS_var n) ++ T) :: G)
+| hmrr_Z : forall G T r, HMR P (T :: G) -> HMR P ((vec r MRS_zero ++ T) :: G)
 
 | hmrr_plus : forall G T A B r, HMR P ((vec r A ++ vec r B ++ T) :: G) -> HMR P ((vec r (A +S B) ++ T) :: G)
 | hmrr_mul : forall G T A r0 r, HMR P ((vec (mul_vec r0 r) A ++ T) :: G) -> HMR P ((vec r (r0 *S A) ++ T) :: G)
 | hmrr_max : forall G T A B r, HMR P ((vec r B ++ T) :: (vec r A ++ T) :: G) -> HMR P ((vec r (A \/S B) ++ T) :: G)
 | hmrr_min : forall G T A B r, HMR P ((vec r A ++ T) :: G) -> HMR P ((vec r B ++ T) :: G) -> HMR P ((vec r (A /\S B) ++ T) :: G)
-| hmrr_one : forall G T r s, sum_vec s <= sum_vec r -> HMR P (T :: G) -> HMR P ((vec s HMR_coone ++ vec r HMR_one ++ T) :: G)
-| hmrr_diamond : forall T r s, sum_vec s <= sum_vec r -> HMR P ((vec s HMR_coone ++ vec r HMR_one ++ T) :: nil) -> HMR P ((vec s HMR_coone ++ vec r HMR_one ++ seq_diamond T) :: nil)
+| hmrr_one : forall G T r s, sum_vec s <= sum_vec r -> HMR P (T :: G) -> HMR P ((vec s MRS_coone ++ vec r MRS_one ++ T) :: G)
+| hmrr_diamond : forall T r s, sum_vec s <= sum_vec r -> HMR P ((vec s MRS_coone ++ vec r MRS_one ++ T) :: nil) -> HMR P ((vec s MRS_coone ++ vec r MRS_one ++ seq_diamond T) :: nil)
 | hmrr_ex_seq : forall G T1 T2, Permutation_Type T1 T2 -> HMR P (T1 :: G) -> HMR P (T2 :: G)
 | hmrr_ex_hseq : forall G H, Permutation_Type G H -> HMR P G -> HMR P H
 | hmrr_can {f : hmr_CAN P = true} : forall G T A r s, sum_vec r = sum_vec s -> HMR P ((vec s (-S A) ++ vec r A ++ T) :: G) -> HMR P (T :: G).
@@ -237,7 +237,7 @@ Lemma hmrr_diamond_no_one P : forall T,
     HMR P ((seq_diamond T) :: nil).
 Proof.
   intros T pi.
-  change (seq_diamond T) with (vec nil HMR_coone ++ vec nil HMR_one ++ seq_diamond T).
+  change (seq_diamond T) with (vec nil MRS_coone ++ vec nil MRS_one ++ seq_diamond T).
   apply hmrr_diamond; try assumption.
   simpl; nra.
 Defined.

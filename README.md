@@ -68,3 +68,12 @@ The files in hr and hmr are quite similar (because the structure of Section 3 an
 ---
 
 Many thanks to Olivier Laurent, the main contributor of [OLlibs](https://github.com/olaure01/ollibs) that was very helpful for this project.
+
+
+ The Coq repository is structured as follows:\todo{check after cleaning the Coq repo}
+\begin{itemize}
+\item The folder \emph{Utilities} contains the preliminary tools required for the formalisation, i.e., the basic definitions and axioms as stated in this section as well as some useful results to manipulate lists and real numbers.
+\item The folders \emph{OLlibs} and \emph{Coquelicot} contain the corresponding libraries.
+\item The folder \emph{hr} (resp. \emph{hmr}) contains all results of Section \ref{subsec:hr} (resp. Section \ref{subsec:hmr}).
+\item The folder \emph{archimedean\_hr} (resp. \emph{archimedean\_hmr}) contains the results of Section \ref{sec:modal_free} (resp. Section \ref{sec:modal}).
+\end{itemize}
